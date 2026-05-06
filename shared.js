@@ -89,11 +89,31 @@ window.saveTripToSupabase = async function(tripData) {
   return data;
 };
 
+// ... (keep everything above the same, only replace getTripsFromSupabase)
+
 window.getTripsFromSupabase = async function() {
   if (!window.supabase || !window.currentUser) return [];
-  const { data, error } = await window.supabase.from('trips').select('*').eq('user_id', window.currentUser.id).order('created_at', { ascending: false });
-  if (error) window.showToast(error.message, 'danger');
-  return data || [];
+  const { data, error } = await window.supabase
+    .from('trips')
+    .select('*')
+    .eq('user_id', window.currentUser.id)
+    .order('created_at', { ascending: false });
+  if (error) {
+    window.showToast(error.message, 'danger');
+    return [];
+  }
+  // Convert each database row into the object expected by trips.js
+  return data.map(row => ({
+    id: row.id,
+    name: row.title,
+    dates: { start: row.start_date, end: row.end_date },
+    destinations: row.preferences_json?.destinations || { main: { country: '', cities: [] } },
+    preferences: row.preferences_json || {},
+    weather: row.weather_json || {},
+    packingList: row.packing_list_json || [],
+    createdAt: row.created_at,
+    savedAt: row.updated_at
+  }));
 };
 
 window.requestNotificationPermission = function() {
