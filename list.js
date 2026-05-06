@@ -1,4 +1,4 @@
-// list.js – displays packing list, saves to localStorage (guest) or Supabase (logged-in)
+// list.js – simplified, with visible alerts for phone debugging
 let currentList = [];
 let currentTrip = null;
 
@@ -8,7 +8,7 @@ function renderPackingList() {
     const progressSpan = document.getElementById('listProgress');
     
     if (!currentList || currentList.length === 0) {
-        container.innerHTML = '<div class="card"><p>No packing list found. Please plan a trip first.</p></div>';
+        container.innerHTML = '<div class="card"><p>No packing list. Please plan a trip first.</p></div>';
         badge.innerHTML = '';
         progressSpan.innerHTML = '';
         return;
@@ -32,7 +32,7 @@ function renderPackingList() {
                 <div class="pack-item">
                     <div class="item-checkbox ${item.checked ? 'checked' : ''}" data-cat="${escapeHtml(category)}" data-idx="${idx}"></div>
                     <span class="item-name">${escapeHtml(item.name)}</span>
-                    <a href="#" class="item-buy" onclick="event.preventDefault();showToast('Affiliate link (demo)')">Buy →</a>
+                    <a href="#" class="item-buy" onclick="event.preventDefault();alert('Affiliate link demo')">Buy →</a>
                 </div>
             `;
         });
@@ -40,7 +40,7 @@ function renderPackingList() {
     }
     container.innerHTML = html;
     
-    // Attach checkbox toggle events
+    // Attach checkbox events
     document.querySelectorAll('.item-checkbox').forEach(cb => {
         cb.addEventListener('click', (e) => {
             const cat = cb.dataset.cat;
@@ -54,7 +54,6 @@ function renderPackingList() {
         });
     });
     
-    // Trip badge
     if (currentTrip && currentTrip.name) {
         badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(currentTrip.name)} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
     } else {
@@ -71,120 +70,55 @@ function renderPackingList() {
 
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
 }
 
 function addCustomItem() {
     const name = prompt('Enter custom item name:');
     if (!name) return;
-    const category = prompt('Enter category (e.g., Accessories, Electronics):') || 'Other';
+    const category = prompt('Category (e.g., Accessories):') || 'Other';
     currentList.push({ name, category, checked: false });
     renderPackingList();
-    if (typeof showToast === 'function') showToast(`"${name}" added to your list`, 'success');
-    else alert('Item added');
+    alert(`"${name}" added!`);
 }
 
-async function saveTrip() {
-    console.log('saveTrip called, currentUser:', window.currentUser);
+function saveTrip() {
     if (!currentTrip) {
-        const msg = 'No trip data to save. Please generate a list first.';
-        if (typeof showToast === 'function') showToast(msg, 'warning');
-        else alert(msg);
+        alert('No trip data to save. Please generate a list first.');
         return;
     }
     if (!currentTrip.id) currentTrip.id = Date.now();
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
-    const isLoggedIn = !!(window.currentUser && window.supabase);
-    console.log('isLoggedIn:', isLoggedIn);
-
-    if (isLoggedIn) {
-        // Save to Supabase
-        const tripData = {
-            title: currentTrip.name,
-            startDate: currentTrip.dates?.start,
-            endDate: currentTrip.dates?.end,
-            reason: currentTrip.preferences?.reason,
-            style: currentTrip.preferences?.style,
-            travelersCount: currentTrip.preferences?.travelersCount || 1,
-            luggage: currentTrip.preferences?.luggage,
-            packingList: currentList,
-            preferences: currentTrip.preferences,
-            weather: currentTrip.weather
-        };
-        try {
-            const { data, error } = await window.supabase
-                .from('trips')
-                .upsert({
-                    id: currentTrip.id,
-                    user_id: window.currentUser.id,
-                    title: tripData.title,
-                    start_date: tripData.startDate,
-                    end_date: tripData.endDate,
-                    travel_reason: tripData.reason,
-                    travel_style: tripData.style,
-                    travelers_count: tripData.travelersCount,
-                    luggage_type: tripData.luggage,
-                    packing_list_json: tripData.packingList,
-                    preferences_json: tripData.preferences,
-                    weather_json: tripData.weather
-                })
-                .select();
-            if (error) throw error;
-            console.log('Saved to Supabase', data);
-            if (typeof showToast === 'function') showToast('Trip saved to cloud!', 'success');
-        } catch (err) {
-            console.error('Supabase error:', err);
-            if (typeof showToast === 'function') showToast('Failed to save to cloud: ' + err.message, 'danger');
-        }
-    } else {
-        // Guest mode: save to localStorage
-        let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
-        const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
-        if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
-        else savedTrips.unshift(currentTrip);
-        localStorage.setItem('userTrips', JSON.stringify(savedTrips));
-        localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
-        localStorage.setItem('currentPackingList', JSON.stringify(currentList));
-        console.log('Saved to localStorage. userTrips length:', savedTrips.length);
-        if (typeof showToast === 'function') showToast('Trip saved locally (guest)', 'success');
-    }
+    // Save to localStorage (guest mode)
+    let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
+    const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
+    if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
+    else savedTrips.unshift(currentTrip);
+    localStorage.setItem('userTrips', JSON.stringify(savedTrips));
+    
+    // Also keep current trip metadata for editing
+    localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
+    localStorage.setItem('currentPackingList', JSON.stringify(currentList));
+    
+    alert('✅ Trip saved! Go to "Trips" to see it.');
+    console.log('Saved trips count:', savedTrips.length);
 }
 
 function loadData() {
     const storedList = localStorage.getItem('currentPackingList');
     const storedTrip = localStorage.getItem('currentTripMetadata');
-    console.log('loadData: list', !!storedList, 'trip', !!storedTrip);
-    if (storedList) {
-        try { currentList = JSON.parse(storedList); } catch(e) { console.error(e); }
-    }
-    if (storedTrip) {
-        try { currentTrip = JSON.parse(storedTrip); } catch(e) { console.error(e); }
-    }
-    if (currentTrip && currentTrip.packingList && currentList.length === 0) {
+    if (storedList) currentList = JSON.parse(storedList);
+    if (storedTrip) currentTrip = JSON.parse(storedTrip);
+    if (currentTrip && currentTrip.packingList && !currentList.length) {
         currentList = currentTrip.packingList;
     }
     renderPackingList();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM ready, initializing list page');
     loadData();
-    const addBtn = document.getElementById('addCustomItemBtn');
-    const saveBtn = document.getElementById('saveTripBtn');
-    if (addBtn) addBtn.addEventListener('click', addCustomItem);
-    if (saveBtn) {
-        saveBtn.addEventListener('click', saveTrip);
-        console.log('Save button listener attached');
-    } else {
-        console.error('Save button not found – check ID in HTML');
-    }
-    if (typeof showToast === 'undefined') console.warn('showToast not defined – shared.js may not be loaded');
-    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    document.getElementById('addCustomItemBtn')?.addEventListener('click', addCustomItem);
+    document.getElementById('saveTripBtn')?.addEventListener('click', saveTrip);
 });
