@@ -11,12 +11,20 @@ async function loadProfile() {
   }
 }
 
-document.getElementById('logoutBtn').addEventListener('click', signOut);
-document.getElementById('darkModeToggle').addEventListener('change', e => {
-  document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : '');
-  localStorage.setItem('theme', e.target.checked ? 'dark' : 'light');
-});
-document.getElementById('exportBtn').addEventListener('click', () => {
+document.getElementById('logoutBtn')?.addEventListener('click', signOut);
+const darkToggle = document.getElementById('darkModeToggle');
+if (darkToggle) {
+  darkToggle.addEventListener('change', (e) => {
+    document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : '');
+    localStorage.setItem('theme', e.target.checked ? 'dark' : 'light');
+  });
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    darkToggle.checked = true;
+  }
+}
+document.getElementById('exportBtn')?.addEventListener('click', () => {
   const trips = JSON.parse(localStorage.getItem('wanderpack_trips') || '[]');
   const dataStr = JSON.stringify(trips, null, 2);
   const blob = new Blob([dataStr], {type: 'application/json'});
@@ -28,16 +36,10 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
   showToast('Data exported', 'success');
 });
-document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+document.getElementById('deleteAccountBtn')?.addEventListener('click', () => {
   if (confirm('Delete all your locally stored trips? This cannot be undone.')) {
     localStorage.removeItem('wanderpack_trips');
-    showToast('All local data cleared', 'danger');
+    showToast('All local data cleared', 'success');
   }
 });
-// Restore dark mode preference
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'dark') {
-  document.documentElement.setAttribute('data-theme', 'dark');
-  document.getElementById('darkModeToggle').checked = true;
-}
 initAuth().then(loadProfile);
