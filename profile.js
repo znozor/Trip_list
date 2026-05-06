@@ -10,8 +10,34 @@ async function loadProfile() {
     document.getElementById('userEmail').innerText = 'Not logged in';
   }
 }
-document.getElementById('logoutBtn').onclick = () => signOut();
-document.getElementById('darkToggle').addEventListener('change', e => document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : ''));
-function exportData() { alert('Would download trips data – implement if needed'); }
-function deleteAllData() { if(confirm('Permanently delete all local trips?')) { localStorage.removeItem('wanderpack_trips'); showToast('Local data cleared'); } }
+
+document.getElementById('logoutBtn').addEventListener('click', signOut);
+document.getElementById('darkModeToggle').addEventListener('change', e => {
+  document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : '');
+  localStorage.setItem('theme', e.target.checked ? 'dark' : 'light');
+});
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const trips = JSON.parse(localStorage.getItem('wanderpack_trips') || '[]');
+  const dataStr = JSON.stringify(trips, null, 2);
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wanderpack-data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported', 'success');
+});
+document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+  if (confirm('Delete all your locally stored trips? This cannot be undone.')) {
+    localStorage.removeItem('wanderpack_trips');
+    showToast('All local data cleared', 'danger');
+  }
+});
+// Restore dark mode preference
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.getElementById('darkModeToggle').checked = true;
+}
 initAuth().then(loadProfile);
