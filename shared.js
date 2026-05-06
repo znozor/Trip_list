@@ -11,7 +11,6 @@ try {
   }
 } catch(e) { console.warn('Supabase init error:', e); }
 
-// Expose supabase and currentUser globally
 window.supabase = supabase;
 window.currentUser = currentUser;
 
@@ -73,6 +72,21 @@ if (window.supabase) {
   });
 }
 
+// Helper to reconstruct trip object from Supabase row
+function rowToTrip(row) {
+  return {
+    id: row.id,
+    name: row.title,
+    dates: { start: row.start_date, end: row.end_date },
+    destinations: row.preferences_json?.destinations || { main: { country: '', cities: [] } },
+    preferences: row.preferences_json || {},
+    weather: row.weather_json || {},
+    packingList: row.packing_list_json || [],
+    createdAt: row.created_at,
+    savedAt: row.updated_at
+  };
+}
+
 window.saveTripToSupabase = async function(tripData) {
   if (!window.supabase || !window.currentUser) return null;
   const { data, error } = await window.supabase.from('trips').insert({
@@ -83,13 +97,14 @@ window.saveTripToSupabase = async function(tripData) {
     travel_reason: tripData.reason,
     travel_style: tripData.style,
     travelers_count: tripData.travelersCount || 1,
-    luggage_type: tripData.luggage
+    luggage_type: tripData.luggage,
+    packing_list_json: tripData.packingList,
+    preferences_json: tripData.preferences,
+    weather_json: tripData.weather
   }).select().single();
   if (error) window.showToast(error.message, 'danger');
-  return data;
+  return data ? rowToTrip(data) : null;
 };
-
-// ... (keep everything above the same, only replace getTripsFromSupabase)
 
 window.getTripsFromSupabase = async function() {
   if (!window.supabase || !window.currentUser) return [];
@@ -102,18 +117,7 @@ window.getTripsFromSupabase = async function() {
     window.showToast(error.message, 'danger');
     return [];
   }
-  // Convert each database row into the object expected by trips.js
-  return data.map(row => ({
-    id: row.id,
-    name: row.title,
-    dates: { start: row.start_date, end: row.end_date },
-    destinations: row.preferences_json?.destinations || { main: { country: '', cities: [] } },
-    preferences: row.preferences_json || {},
-    weather: row.weather_json || {},
-    packingList: row.packing_list_json || [],
-    createdAt: row.created_at,
-    savedAt: row.updated_at
-  }));
+  return data.map(rowToTrip);
 };
 
 window.requestNotificationPermission = function() {
