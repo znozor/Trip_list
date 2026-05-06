@@ -2,6 +2,6 @@
 const CONFIG = {
   SUPABASE_URL: 'https://ezmtdoodmkszngfndkpg.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6bXRkb29kbWtzem5nZm5ka3BnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjg1ODIsImV4cCI6MjA5MjgwNDU4Mn0.aWgag4LTNhU-eDFyhHKlADNi0ERwbB45eScxvLwhjiE',
-  OPENWEATHER_API_KEY: 'bd5e378503939ddaee76f12ad7a97608', // optional
+  OPENWEATHER_API_KEY: '', // optional
   AMAZON_ASSOCIATE_TAG: 'your-tag-20'         // optional
 };
