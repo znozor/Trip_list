@@ -154,7 +154,15 @@ async function saveTrip() {
     currentList = [];
     renderPackingList();
     
-    alert('✅ Trip saved! Redirecting to Trips page.');
+    if (Notification.permission === 'granted') {
+    new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
+} else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(perm => {
+        if (perm === 'granted') {
+            new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
+        }
+    });
+}
     window.location.href = 'trips.html';
 }
 
