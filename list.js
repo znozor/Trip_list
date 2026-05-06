@@ -1,24 +1,21 @@
-// list.js
 let currentTrip = null;
 let packingList = null;
 
 function generatePackingList(trip) {
-  // Simplified – you can expand logic based on weather/activities
   return {
     mandatory: { title: '⭐ Mandatory', items: [
       { name: 'Passport / ID', checked: false },
       { name: 'Wallet / Cards', checked: false },
       { name: 'Phone + Charger', checked: false },
-      { name: 'Prescription Medications', checked: false }
+      { name: 'Prescription Meds', checked: false }
     ]},
     weather: { title: '🌤️ Weather‑Based', items: [
       { name: 'Sunscreen SPF 30+', checked: false },
-      { name: 'Umbrella', checked: false },
-      { name: 'Light Jacket', checked: false }
+      { name: 'Umbrella', checked: false }
     ]},
     activity: { title: '🎒 Activity‑Based', items: [
-      { name: 'Comfortable walking shoes', checked: false },
-      { name: 'Day backpack', checked: false }
+      { name: 'Comfortable shoes', checked: false },
+      { name: 'Backpack', checked: false }
     ]}
   };
 }
@@ -27,27 +24,24 @@ function renderPackingList() {
   const container = document.getElementById('packingListBody');
   container.innerHTML = '';
   let total = 0, checked = 0;
-  for (const cat in packingList) {
+  for (let cat in packingList) {
     const items = packingList[cat].items;
     total += items.length;
     checked += items.filter(i => i.checked).length;
-    const card = document.createElement('div');
-    card.className = 'card';
+    const card = document.createElement('div'); card.className = 'card';
     card.innerHTML = `<h3>${packingList[cat].title}</h3>${items.map((item, idx) => `
       <div class="pack-item">
         <div class="item-checkbox ${item.checked ? 'checked' : ''}" data-cat="${cat}" data-idx="${idx}"></div>
         <span class="item-name">${item.name}</span>
-        <a href="#" class="item-buy" onclick="event.preventDefault();showToast('Demo: Amazon link')">Buy →</a>
+        <a href="#" class="item-buy" onclick="event.preventDefault();showToast('Demo Amazon link')">Buy →</a>
       </div>
     `).join('')}`;
     container.appendChild(card);
   }
   document.getElementById('listProgress').innerText = `${checked}/${total} items packed`;
-  // attach checkbox events
   document.querySelectorAll('.item-checkbox').forEach(cb => {
     cb.addEventListener('click', () => {
-      const cat = cb.dataset.cat;
-      const idx = parseInt(cb.dataset.idx);
+      const cat = cb.dataset.cat, idx = parseInt(cb.dataset.idx);
       packingList[cat].items[idx].checked = !packingList[cat].items[idx].checked;
       renderPackingList();
     });
@@ -55,38 +49,36 @@ function renderPackingList() {
 }
 
 function addCustomItem() {
-  const name = prompt('Enter custom item name:');
-  if (name) {
-    packingList.mandatory.items.push({ name, checked: false });
-    renderPackingList();
-    showToast(`"${name}" added`, 'success');
-  }
+  const name = prompt('Item name:');
+  if (name) { packingList.mandatory.items.push({ name, checked: false }); renderPackingList(); showToast(`"${name}" added`); }
 }
 
 async function saveCurrentTrip() {
   if (!currentTrip) { showToast('No trip to save', 'warning'); return; }
+  const tripToSave = {
+    id: Date.now(),
+    ...currentTrip,
+    list: packingList,
+    savedAt: new Date().toISOString()
+  };
   if (window.currentUser) {
-    const tripData = {
+    const result = await saveTripToSupabase({
       title: `${currentTrip.city}, ${currentTrip.country}`,
       startDate: currentTrip.startDate,
       endDate: currentTrip.endDate,
       reason: currentTrip.reason,
       style: currentTrip.style,
-      travelersCount: 1,
       luggage: currentTrip.luggage
-    };
-    const saved = await saveTripToSupabase(tripData);
-    if (saved) showToast('Trip saved to cloud!', 'success');
+    });
+    if (result) showToast('Saved to cloud!', 'success');
   } else {
-    const trips = JSON.parse(localStorage.getItem('wanderpack_trips') || '[]');
-    const newTrip = { id: Date.now(), ...currentTrip, list: packingList, savedAt: new Date().toISOString() };
-    trips.unshift(newTrip);
+    let trips = JSON.parse(localStorage.getItem('wanderpack_trips') || '[]');
+    trips.unshift(tripToSave);
     localStorage.setItem('wanderpack_trips', JSON.stringify(trips));
-    showToast('Trip saved locally (guest mode)', 'success');
+    showToast('Saved locally (guest)', 'success');
   }
 }
 
-// Load trip from sessionStorage
 const stored = sessionStorage.getItem('pendingTrip');
 if (stored) {
   currentTrip = JSON.parse(stored);
@@ -94,9 +86,8 @@ if (stored) {
   document.getElementById('tripBadge').innerHTML = `${currentTrip.city}, ${currentTrip.country} • ${currentTrip.startDate} to ${currentTrip.endDate}`;
   renderPackingList();
 } else {
-  document.getElementById('tripBadge').innerHTML = 'No trip data';
+  document.getElementById('tripBadge').innerHTML = 'No active trip. Create one first.';
 }
-
-document.getElementById('saveTripBtn').addEventListener('click', saveCurrentTrip);
-document.getElementById('addCustomItemBtn').addEventListener('click', addCustomItem);
+document.getElementById('saveTripBtn').onclick = saveCurrentTrip;
+document.getElementById('addCustomItemBtn').onclick = addCustomItem;
 initAuth();
