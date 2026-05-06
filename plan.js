@@ -1,6 +1,6 @@
 // plan.js – multi‑city, multi‑day forecast with collapsible sections
 // Enhanced packing list generator with reasons, quantities, essential/optional badges, and medicine
-// Removed simulate‑trip toggle, added country to trip name
+// Removed simulate‑trip toggle, added country to trip name, removed tip section, added loading overlay
 document.addEventListener('DOMContentLoaded', () => {
     // ---------- DOM Elements (unchanged, except removed timeTravelToggle) ----------
     const countryInput = document.getElementById('countryInput');
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return combined;
     }
 
-    // ---------- ENHANCED: Generate packing list with reasons, quantities, essential/optional, medicine ----------
+    // ---------- ENHANCED: Generate packing list with reasons, quantities, essential/optional, medicine (tip removed) ----------
     function generatePackingListFromWeather(weather, preferences, forecastType = 'climate') {
         const { condition, rainy, snowy, avgTemp } = weather;
         const activities = preferences.activities;
@@ -388,71 +388,79 @@ document.addEventListener('DOMContentLoaded', () => {
         addItem('Copy of documents (digital backup)', 'Documents', 'Emergency', '1', false);
         addItem('Travel insurance card', 'Documents', 'Medical coverage', '1', true);
 
-        // ----- Luggage limit -----
+        // ----- Luggage limit (Tip removed) -----
         let finalItems = items;
         if (luggage === 'Carry-on') {
             finalItems = items.slice(0, 16);
-            finalItems.push({
-                name: '🧳 Pack light! Aim for 7kg',
-                category: 'Tip',
-                reason: 'Carry‑on only',
-                essential: true,
-                checked: false
-            });
+            // Removed the "Pack light! Aim for 7kg" tip
         }
-
-        
 
         return finalItems;
     }
 
-    // ---------- MODIFIED: Generate final trip with forecastType and improved name (includes country) ----------
+    // ---------- MODIFIED: Generate final trip with forecastType, improved name, and loading overlay ----------
     async function generateList() {
-        const country = countryInput.value;
-        const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
-        const start = startDateInput.value;
-        const end = endDateInput.value;
-        if (!country || cities.length === 0 || !start || !end) {
-            alert('Please complete all steps.');
+        // Show loading overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div>Analyzing weather and creating your smart packing list...</div>
+        `;
+        document.body.appendChild(overlay);
+        
+        try {
+            const country = countryInput.value;
+            const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
+            const start = startDateInput.value;
+            const end = endDateInput.value;
+            if (!country || cities.length === 0 || !start || !end) {
+                alert('Please complete all steps.');
+                overlay.remove();
+                return false;
+            }
+            let forecasts = weatherForecasts;
+            if (!forecasts || forecasts.length === 0) {
+                forecasts = [];
+                for (const city of cities) {
+                    const dailyData = await fetchDailyForecast(city, country, start, end);
+                    if (dailyData) forecasts.push(dailyData);
+                }
+            }
+            const combinedWeather = combineWeather(forecasts);
+            
+            const daysToTrip = Math.ceil((new Date(start) - new Date()) / (1000 * 3600 * 24));
+            const forecastType = daysToTrip <= 14 ? 'real' : 'climate';
+            
+            const preferences = { reason: selectedReason, style: selectedStyle, who: selectedWho, activities: selectedActivities, luggage: selectedLuggage, travelersCount: 1 };
+            const packingList = generatePackingListFromWeather(combinedWeather, preferences, forecastType);
+            
+            let tripName;
+            if (cities.length === 1) {
+                tripName = `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`;
+            } else {
+                tripName = `${cities[0]}, ${country} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`;
+            }
+            
+            const tripData = {
+                id: Date.now(),
+                name: tripName,
+                destinations: { main: { country, cities } },
+                dates: { start, end },
+                preferences: preferences,
+                weather: { ...combinedWeather, forecastType },
+                packingList: packingList,
+                createdAt: new Date().toISOString()
+            };
+            sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
+            window.location.href = 'list.html';
+            // The overlay will disappear because the page unloads
+        } catch (err) {
+            console.error(err);
+            alert('Something went wrong. Please try again.');
+            overlay.remove();
             return false;
         }
-        let forecasts = weatherForecasts;
-        if (!forecasts || forecasts.length === 0) {
-            forecasts = [];
-            for (const city of cities) {
-                const dailyData = await fetchDailyForecast(city, country, start, end);
-                if (dailyData) forecasts.push(dailyData);
-            }
-        }
-        const combinedWeather = combineWeather(forecasts);
-        
-        // Determine forecast confidence based on actual days to trip
-        const daysToTrip = Math.ceil((new Date(start) - new Date()) / (1000 * 3600 * 24));
-        const forecastType = daysToTrip <= 14 ? 'real' : 'climate';
-        
-        const preferences = { reason: selectedReason, style: selectedStyle, who: selectedWho, activities: selectedActivities, luggage: selectedLuggage, travelersCount: 1 };
-        const packingList = generatePackingListFromWeather(combinedWeather, preferences, forecastType);
-        
-        // Improved trip name with country and "& X more" (no extra city names)
-        let tripName;
-        if (cities.length === 1) {
-            tripName = `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`;
-        } else {
-            tripName = `${cities[0]}, ${country} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`;
-        }
-        
-        const tripData = {
-            id: Date.now(),
-            name: tripName,
-            destinations: { main: { country, cities } },
-            dates: { start, end },
-            preferences: preferences,
-            weather: { ...combinedWeather, forecastType },
-            packingList: packingList,
-            createdAt: new Date().toISOString()
-        };
-        sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
-        window.location.href = 'list.html';
         return true;
     }
 
@@ -539,7 +547,6 @@ document.addEventListener('DOMContentLoaded', () => {
         addCityBtn.removeAttribute('onclick');
         addCityBtn.addEventListener('click', window.addCityField);
     }
-    // timeTravelToggle event listener removed
     startDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
     endDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
 
