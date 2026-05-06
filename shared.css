@@ -583,3 +583,44 @@ input:checked + .toggle-slider:before {
     gap: 6px;
 }
 
+/* Packing item details */
+.item-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.item-reason {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.essential-badge {
+    font-size: 10px;
+    background: #2E9C6E20;
+    color: #2E9C6E;
+    padding: 2px 8px;
+    border-radius: 20px;
+    width: fit-content;
+}
+.optional-badge {
+    font-size: 10px;
+    background: #6C757D20;
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 20px;
+    width: fit-content;
+}
+.confidence-card {
+    background: rgba(6,167,125,0.1);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+    width: auto;
+}
+.reminders-card .pack-item {
+    padding: 8px 0;
+}
