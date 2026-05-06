@@ -1,4 +1,4 @@
-// plan.js – multi‑city support, combine weather forecasts
+// plan.js – multi‑city, multi‑day forecast display
 document.addEventListener('DOMContentLoaded', () => {
     // ---------- DOM Elements ----------
     const countryInput = document.getElementById('countryInput');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let citiesCache = new Map();
     let mainCityInputs = [cityInput];
     let activeCountry = '';
-    let weatherForecasts = []; // store per city
+    let weatherForecasts = []; // array of { city, dailyData }
     let selectedReason = 'Leisure';
     let selectedStyle = 'Standard';
     let selectedWho = 'Solo';
@@ -173,17 +173,17 @@ document.addEventListener('DOMContentLoaded', () => {
         setupCityAutocomplete(newInput, () => countryInput.value, null);
     };
 
-    // ---------- Fetch weather for a single city ----------
-    async function fetchWeatherForCity(city, country, startDate) {
+    // ---------- Fetch daily forecast for a city (returns daily array) ----------
+    async function fetchDailyForecast(city, country, startDate, endDate) {
         try {
             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
             const geoData = await geoRes.json();
             if (!geoData.results || !geoData.results.length) return null;
             const { latitude, longitude, name } = geoData.results[0];
             let days = 3;
-            if (endDateInput.value) {
+            if (endDate) {
                 const start = new Date(startDate);
-                const end = new Date(endDateInput.value);
+                const end = new Date(endDate);
                 const diff = Math.ceil((end - start) / (1000 * 3600 * 24)) + 1;
                 days = Math.min(diff, 7);
             }
@@ -191,72 +191,90 @@ document.addEventListener('DOMContentLoaded', () => {
             const weatherRes = await fetch(weatherUrl);
             const weatherData = await weatherRes.json();
             if (!weatherData.daily) return null;
-            const avgMax = weatherData.daily.temperature_2m_max.reduce((a,b) => a+b,0) / weatherData.daily.temperature_2m_max.length;
-            const avgMin = weatherData.daily.temperature_2m_min.reduce((a,b) => a+b,0) / weatherData.daily.temperature_2m_min.length;
-            const avgTemp = (avgMax + avgMin) / 2;
-            const hasRain = weatherData.daily.weathercode.some(code => code >= 51 && code <= 67);
-            const hasSnow = weatherData.daily.weathercode.some(code => code >= 71 && code <= 77);
-            let condition = 'Mild';
-            if (hasSnow) condition = 'Snowy';
-            else if (hasRain) condition = 'Rainy';
-            else if (avgTemp > 25) condition = 'Hot';
-            else if (avgTemp < 10) condition = 'Cold';
-            return { city, avgTemp, condition, rainy: hasRain, snowy: hasSnow, forecast: weatherData.daily };
+            const daily = [];
+            for (let i = 0; i < weatherData.daily.time.length; i++) {
+                const date = weatherData.daily.time[i];
+                const max = weatherData.daily.temperature_2m_max[i];
+                const min = weatherData.daily.temperature_2m_min[i];
+                const precip = weatherData.daily.precipitation_sum[i];
+                const code = weatherData.daily.weathercode[i];
+                let icon = '☀️', condition = 'Sunny';
+                if (code >= 51 && code <= 67) { icon = '🌧️'; condition = 'Rainy'; }
+                else if (code >= 71 && code <= 77) { icon = '❄️'; condition = 'Snowy'; }
+                else if (code >= 80 && code <= 99) { icon = '⛈️'; condition = 'Stormy'; }
+                daily.push({ date, max, min, precip, code, icon, condition });
+            }
+            return { city: name, daily };
         } catch (err) {
             console.error(err);
             return null;
         }
     }
 
-    // ---------- Weather Preview (all cities) ----------
+    // ---------- Weather Preview: show daily forecasts for all cities ----------
     async function updateWeatherPreview() {
         const country = countryInput.value;
         const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
         const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
         if (!country || cities.length === 0 || !startDate) {
             weatherPreviewDiv.innerHTML = '<div class="weather-placeholder"><i class="fa-solid fa-cloud-moon"></i> Fill destination & start date to see forecast.</div>';
             return;
         }
-        weatherPreviewDiv.innerHTML = '<div class="weather-loading"><i class="fa-solid fa-spinner fa-pulse"></i> Fetching forecasts for all cities...</div>';
+        weatherPreviewDiv.innerHTML = '<div class="weather-loading"><i class="fa-solid fa-spinner fa-pulse"></i> Fetching daily forecasts for all cities...</div>';
         let forecasts = [];
         for (const city of cities) {
-            const f = await fetchWeatherForCity(city, country, startDate);
-            if (f) forecasts.push(f);
+            const dailyData = await fetchDailyForecast(city, country, startDate, endDate);
+            if (dailyData) forecasts.push(dailyData);
         }
         if (forecasts.length === 0) {
             weatherPreviewDiv.innerHTML = '<div class="weather-error">❌ Could not fetch weather. Try again.</div>';
             return;
         }
-        weatherForecasts = forecasts;
-        let html = `<div class="weather-card"><div class="weather-location"><i class="fa-solid fa-location-dot"></i> Multi‑city forecast</div><div class="weather-days">`;
-        forecasts.forEach(f => {
-            let icon = '☀️';
-            if (f.snowy) icon = '❄️';
-            else if (f.rainy) icon = '🌧️';
-            else if (f.condition === 'Hot') icon = '🔥';
-            else if (f.condition === 'Cold') icon = '❄️';
-            html += `<div class="weather-day"><strong>${f.city}</strong> ${icon} ${f.condition}, ${Math.round(f.avgTemp)}°C</div>`;
-        });
-        html += `</div><div class="weather-note"><i class="fa-regular fa-lightbulb"></i> Your packing list will be tailored to the most extreme weather among your cities.</div></div>`;
+        weatherForecasts = forecasts; // store for list generation
+        let html = `<div class="weather-multi">`;
+        for (const f of forecasts) {
+            html += `<div class="weather-city-card"><div class="weather-city-header"><i class="fa-solid fa-location-dot"></i> ${f.city}</div><div class="weather-days">`;
+            for (const day of f.daily) {
+                html += `<div class="weather-day">
+                            <span class="date">${day.date.slice(5)}</span>
+                            <span class="icon">${day.icon}</span>
+                            <span class="temp">${Math.round(day.min)}°–${Math.round(day.max)}°</span>
+                            <span class="rain">${day.precip > 0 ? '💧' + day.precip + 'mm' : ''}</span>
+                         </div>`;
+            }
+            html += `</div></div>`;
+        }
+        html += `<div class="weather-note"><i class="fa-regular fa-lightbulb"></i> Your packing list will be tailored to the most extreme weather among your cities.</div></div>`;
         weatherPreviewDiv.innerHTML = html;
     }
 
-    // ---------- Combine weather forecasts into one ----------
+    // ---------- Combine weather across cities (extreme conditions) ----------
     function combineWeather(forecasts) {
-        let combined = { avgTemp: 0, condition: 'Mild', rainy: false, snowy: false };
-        for (let f of forecasts) {
-            if (f.snowy) combined.snowy = true;
-            if (f.rainy) combined.rainy = true;
-            if (f.avgTemp > combined.avgTemp) combined.avgTemp = f.avgTemp;
-            if (f.condition === 'Snowy') combined.condition = 'Snowy';
-            else if (f.condition === 'Rainy') combined.condition = 'Rainy';
-            else if (f.condition === 'Hot') combined.condition = 'Hot';
-            else if (f.condition === 'Cold' && combined.condition !== 'Snowy') combined.condition = 'Cold';
+        let combined = { avgTemp: 0, condition: 'Mild', rainy: false, snowy: false, hot: false, cold: false };
+        let tempSum = 0;
+        let count = 0;
+        for (const f of forecasts) {
+            for (const day of f.daily) {
+                const avgDay = (day.max + day.min) / 2;
+                tempSum += avgDay;
+                count++;
+                if (day.condition === 'Rainy') combined.rainy = true;
+                if (day.condition === 'Snowy') combined.snowy = true;
+                if (avgDay > 25) combined.hot = true;
+                if (avgDay < 10) combined.cold = true;
+            }
         }
+        combined.avgTemp = count ? tempSum / count : 20;
+        if (combined.snowy) combined.condition = 'Snowy';
+        else if (combined.rainy) combined.condition = 'Rainy';
+        else if (combined.hot) combined.condition = 'Hot';
+        else if (combined.cold) combined.condition = 'Cold';
+        else combined.condition = 'Mild';
         return combined;
     }
 
-    // ---------- Generate packing list based on combined weather ----------
+    // ---------- Generate packing list from combined weather ----------
     function generatePackingListFromWeather(weather, preferences) {
         const activities = preferences.activities;
         const style = preferences.style;
@@ -305,13 +323,13 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please complete all steps.');
             return false;
         }
-        // Use stored forecasts or fetch fresh
+        // Use stored forecasts (already fetched in preview) or fetch fresh
         let forecasts = weatherForecasts;
         if (!forecasts || forecasts.length === 0) {
             forecasts = [];
             for (const city of cities) {
-                const f = await fetchWeatherForCity(city, country, start);
-                if (f) forecasts.push(f);
+                const dailyData = await fetchDailyForecast(city, country, start, end);
+                if (dailyData) forecasts.push(dailyData);
             }
         }
         const combinedWeather = combineWeather(forecasts);
@@ -327,7 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
             packingList: packingList,
             createdAt: new Date().toISOString()
         };
-        // Store in sessionStorage for list.html
         sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
         window.location.href = 'list.html';
         return true;
