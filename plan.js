@@ -1,6 +1,6 @@
-// plan.js – multi‑city, multi‑day forecast display
+// plan.js – multi‑city, multi‑day forecast with collapsible sections
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------- DOM Elements ----------
+    // ---------- DOM Elements (same as before) ----------
     const countryInput = document.getElementById('countryInput');
     const cityInput = document.getElementById('cityInput0');
     const addCityBtn = document.querySelector('.btn-ghost.btn-sm');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let citiesCache = new Map();
     let mainCityInputs = [cityInput];
     let activeCountry = '';
-    let weatherForecasts = []; // array of { city, dailyData }
+    let weatherForecasts = [];
     let selectedReason = 'Leisure';
     let selectedStyle = 'Standard';
     let selectedWho = 'Solo';
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ---------- Custom Autocomplete Component ----------
+    // ---------- Custom Autocomplete (unchanged) ----------
     class Autocomplete {
         constructor(inputElement, fetchSuggestions, onSelect) {
             this.input = inputElement;
@@ -90,15 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         async update() {
             const query = this.input.value.trim();
-            if (!query) {
-                this.hide();
-                return;
-            }
+            if (!query) { this.hide(); return; }
             const suggestions = await this.fetchSuggestions(query);
-            if (suggestions.length === 0) {
-                this.hide();
-                return;
-            }
+            if (suggestions.length === 0) { this.hide(); return; }
             this.suggestionsDiv.innerHTML = '';
             suggestions.slice(0, 8).forEach(s => {
                 const div = document.createElement('div');
@@ -117,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         hide() { this.suggestionsDiv.style.display = 'none'; }
     }
 
-    // ---------- Country Autocomplete ----------
     function setupCountryAutocomplete(input, onSelect) {
         new Autocomplete(input, async (query) => {
             if (!countriesList.length) await fetchCountries();
@@ -125,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, onSelect);
     }
 
-    // ---------- City Autocomplete ----------
     function setupCityAutocomplete(input, countryGetter, onSelect) {
         let currentCities = [];
         new Autocomplete(input, async (query) => {
@@ -136,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, onSelect);
     }
 
-    // ---------- Initialize Autocompletes ----------
     async function initAutocompletes() {
         await fetchCountries();
         setupCountryAutocomplete(countryInput, (val) => {
@@ -153,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await fetchCities(country);
     }
 
-    // ---------- Add dynamic city field ----------
     window.addCityField = function() {
         const idx = mainCityInputs.length;
         const newDiv = document.createElement('div');
@@ -211,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ---------- Weather Preview: show daily forecasts for all cities ----------
+    // ---------- Weather Preview: collapsible sections (first expanded, others collapsed) ----------
     async function updateWeatherPreview() {
         const country = countryInput.value;
         const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
@@ -231,22 +221,41 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherPreviewDiv.innerHTML = '<div class="weather-error">❌ Could not fetch weather. Try again.</div>';
             return;
         }
-        weatherForecasts = forecasts; // store for list generation
+        weatherForecasts = forecasts;
         let html = `<div class="weather-multi">`;
-        for (const f of forecasts) {
-            html += `<div class="weather-city-card"><div class="weather-city-header"><i class="fa-solid fa-location-dot"></i> ${f.city}</div><div class="weather-days">`;
-            for (const day of f.daily) {
-                html += `<div class="weather-day">
-                            <span class="date">${day.date.slice(5)}</span>
-                            <span class="icon">${day.icon}</span>
-                            <span class="temp">${Math.round(day.min)}°–${Math.round(day.max)}°</span>
-                            <span class="rain">${day.precip > 0 ? '💧' + day.precip + 'mm' : ''}</span>
-                         </div>`;
-            }
-            html += `</div></div>`;
+        for (let i = 0; i < forecasts.length; i++) {
+            const f = forecasts[i];
+            const isFirst = i === 0;
+            const collapsedClass = isFirst ? '' : 'collapsed';
+            html += `
+                <div class="weather-city-card ${collapsedClass}" data-city-index="${i}">
+                    <div class="weather-city-header">
+                        <span><i class="fa-solid fa-location-dot"></i> ${f.city}</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="weather-days">
+                        ${f.daily.map(day => `
+                            <div class="weather-day">
+                                <span class="date">${day.date.slice(5)}</span>
+                                <span class="icon">${day.icon}</span>
+                                <span class="temp">${Math.round(day.min)}°–${Math.round(day.max)}°</span>
+                                <span class="rain">${day.precip > 0 ? '💧' + day.precip + 'mm' : ''}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
         }
         html += `<div class="weather-note"><i class="fa-regular fa-lightbulb"></i> Your packing list will be tailored to the most extreme weather among your cities.</div></div>`;
         weatherPreviewDiv.innerHTML = html;
+
+        // Attach click handlers for collapsible headers
+        document.querySelectorAll('.weather-city-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const card = header.closest('.weather-city-card');
+                card.classList.toggle('collapsed');
+            });
+        });
     }
 
     // ---------- Combine weather across cities (extreme conditions) ----------
@@ -303,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activities.includes('Hiking')) items.push({ name: 'Hiking boots', category: 'Footwear', checked: false });
         if (style === 'Luxury' || activities.includes('Shopping')) items.push({ name: 'Dress shoes / sandals', category: 'Footwear', checked: false });
         if (activities.includes('Beach')) items.push({ name: 'Beach towel', category: 'Accessories', checked: false });
-        if (activities.includes('Hiking')) items.push({ name: 'Backpack (daypack)', category: 'Gear', checked: false });
+        if (activities.includes('Hiking')) items.push({ name: 'Day backpack', category: 'Gear', checked: false });
         if (activities.includes('City Tours')) items.push({ name: 'Portable charger', category: 'Electronics', checked: false });
         if (who === 'Family') items.push({ name: 'First-aid kit', category: 'Health', checked: false });
         if (luggage === 'Carry-on') items = items.slice(0, 12);
@@ -313,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return items.map(i => ({ name: i.name, category: i.category, checked: false }));
     }
 
-    // ---------- Generate final trip and store ----------
+    // ---------- Generate final trip ----------
     async function generateList() {
         const country = countryInput.value;
         const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
@@ -323,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please complete all steps.');
             return false;
         }
-        // Use stored forecasts (already fetched in preview) or fetch fresh
         let forecasts = weatherForecasts;
         if (!forecasts || forecasts.length === 0) {
             forecasts = [];
