@@ -28,19 +28,38 @@
   </div>
 
   <div class="form-body">
-    <!-- Step 1: Destinations -->
+    <!-- STEP 1: DESTINATIONS (with auto-complete dropdown) -->
     <div class="form-step active" id="step-0">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-map-location-dot"></i> Where are you going?</h2></div>
-        <div class="input-group"><label class="input-label">Country</label><select id="countrySelect" class="input-field"><option>Japan</option><option>France</option><option>Italy</option><option>Thailand</option><option>Spain</option></select></div>
-        <div id="cityFields"><div class="city-row"><input type="text" class="input-field" placeholder="City" id="city-0" value="Tokyo"></div></div>
+        <div class="input-group">
+          <label class="input-label">Country</label>
+          <input type="text" id="countryInput" list="countryList" class="input-field" placeholder="Type or select country" value="Japan">
+          <datalist id="countryList">
+            <option>Japan</option><option>France</option><option>Italy</option><option>Thailand</option><option>Spain</option><option>USA</option><option>UK</option>
+          </datalist>
+        </div>
+        <div id="cityFields">
+          <div class="city-row">
+            <label class="input-label">City</label>
+            <input type="text" class="input-field city-input" placeholder="City name" value="Tokyo" list="cityListJapan">
+            <datalist id="cityListJapan">
+              <option>Tokyo</option><option>Osaka</option><option>Kyoto</option><option>Hiroshima</option>
+            </datalist>
+          </div>
+        </div>
         <button class="btn btn-ghost btn-sm" type="button" onclick="addCity()"><i class="fa-solid fa-plus"></i> Add another city</button>
         <div class="toggle-row" style="margin-top:16px;"><span>Multi‑country trip</span><label class="toggle-switch"><input type="checkbox" id="multiCountryToggle"><span class="toggle-slider"></span></label></div>
-        <div id="extraCountries" style="display:none; margin-top:16px;"><input type="text" class="input-field" placeholder="2nd Country" id="country2"><input type="text" class="input-field" placeholder="2nd City" id="city2" style="margin-top:8px;"></div>
+        <div id="extraCountries" style="display:none; margin-top:16px;">
+          <input type="text" id="country2Input" class="input-field" placeholder="2nd Country" list="countryList2">
+          <datalist id="countryList2"><option>France</option><option>Italy</option><option>Spain</option></datalist>
+          <input type="text" id="city2Input" class="input-field" placeholder="2nd City" style="margin-top:8px;" list="cityList2">
+          <datalist id="cityList2"></datalist>
+        </div>
       </div>
     </div>
 
-    <!-- Step 2: Dates -->
+    <!-- STEP 2: DATES -->
     <div class="form-step" id="step-1">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-calendar-days"></i> When are you traveling?</h2></div>
@@ -50,19 +69,19 @@
       </div>
     </div>
 
-    <!-- Step 3: Trip Style -->
+    <!-- STEP 3: TRIP STYLE -->
     <div class="form-step" id="step-2">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-heart"></i> Tell us about your trip</h2></div>
         <label class="input-label">Reason</label><div class="chips-group" id="chips-reason"><div class="chip selected" data-val="Leisure">Leisure</div><div class="chip" data-val="Adventure">Adventure</div><div class="chip" data-val="Business">Business</div></div>
         <label class="input-label">Style</label><div class="chips-group" id="chips-style"><div class="chip selected" data-val="Standard">Standard</div><div class="chip" data-val="Backpacker">Backpacker</div><div class="chip" data-val="Luxury">Luxury</div></div>
         <label class="input-label">Who</label><div class="chips-group" id="chips-who"><div class="chip selected" data-val="Solo">Solo</div><div class="chip" data-val="Couple">Couple</div><div class="chip" data-val="Family">Family</div></div>
-        <label class="input-label">Activities (multi-select)</label><div class="chips-group" id="chips-activities"><div class="chip selected" data-val="Hiking">Hiking</div><div class="chip" data-val="City Tours">City Tours</div><div class="chip" data-val="Beach">Beach</div><div class="chip" data-val="Shopping">Shopping</div></div>
+        <label class="input-label">Activities (multi-select)</label><div class="chips-group" id="chips-activities"><div class="chip selected" data-val="Hiking">Hiking</div><div class="chip selected" data-val="City Tours">City Tours</div><div class="chip" data-val="Beach">Beach</div><div class="chip" data-val="Shopping">Shopping</div></div>
         <label class="input-label">Luggage</label><div class="chips-group" id="chips-luggage"><div class="chip selected" data-val="Checked">Checked Bag</div><div class="chip" data-val="Carry-on">Carry‑on</div></div>
       </div>
     </div>
 
-    <!-- Step 4: Weather Preview -->
+    <!-- STEP 4: WEATHER PREVIEW -->
     <div class="form-step" id="step-3">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-cloud-sun"></i> Weather Prediction</h2></div>
