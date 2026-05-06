@@ -21,22 +21,25 @@
     <div class="avatar-circle" id="avatar">👤</div>
     <h3 id="userName">Guest</h3>
     <p id="userEmail"></p>
-    <button id="logoutBtn" class="btn btn-outline btn-full">Logout</button>
+    <button id="logoutBtn" class="btn btn-outline btn-full" style="margin-top: 8px;">Logout</button>
   </div>
 
   <div class="card">
-    <div class="settings-row" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="settings-row">
       <span><i class="fa-solid fa-moon"></i> Dark Mode</span>
-      <label class="toggle-switch"><input type="checkbox" id="darkModeToggle"><span class="toggle-slider"></span></label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="toggle-slider"></span>
+      </label>
     </div>
   </div>
 
   <div class="card">
-    <button class="btn btn-outline btn-full" id="exportBtn"><i class="fa-solid fa-download"></i> Export All Data</button>
-    <button class="btn btn-danger btn-full" id="deleteAccountBtn" style="margin-top: 12px;"><i class="fa-solid fa-trash"></i> Delete Account</button>
+    <button class="btn btn-outline btn-full" id="exportBtn"><i class="fa-solid fa-download"></i> Export All Data (JSON)</button>
+    <button class="btn btn-danger btn-full" id="deleteAccountBtn" style="margin-top: 12px;"><i class="fa-solid fa-trash"></i> Delete All Local Data</button>
   </div>
 
-  <div class="disclaimer">v1.0 – Data stays local unless logged in</div>
+  <div class="disclaimer">WanderPack v1.0 – Data is stored locally unless you log in.</div>
 </div>
 <script src="config.js"></script>
 <script src="shared.js"></script>
