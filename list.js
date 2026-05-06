@@ -94,8 +94,14 @@ function renderPackingList() {
     });
     
     if (currentTrip && currentTrip.name) {
-        badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(currentTrip.name)} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
-    } else {
+        const country = currentTrip.destinations?.main?.country || '';
+const cities = currentTrip.destinations?.main?.cities || [];
+const cityNames = cities.join(', ');
+badge.innerHTML = `
+    <div><strong>${escapeHtml(country)}</strong></div>
+    <div style="font-size: 13px; margin-top: 4px;">${escapeHtml(cityNames)}</div>
+    <div style="font-size: 12px; margin-top: 2px; color: var(--text-secondary);">${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}</div>
+`;} else {
         badge.innerHTML = 'Trip details not available';
     }
     updateProgress();
