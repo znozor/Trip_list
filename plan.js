@@ -401,14 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Add pro tip
-        finalItems.push({
-            name: '💡 Pro tip: Roll clothes instead of folding',
-            category: 'Tip',
-            reason: 'Saves space & reduces wrinkles',
-            essential: false,
-            checked: false
-        });
+        
 
         return finalItems;
     }
