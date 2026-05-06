@@ -441,3 +441,62 @@ input:checked + .slider:before {
 .weather-day .icon { font-size: 1.4rem; width: 40px; text-align: center; }
 .weather-day .temp { font-weight: 500; width: 70px; }
 .weather-note { margin-top: 12px; font-size: 0.8rem; color: #555; }
+
+/* Autocomplete styles */
+.autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  border-radius: 0 0 var(--radius-input) var(--radius-input);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.autocomplete-suggestions div {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.autocomplete-suggestions div:hover {
+  background: rgba(6,167,125,0.1);
+  color: var(--primary);
+}
+.weather-card {
+  background: rgba(6,167,125,0.05);
+  border-radius: 16px;
+  padding: 12px;
+}
+.weather-location {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.weather-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.weather-day {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.weather-note {
+  font-size: 12px;
+  margin-top: 8px;
+  color: var(--primary);
+}
