@@ -2,6 +2,21 @@
 let currentList = [];
 let currentTrip = null;
 
+// At the top of list.js, after loadData() or inside DOMContentLoaded
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('view') === 'trip') {
+    const savedTrip = sessionStorage.getItem('viewTrip');
+    if (savedTrip) {
+        currentTrip = JSON.parse(savedTrip);
+        currentList = currentTrip.packingList || [];
+        localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
+        localStorage.setItem('currentPackingList', JSON.stringify(currentList));
+        renderPackingList();
+        // Clear the sessionStorage so it doesn't load again on refresh
+        sessionStorage.removeItem('viewTrip');
+    }
+}
+
 function renderPackingList() {
     const container = document.getElementById('packingListBody');
     const badge = document.getElementById('tripBadge');
