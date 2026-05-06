@@ -1,468 +1,467 @@
-// plan.js - Dynamic Country & City Search with API Integration
+// plan.js - Complete rewrite with custom autocomplete, enhanced weather, and list generation
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------- Global State ----------
-    let countriesList = [];             // Array of country names
-    let citiesCache = new Map();        // countryName -> array of cities
-    let mainCityInputs = [];            // Track all main city input elements (dynamic + initial)
-
-    // DOM Elements
+    // ---------- DOM Elements ----------
     const countryInput = document.getElementById('countryInput');
-    const country2Input = document.getElementById('country2Input');
-    const cityInput0 = document.getElementById('cityInput0');
-    const city2Input = document.getElementById('city2Input');
-    const cityFieldsContainer = document.getElementById('cityFields');
-    const extraCountriesDiv = document.getElementById('extraCountries');
-    const multiCountryToggle = document.getElementById('multiCountryToggle');
+    const cityInput = document.getElementById('cityInput0');
     const addCityBtn = document.querySelector('.btn-ghost.btn-sm');
+    const cityFieldsContainer = document.getElementById('cityFields');
+    const multiCountryToggle = document.getElementById('multiCountryToggle');
+    const extraCountriesDiv = document.getElementById('extraCountries');
+    const country2Input = document.getElementById('country2Input');
+    const city2Input = document.getElementById('city2Input');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const startDate2Input = document.getElementById('startDate2');
+    const endDate2Input = document.getElementById('endDate2');
+    const multiDatesDiv = document.getElementById('multiDates');
     const nextBtn = document.getElementById('nextBtn');
     const prevBtn = document.getElementById('prevBtn');
     const steps = document.querySelectorAll('.form-step');
     const stepDots = document.querySelectorAll('.step-dot');
     const stepLines = document.querySelectorAll('.step-line');
-    let currentStep = 0;
-
-    // Weather preview element
     const weatherPreviewDiv = document.getElementById('weatherPreview');
+    const timeTravelToggle = document.getElementById('timeTravelToggle');
 
-    // ---------- Helper: Fetch Countries (REST Countries) ----------
+    // Chips data
+    let selectedReason = 'Leisure';
+    let selectedStyle = 'Standard';
+    let selectedWho = 'Solo';
+    let selectedActivities = ['Hiking', 'City Tours'];
+    let selectedLuggage = 'Checked';
+
+    // ---------- Global state ----------
+    let countriesList = [];
+    let citiesCache = new Map();
+    let mainCityInputs = [cityInput];
+    let activeCountry = '';
+    let weatherForecast = null; // store for list generation
+
+    // ---------- Helper: Fetch Countries ----------
     async function fetchCountries() {
         try {
-            const response = await fetch('https://restcountries.com/v3.1/all?fields=name');
-            if (!response.ok) throw new Error('Failed to fetch countries');
-            const data = await response.json();
+            const res = await fetch('https://restcountries.com/v3.1/all?fields=name');
+            if (!res.ok) throw new Error();
+            const data = await res.json();
             countriesList = data.map(c => c.name.common).sort();
-            return countriesList;
-        } catch (error) {
-            console.error('Error fetching countries:', error);
-            // Fallback static list
+        } catch {
             countriesList = ["Japan", "France", "Italy", "Thailand", "USA", "Spain", "UK", "Germany", "Canada", "Australia"];
-            return countriesList;
         }
+        return countriesList;
     }
 
-    // ---------- Fetch Cities for a Country (CountriesNow API) ----------
-    async function fetchCitiesForCountry(countryName) {
+    // ---------- Fetch Cities for a Country ----------
+    async function fetchCities(countryName) {
         if (!countryName) return [];
-        if (citiesCache.has(countryName)) {
-            return citiesCache.get(countryName);
-        }
+        if (citiesCache.has(countryName)) return citiesCache.get(countryName);
         try {
-            const response = await fetch('https://countriesnow.space/api/v0.1/countries/cities', {
+            const res = await fetch('https://countriesnow.space/api/v0.1/countries/cities', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ country: countryName })
             });
-            if (!response.ok) throw new Error('Cities API error');
-            const data = await response.json();
+            const data = await res.json();
             let cities = data.data || [];
             if (!cities.length) cities = ["Unknown City"];
             citiesCache.set(countryName, cities);
             return cities;
-        } catch (error) {
-            console.error('Error fetching cities:', error);
+        } catch {
             const fallback = ["Tokyo", "Paris", "Rome", "Bangkok", "New York", "Madrid", "London"];
             citiesCache.set(countryName, fallback);
             return fallback;
         }
     }
 
-    // ---------- Setup Autocomplete for Country Input (filtered dropdown) ----------
-    function setupCountryAutocomplete(inputElement, datalistId, filterFn = null) {
-        let datalist = document.getElementById(datalistId);
-        if (!datalist) {
-            datalist = document.createElement('datalist');
-            datalist.id = datalistId;
-            document.body.appendChild(datalist);
-        }
-        inputElement.setAttribute('list', datalistId);
-
-        const updateSuggestions = () => {
-            const searchTerm = inputElement.value.toLowerCase().trim();
-            let sourceList = filterFn ? filterFn() : countriesList;
-            if (!sourceList.length) sourceList = countriesList;
-            const filtered = searchTerm === '' ? sourceList : sourceList.filter(c => c.toLowerCase().includes(searchTerm));
-            datalist.innerHTML = '';
-            filtered.slice(0, 50).forEach(country => {
-                const option = document.createElement('option');
-                option.value = country;
-                datalist.appendChild(option);
+    // ---------- Custom Autocomplete Component ----------
+    class Autocomplete {
+        constructor(inputElement, fetchSuggestions, onSelect) {
+            this.input = inputElement;
+            this.fetchSuggestions = fetchSuggestions;
+            this.onSelect = onSelect;
+            this.container = document.createElement('div');
+            this.container.className = 'autocomplete-container';
+            this.suggestionsDiv = document.createElement('div');
+            this.suggestionsDiv.className = 'autocomplete-suggestions';
+            this.container.appendChild(this.suggestionsDiv);
+            this.input.parentNode.insertBefore(this.container, this.input.nextSibling);
+            this.input.addEventListener('input', () => this.update());
+            this.input.addEventListener('focus', () => this.update());
+            document.addEventListener('click', (e) => {
+                if (!this.container.contains(e.target) && e.target !== this.input) this.hide();
             });
-        };
-
-        inputElement.addEventListener('input', updateSuggestions);
-        updateSuggestions();
-        return datalist;
-    }
-
-    // ---------- Setup City Input with its own dynamic datalist + filtering ----------
-    async function setupCityAutocomplete(cityInput, countryGetter, datalistId) {
-        let datalist = document.getElementById(datalistId);
-        if (!datalist) {
-            datalist = document.createElement('datalist');
-            datalist.id = datalistId;
-            document.body.appendChild(datalist);
+            this.input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (this.suggestionsDiv.children.length) {
+                        this.selectItem(this.suggestionsDiv.children[0]);
+                    }
+                }
+            });
         }
-        cityInput.setAttribute('list', datalistId);
-
-        let currentCities = [];
-
-        const refreshCityList = async () => {
-            const country = countryGetter();
-            if (!country) {
-                datalist.innerHTML = '';
-                currentCities = [];
+        async update() {
+            const query = this.input.value.trim();
+            if (!query) {
+                this.hide();
                 return;
             }
-            const cities = await fetchCitiesForCountry(country);
-            currentCities = cities;
-            filterCities(cityInput.value);
-        };
-
-        const filterCities = (searchTerm) => {
-            const term = searchTerm.toLowerCase().trim();
-            const filtered = term === '' ? currentCities : currentCities.filter(c => c.toLowerCase().includes(term));
-            datalist.innerHTML = '';
-            filtered.slice(0, 50).forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                datalist.appendChild(option);
-            });
-        };
-
-        cityInput.addEventListener('input', (e) => filterCities(e.target.value));
-        cityInput.addEventListener('focus', () => filterCities(cityInput.value));
-        await refreshCityList();
-        return { refresh: refreshCityList };
-    }
-
-    // ---------- Refresh all main city inputs (for current main country) ----------
-    async function refreshAllMainCityFields() {
-        const mainCountry = countryInput.value;
-        if (!mainCountry) return;
-        // Fetch cities for this country once and cache
-        const cities = await fetchCitiesForCountry(mainCountry);
-        // Update each city input's datalist dynamically
-        mainCityInputs.forEach(cityInput => {
-            const datalistId = cityInput.getAttribute('list');
-            if (datalistId) {
-                const datalist = document.getElementById(datalistId);
-                if (datalist) {
-                    const currentVal = cityInput.value;
-                    const filtered = currentVal ? cities.filter(c => c.toLowerCase().includes(currentVal.toLowerCase())) : cities;
-                    datalist.innerHTML = '';
-                    filtered.slice(0, 50).forEach(city => {
-                        const opt = document.createElement('option');
-                        opt.value = city;
-                        datalist.appendChild(opt);
-                    });
-                }
+            const suggestions = await this.fetchSuggestions(query);
+            if (suggestions.length === 0) {
+                this.hide();
+                return;
             }
-        });
+            this.suggestionsDiv.innerHTML = '';
+            suggestions.slice(0, 8).forEach(s => {
+                const div = document.createElement('div');
+                div.textContent = s;
+                div.addEventListener('click', () => this.selectItem(div));
+                this.suggestionsDiv.appendChild(div);
+            });
+            this.show();
+        }
+        selectItem(div) {
+            this.input.value = div.textContent;
+            if (this.onSelect) this.onSelect(this.input.value);
+            this.hide();
+        }
+        show() { this.suggestionsDiv.style.display = 'block'; }
+        hide() { this.suggestionsDiv.style.display = 'none'; }
     }
 
-    // ---------- Add another city field for same country ----------
+    // ---------- Country Autocomplete ----------
+    function setupCountryAutocomplete(input, onSelect) {
+        new Autocomplete(input, async (query) => {
+            if (!countriesList.length) await fetchCountries();
+            return countriesList.filter(c => c.toLowerCase().includes(query.toLowerCase()));
+        }, onSelect);
+    }
+
+    // ---------- City Autocomplete (depends on country) ----------
+    function setupCityAutocomplete(input, countryGetter, onSelect) {
+        let currentCities = [];
+        new Autocomplete(input, async (query) => {
+            const country = countryGetter();
+            if (!country) return [];
+            if (!currentCities.length) currentCities = await fetchCities(country);
+            return currentCities.filter(c => c.toLowerCase().includes(query.toLowerCase()));
+        }, onSelect);
+    }
+
+    // ---------- Initialize Autocompletes ----------
+    async function initAutocompletes() {
+        await fetchCountries();
+        // Main country
+        setupCountryAutocomplete(countryInput, (val) => {
+            activeCountry = val;
+            // Refresh all city autocompletes
+            refreshMainCitySuggestions();
+        });
+        // Main city (first)
+        function getMainCountry() { return countryInput.value; }
+        setupCityAutocomplete(cityInput, getMainCountry, null);
+        // Multi-country second row
+        if (country2Input && city2Input) {
+            setupCountryAutocomplete(country2Input, null);
+            setupCityAutocomplete(city2Input, () => country2Input.value, null);
+        }
+        // Additional city fields later will be set dynamically
+    }
+
+    async function refreshMainCitySuggestions() {
+        const country = countryInput.value;
+        if (!country) return;
+        const cities = await fetchCities(country);
+        // For each city input, we need to re-attach? Simpler: just update their autocomplete's internal list?
+        // Since we use classes, we don't have a direct reference. We'll re-init each city field.
+        // For simplicity, we'll just update the global cache and the existing autocomplete instances will fetch again on input.
+        citiesCache.set(country, cities);
+    }
+
+    // ---------- Add dynamic city field ----------
     function addCityField() {
-        const newIndex = mainCityInputs.length;
+        const idx = mainCityInputs.length;
         const newDiv = document.createElement('div');
         newDiv.className = 'city-row';
         newDiv.style.marginTop = '12px';
         const label = document.createElement('label');
         label.className = 'input-label';
-        label.textContent = `City ${newIndex + 1}`;
+        label.textContent = `City ${idx + 1}`;
         const newInput = document.createElement('input');
         newInput.type = 'text';
         newInput.className = 'input-field';
         newInput.placeholder = 'Type or select city';
-        const datalistId = `cityDatalistMain_${Date.now()}_${newIndex}`;
-        newInput.setAttribute('list', datalistId);
         newDiv.appendChild(label);
         newDiv.appendChild(newInput);
         cityFieldsContainer.appendChild(newDiv);
-
-        // Create datalist for this new city input
-        const datalist = document.createElement('datalist');
-        datalist.id = datalistId;
-        document.body.appendChild(datalist);
-        newInput.setAttribute('list', datalistId);
-        
-        // Store reference
         mainCityInputs.push(newInput);
-        
-        // Setup filtering for this new input based on main country
-        const updateFilter = async () => {
-            const mainCountry = countryInput.value;
-            if (!mainCountry) return;
-            const cities = await fetchCitiesForCountry(mainCountry);
-            const filterCities = (term) => {
-                const filtered = term ? cities.filter(c => c.toLowerCase().includes(term.toLowerCase())) : cities;
-                datalist.innerHTML = '';
-                filtered.slice(0, 50).forEach(city => {
-                    const opt = document.createElement('option');
-                    opt.value = city;
-                    datalist.appendChild(opt);
-                });
-            };
-            newInput.addEventListener('input', (e) => filterCities(e.target.value));
-            filterCities(newInput.value);
-        };
-        updateFilter();
-        
-        // Also refresh when main country changes
-        const countryChangeHandler = () => updateFilter();
-        countryInput.addEventListener('change', countryChangeHandler);
-        // remove listener later? Not critical for demo
+        // Setup autocomplete for this new city
+        setupCityAutocomplete(newInput, () => countryInput.value, null);
     }
 
-    // ---------- Setup Second Country & City (multi-country) ----------
-    async function setupSecondCountryAndCity() {
-        if (!country2Input || !city2Input) return;
-        // Setup country autocomplete for 2nd country
-        setupCountryAutocomplete(country2Input, 'countryListDyn2', () => countriesList);
-        // City setup for 2nd country
-        const getSecondCountry = () => country2Input.value;
-        const secondCityDatalistId = 'cityDatalistSecond';
-        await setupCityAutocomplete(city2Input, getSecondCountry, secondCityDatalistId);
-        // Refresh when second country changes
-        country2Input.addEventListener('change', async () => {
-            const country = country2Input.value;
-            if (country) {
-                const cities = await fetchCitiesForCountry(country);
-                const datalist = document.getElementById(secondCityDatalistId);
-                if (datalist) {
-                    datalist.innerHTML = '';
-                    cities.forEach(city => {
-                        const opt = document.createElement('option');
-                        opt.value = city;
-                        datalist.appendChild(opt);
-                    });
-                }
-            }
-        });
-    }
-
-    // ---------- Weather Preview (Open-Meteo) ----------
+    // ---------- Weather Preview (User‑friendly UI) ----------
     async function updateWeatherPreview() {
-        if (!weatherPreviewDiv) return;
-        const mainCountry = countryInput.value;
-        const mainCity = mainCityInputs[0]?.value || cityInput0.value;
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        
-        if (!mainCity || !mainCountry || !startDate) {
-            weatherPreviewDiv.innerHTML = '<i class="fa-solid fa-cloud-rain"></i> Please fill destination and start date in previous steps.';
+        const country = countryInput.value;
+        const city = mainCityInputs[0]?.value;
+        const startDate = startDateInput.value;
+        if (!country || !city || !startDate) {
+            weatherPreviewDiv.innerHTML = '<div class="weather-placeholder"><i class="fa-solid fa-cloud-moon"></i> Fill destination & start date to see forecast.</div>';
             return;
         }
-        
-        weatherPreviewDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fetching weather data...';
-        
+        weatherPreviewDiv.innerHTML = '<div class="weather-loading"><i class="fa-solid fa-spinner fa-pulse"></i> Fetching forecast...</div>';
         try {
-            // Geocoding with Open-Meteo
-            const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(mainCity)}&count=1&language=en&format=json`;
-            const geoRes = await fetch(geoUrl);
+            // Geocode
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
             const geoData = await geoRes.json();
-            if (!geoData.results || geoData.results.length === 0) {
-                weatherPreviewDiv.innerHTML = '⚠️ Could not locate city. Try a more specific city name.';
-                return;
+            if (!geoData.results || !geoData.results.length) throw new Error('City not found');
+            const { latitude, longitude, name } = geoData.results[0];
+            // Determine days to fetch (max 7)
+            let days = 3;
+            if (endDateInput.value) {
+                const start = new Date(startDate);
+                const end = new Date(endDateInput.value);
+                const diff = Math.ceil((end - start) / (1000 * 3600 * 24)) + 1;
+                days = Math.min(diff, 7);
             }
-            const { latitude, longitude, name, country } = geoData.results[0];
-            
-            // Get forecast for date range (up to 7 days)
-            const today = new Date();
-            const start = new Date(startDate);
-            let end = endDate ? new Date(endDate) : new Date(startDate);
-            end.setDate(end.getDate() + 1);
-            const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-            const forecastDays = Math.min(diffDays, 7);
-            
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=${forecastDays}`;
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&forecast_days=${days}`;
             const weatherRes = await fetch(weatherUrl);
             const weatherData = await weatherRes.json();
-            
             if (weatherData.daily) {
-                let weatherHtml = `<div style="background:#f0f7ff; border-radius:20px; padding:12px;"><strong>${name}, ${country}</strong><br>`;
+                weatherForecast = weatherData.daily;
+                let html = `<div class="weather-card"><div class="weather-location"><i class="fa-solid fa-location-dot"></i> ${name}, ${country}</div><div class="weather-days">`;
                 for (let i = 0; i < weatherData.daily.time.length; i++) {
                     const date = weatherData.daily.time[i];
                     const max = weatherData.daily.temperature_2m_max[i];
                     const min = weatherData.daily.temperature_2m_min[i];
+                    const precip = weatherData.daily.precipitation_sum[i];
                     const code = weatherData.daily.weathercode[i];
-                    let emoji = '☀️';
-                    if (code >= 51 && code <= 67) emoji = '🌧️';
-                    else if (code >= 71 && code <= 77) emoji = '❄️';
-                    else if (code >= 80 && code <= 99) emoji = '⛈️';
-                    weatherHtml += `<div>📅 ${date}: ${emoji} ${min}°C ~ ${max}°C</div>`;
+                    let icon = '☀️', condition = 'Sunny';
+                    if (code >= 51 && code <= 67) { icon = '🌧️'; condition = 'Rainy'; }
+                    else if (code >= 71 && code <= 77) { icon = '❄️'; condition = 'Snowy'; }
+                    else if (code >= 80 && code <= 99) { icon = '⛈️'; condition = 'Stormy'; }
+                    html += `<div class="weather-day"><span class="date">${date}</span><span class="icon">${icon}</span><span class="temp">${min}°–${max}°</span><span class="rain">${precip > 0 ? '💧' + precip + 'mm' : ''}</span></div>`;
                 }
-                weatherHtml += `</div><div class="note"><i class="fa-regular fa-clock"></i> Forecast for first ${forecastDays} days</div>`;
-                weatherPreviewDiv.innerHTML = weatherHtml;
+                html += `</div><div class="weather-note"><i class="fa-regular fa-lightbulb"></i> Based on this forecast, your packing list will be tailored.</div></div>`;
+                weatherPreviewDiv.innerHTML = html;
             } else {
-                weatherPreviewDiv.innerHTML = '🌡️ Weather data not available.';
+                weatherPreviewDiv.innerHTML = '<div class="weather-error">⚠️ Forecast unavailable. Try a different city.</div>';
             }
         } catch (err) {
             console.error(err);
-            weatherPreviewDiv.innerHTML = '❌ Weather service error. Please try later.';
+            weatherPreviewDiv.innerHTML = '<div class="weather-error">❌ Weather service error. Please try later.</div>';
         }
     }
 
-    // ---------- Step Navigation Logic ----------
+    // ---------- Generate Packing List Based on Weather & Preferences ----------
+    async function generatePackingList() {
+        // Gather all inputs
+        const country = countryInput.value;
+        const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
+        const multiCountry = multiCountryToggle.checked && country2Input.value && city2Input.value;
+        const secondDest = multiCountry ? { country: country2Input.value, city: city2Input.value } : null;
+        const start = startDateInput.value;
+        const end = endDateInput.value;
+        const reason = selectedReason;
+        const style = selectedStyle;
+        const who = selectedWho;
+        const activities = selectedActivities;
+        const luggage = selectedLuggage;
+
+        if (!country || cities.length === 0 || !start) {
+            alert('Please complete step 1 and 2 before generating list.');
+            return false;
+        }
+
+        // Get weather data for main city (already fetched in preview)
+        let weatherSummary = { avgTemp: 20, condition: 'Sunny', rainy: false, snowy: false };
+        if (weatherForecast && weatherForecast.temperature_2m_max) {
+            const avgMax = weatherForecast.temperature_2m_max.reduce((a,b) => a+b,0)/weatherForecast.temperature_2m_max.length;
+            const avgMin = weatherForecast.temperature_2m_min.reduce((a,b) => a+b,0)/weatherForecast.temperature_2m_min.length;
+            weatherSummary.avgTemp = (avgMax + avgMin) / 2;
+            const hasRain = weatherForecast.weathercode.some(code => code >= 51 && code <= 67);
+            const hasSnow = weatherForecast.weathercode.some(code => code >= 71 && code <= 77);
+            weatherSummary.rainy = hasRain;
+            weatherSummary.snowy = hasSnow;
+            if (hasSnow) weatherSummary.condition = 'Snowy';
+            else if (hasRain) weatherSummary.condition = 'Rainy';
+            else if (weatherSummary.avgTemp > 25) weatherSummary.condition = 'Hot';
+            else if (weatherSummary.avgTemp < 10) weatherSummary.condition = 'Cold';
+            else weatherSummary.condition = 'Mild';
+        }
+
+        // Packing list logic
+        let items = [];
+
+        // Base clothing depending on temp/condition
+        if (weatherSummary.condition === 'Hot') {
+            items.push({ name: 'T-shirts (3-4)', category: 'Clothing', checked: false });
+            items.push({ name: 'Shorts (2-3)', category: 'Clothing', checked: false });
+            items.push({ name: 'Light dresses / skirts', category: 'Clothing', checked: false });
+            items.push({ name: 'Swimwear', category: 'Clothing', checked: false, condition: activities.includes('Beach') });
+        } else if (weatherSummary.condition === 'Cold') {
+            items.push({ name: 'Thermal base layers', category: 'Clothing', checked: false });
+            items.push({ name: 'Sweaters / fleece', category: 'Clothing', checked: false });
+            items.push({ name: 'Heavy jacket / coat', category: 'Clothing', checked: false });
+            items.push({ name: 'Gloves, scarf, beanie', category: 'Accessories', checked: false });
+        } else {
+            items.push({ name: 'Long-sleeve shirts', category: 'Clothing', checked: false });
+            items.push({ name: 'T-shirts', category: 'Clothing', checked: false });
+            items.push({ name: 'Jeans / trousers', category: 'Clothing', checked: false });
+            items.push({ name: 'Light jacket or cardigan', category: 'Clothing', checked: false });
+        }
+        if (weatherSummary.rainy) items.push({ name: 'Rain jacket / umbrella', category: 'Gear', checked: false });
+        if (weatherSummary.snowy) items.push({ name: 'Waterproof boots', category: 'Footwear', checked: false });
+
+        // Footwear
+        items.push({ name: 'Comfortable walking shoes', category: 'Footwear', checked: false });
+        if (activities.includes('Hiking')) items.push({ name: 'Hiking boots', category: 'Footwear', checked: false });
+        if (style === 'Luxury' || activities.includes('Shopping')) items.push({ name: 'Dress shoes / sandals', category: 'Footwear', checked: false });
+
+        // Activities based
+        if (activities.includes('Beach')) items.push({ name: 'Beach towel', category: 'Accessories', checked: false });
+        if (activities.includes('Hiking')) items.push({ name: 'Backpack (daypack)', category: 'Gear', checked: false });
+        if (activities.includes('City Tours')) items.push({ name: 'Portable charger', category: 'Electronics', checked: false });
+        if (who === 'Family') items.push({ name: 'First-aid kit', category: 'Health', checked: false });
+
+        // Luggage limit
+        if (luggage === 'Carry-on') {
+            items = items.slice(0, 12); // limit items
+        }
+
+        // Filter out conditional items
+        items = items.filter(item => item.condition !== false);
+
+        // Add standard toiletries
+        items.push({ name: 'Toothbrush & toothpaste', category: 'Toiletries', checked: false });
+        items.push({ name: 'Shampoo & soap', category: 'Toiletries', checked: false });
+        items.push({ name: 'Sunscreen', category: 'Health', checked: false, condition: weatherSummary.condition === 'Hot' });
+
+        // Final list with categories
+        const finalList = items.filter(i => i.condition !== false).map(i => ({ name: i.name, category: i.category, checked: false }));
+
+        // Store in localStorage
+        const tripData = {
+            id: Date.now(),
+            name: `${cities[0]} (${new Date(start).toLocaleDateString()})`,
+            destinations: { main: { country, cities }, second: secondDest },
+            dates: { start, end },
+            preferences: { reason, style, who, activities, luggage },
+            weather: weatherSummary,
+            packingList: finalList,
+            createdAt: new Date().toISOString()
+        };
+        localStorage.setItem('currentPackingList', JSON.stringify(finalList));
+        localStorage.setItem('currentTripMetadata', JSON.stringify(tripData));
+        // Also add to trips array
+        let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
+        savedTrips.unshift(tripData);
+        localStorage.setItem('userTrips', JSON.stringify(savedTrips));
+        return true;
+    }
+
+    // ---------- Step Navigation + Generate List on step 4 ----------
+    let currentStep = 0;
     function updateStepUI() {
-        steps.forEach((step, idx) => {
-            step.classList.toggle('active', idx === currentStep);
-        });
+        steps.forEach((s, idx) => s.classList.toggle('active', idx === currentStep));
         stepDots.forEach((dot, idx) => {
             dot.classList.toggle('active', idx <= currentStep);
-            if (idx < stepDots.length - 1) {
-                const line = stepLines[idx];
-                if (line) line.classList.toggle('active', idx < currentStep);
-            }
+            if (idx < stepLines.length) stepLines[idx].classList.toggle('active', idx < currentStep);
         });
         prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-flex';
-        nextBtn.textContent = currentStep === steps.length - 1 ? 'Finish' : 'Next →';
-        if (currentStep === steps.length - 1) {
-            updateWeatherPreview();
-        }
+        const nextBtnText = currentStep === steps.length - 1 ? 'Generate List' : 'Next →';
+        nextBtn.textContent = nextBtnText;
+        if (currentStep === steps.length - 1) updateWeatherPreview();
     }
-    
     async function goNext() {
-        // Basic validation per step
         if (currentStep === 0) {
-            const country = countryInput.value;
-            const firstCity = mainCityInputs[0]?.value || cityInput0.value;
-            if (!country || !firstCity) {
-                alert('Please select at least a country and a city.');
+            if (!countryInput.value || !mainCityInputs[0].value) {
+                alert('Please select country and at least one city.');
                 return;
             }
         }
         if (currentStep === 1) {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            if (!start) {
-                alert('Please select a start date.');
-                return;
-            }
-            if (end && new Date(end) < new Date(start)) {
-                alert('End date cannot be before start date.');
-                return;
+            if (!startDateInput.value) { alert('Start date required'); return; }
+            if (endDateInput.value && new Date(endDateInput.value) < new Date(startDateInput.value)) {
+                alert('End date cannot be before start date'); return;
             }
         }
-        if (currentStep < steps.length - 1) {
-            currentStep++;
-            updateStepUI();
-        } else {
-            alert('✨ Trip saved! Check your dashboard. (Demo flow completed)');
-            // In real app, save to localStorage or backend
-        }
-    }
-    
-    function goPrev() {
-        if (currentStep > 0) {
-            currentStep--;
-            updateStepUI();
-        }
-    }
-    
-    nextBtn.addEventListener('click', goNext);
-    prevBtn.addEventListener('click', goPrev);
-    
-    // ---------- Initialize Everything ----------
-    async function initialize() {
-        await fetchCountries();
-        
-        // Setup main country autocomplete
-        setupCountryAutocomplete(countryInput, 'countryListDynamic', () => countriesList);
-        
-        // Setup second country if multi-country toggled
-        if (multiCountryToggle) {
-            multiCountryToggle.addEventListener('change', (e) => {
-                extraCountriesDiv.style.display = e.target.checked ? 'block' : 'none';
-                if (e.target.checked && country2Input) setupSecondCountryAndCity();
-            });
-            extraCountriesDiv.style.display = 'none';
-        }
-        
-        // Setup main city fields: initial city + track dynamic
-        mainCityInputs = [cityInput0];
-        // Create and assign dynamic datalist for initial city input0
-        const mainDatalistId = 'mainCityDatalist0';
-        let mainDatalist = document.getElementById(mainDatalistId);
-        if (!mainDatalist) {
-            mainDatalist = document.createElement('datalist');
-            mainDatalist.id = mainDatalistId;
-            document.body.appendChild(mainDatalist);
-        }
-        cityInput0.setAttribute('list', mainDatalistId);
-        // Filter + fetch integration for initial city
-        const refreshMainCities = async () => {
-            const country = countryInput.value;
-            if (!country) return;
-            const cities = await fetchCitiesForCountry(country);
-            const filterCities = (term) => {
-                const filtered = term ? cities.filter(c => c.toLowerCase().includes(term.toLowerCase())) : cities;
-                mainDatalist.innerHTML = '';
-                filtered.slice(0, 50).forEach(city => {
-                    const opt = document.createElement('option');
-                    opt.value = city;
-                    mainDatalist.appendChild(opt);
-                });
-            };
-            cityInput0.addEventListener('input', (e) => filterCities(e.target.value));
-            filterCities(cityInput0.value);
-        };
-        countryInput.addEventListener('change', refreshMainCities);
-        await refreshMainCities();
-        
-        // Enable add city button
-        if (addCityBtn) {
-            addCityBtn.addEventListener('click', addCityField);
-        }
-        
-        // Initialize second country if any
-        if (country2Input && city2Input) {
-            setupCountryAutocomplete(country2Input, 'countryListDyn2', () => countriesList);
-            const secondDatalistId = 'cityDatalistSecond';
-            let secondDatalist = document.getElementById(secondDatalistId);
-            if (!secondDatalist) {
-                secondDatalist = document.createElement('datalist');
-                secondDatalist.id = secondDatalistId;
-                document.body.appendChild(secondDatalist);
+        if (currentStep === steps.length - 1) {
+            // Generate list and redirect
+            const success = await generatePackingList();
+            if (success) {
+                window.location.href = 'list.html';
             }
-            city2Input.setAttribute('list', secondDatalistId);
-            const refreshSecondCity = async () => {
-                const country2 = country2Input.value;
-                if (!country2) return;
-                const cities = await fetchCitiesForCountry(country2);
-                const filterCities = (term) => {
-                    const filtered = term ? cities.filter(c => c.toLowerCase().includes(term.toLowerCase())) : cities;
-                    secondDatalist.innerHTML = '';
-                    filtered.slice(0, 50).forEach(city => {
-                        const opt = document.createElement('option');
-                        opt.value = city;
-                        secondDatalist.appendChild(opt);
-                    });
-                };
-                city2Input.addEventListener('input', (e) => filterCities(e.target.value));
-                filterCities(city2Input.value);
-            };
-            country2Input.addEventListener('change', refreshSecondCity);
-            await refreshSecondCity();
+            return;
         }
-        
-        // Also handle date change for weather update in step 4
-        const startDateInput = document.getElementById('startDate');
-        const endDateInput = document.getElementById('endDate');
-        if (startDateInput) startDateInput.addEventListener('change', () => { if (currentStep === 3) updateWeatherPreview(); });
-        if (endDateInput) endDateInput.addEventListener('change', () => { if (currentStep === 3) updateWeatherPreview(); });
-        
-        // Time travel toggle (just UI flair)
-        const timeTravelToggle = document.getElementById('timeTravelToggle');
-        if (timeTravelToggle) {
-            timeTravelToggle.addEventListener('change', (e) => {
-                if (e.target.checked) weatherPreviewDiv.innerHTML += '<div class="time-travel-note"><i class="fa-regular fa-hourglass-half"></i> Time travel mode: simulating future weather window.</div>';
-                updateWeatherPreview();
-            });
-        }
-        
+        currentStep++;
         updateStepUI();
     }
-    
-    initialize().catch(console.warn);
+    function goPrev() { if (currentStep > 0) { currentStep--; updateStepUI(); } }
+    nextBtn.addEventListener('click', goNext);
+    prevBtn.addEventListener('click', goPrev);
+
+    // ---------- Read chips selections ----------
+    function initChips() {
+        const reasonChips = document.querySelectorAll('#chips-reason .chip');
+        const styleChips = document.querySelectorAll('#chips-style .chip');
+        const whoChips = document.querySelectorAll('#chips-who .chip');
+        const activityChips = document.querySelectorAll('#chips-activities .chip');
+        const luggageChips = document.querySelectorAll('#chips-luggage .chip');
+        function chipHandler(group, singleSelect, callback) {
+            return (e) => {
+                const chip = e.currentTarget;
+                if (singleSelect) {
+                    group.forEach(c => c.classList.remove('selected'));
+                    chip.classList.add('selected');
+                } else {
+                    chip.classList.toggle('selected');
+                }
+                callback();
+            };
+        }
+        reasonChips.forEach(chip => chip.addEventListener('click', chipHandler(reasonChips, true, () => {
+            selectedReason = document.querySelector('#chips-reason .chip.selected').dataset.val;
+        })));
+        styleChips.forEach(chip => chip.addEventListener('click', chipHandler(styleChips, true, () => {
+            selectedStyle = document.querySelector('#chips-style .chip.selected').dataset.val;
+        })));
+        whoChips.forEach(chip => chip.addEventListener('click', chipHandler(whoChips, true, () => {
+            selectedWho = document.querySelector('#chips-who .chip.selected').dataset.val;
+        })));
+        luggageChips.forEach(chip => chip.addEventListener('click', chipHandler(luggageChips, true, () => {
+            selectedLuggage = document.querySelector('#chips-luggage .chip.selected').dataset.val;
+        })));
+        activityChips.forEach(chip => chip.addEventListener('click', chipHandler(activityChips, false, () => {
+            selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
+        })));
+        // set initial
+        selectedReason = document.querySelector('#chips-reason .chip.selected').dataset.val;
+        selectedStyle = document.querySelector('#chips-style .chip.selected').dataset.val;
+        selectedWho = document.querySelector('#chips-who .chip.selected').dataset.val;
+        selectedLuggage = document.querySelector('#chips-luggage .chip.selected').dataset.val;
+        selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
+    }
+
+    // ---------- Multi-country toggle ----------
+    multiCountryToggle.addEventListener('change', (e) => {
+        extraCountriesDiv.style.display = e.target.checked ? 'block' : 'none';
+        multiDatesDiv.style.display = e.target.checked ? 'block' : 'none';
+    });
+    extraCountriesDiv.style.display = 'none';
+    multiDatesDiv.style.display = 'none';
+
+    // ---------- Add city button ----------
+    if (addCityBtn) addCityBtn.addEventListener('click', addCityField);
+
+    // ---------- Time travel toggle (visual only) ----------
+    if (timeTravelToggle) {
+        timeTravelToggle.addEventListener('change', () => updateWeatherPreview());
+    }
+
+    // ---------- On date change, refresh weather if on last step ----------
+    startDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
+    endDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
+
+    // ---------- Initialize ----------
+    initAutocompletes();
+    initChips();
+    updateStepUI();
 });
