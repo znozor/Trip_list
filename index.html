@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WanderPack – Welcome</title>
+  <link rel="stylesheet" href="shared.css">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="app-wrapper">
+  <div class="welcome-hero">
+    <span class="hero-illustration">🧳✈️</span>
+    <div class="hero-title">WanderPack</div>
+    <div class="hero-subtitle">Pack Smarter, Travel Happier<br>AI‑powered lists tailored to your destination, weather & activities</div>
+  </div>
+  <div class="welcome-body">
+    <div class="auth-buttons">
+      <button class="btn btn-outline" id="loginBtn"><i class="fa-regular fa-user"></i> Login</button>
+      <button class="btn btn-primary" id="signupBtn"><i class="fa-solid fa-user-plus"></i> Sign Up</button>
+    </div>
+    <a href="plan.html" class="guest-link">Continue as guest →</a>
+    <div class="offline-note">
+      <i class="fa-solid fa-wifi"></i> No AI? Our smart rules engine works offline too.
+    </div>
+    <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
+  </div>
+</div>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('loginBtn')?.addEventListener('click', () => showToast('Demo mode — No backend connected', 'warning'));
+  document.getElementById('signupBtn')?.addEventListener('click', () => showToast('Demo mode — No backend connected', 'warning'));
+</script>
+</body>
+</html>
