@@ -42,6 +42,7 @@ body {
   min-height: 100vh;
   transition: background var(--transition), color var(--transition);
   overflow-x: hidden;
+  font-size: 16px; /* prevent zoom on focus in mobile */
 }
 
 button {
@@ -51,9 +52,9 @@ button {
   font-family: inherit;
 }
 
-input, select, textarea {
+input, select, textarea, datalist {
   font-family: inherit;
-  font-size: 16px; /* Prevents zoom on input focus in mobile Safari */
+  font-size: 16px;
 }
 
 /* ===== LAYOUT ===== */
@@ -70,7 +71,7 @@ input, select, textarea {
   }
 }
 
-/* ===== BOTTOM NAVIGATION (responsive) ===== */
+/* ===== BOTTOM NAVIGATION ===== */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -146,10 +147,6 @@ input, select, textarea {
   transition: all var(--transition);
 }
 
-.card:hover {
-  box-shadow: 0 8px 24px rgba(6,167,125,0.1);
-}
-
 /* ===== BUTTONS ===== */
 .btn {
   display: inline-flex;
@@ -191,7 +188,7 @@ input, select, textarea {
   width: 100%;
 }
 
-/* ===== INPUTS & CHIPS ===== */
+/* ===== INPUTS ===== */
 .input-field {
   width: 100%;
   padding: 14px 16px;
@@ -202,12 +199,14 @@ input, select, textarea {
   font-size: 15px;
   transition: all var(--transition);
   outline: none;
+  margin-bottom: 12px;
 }
 
 .input-field:focus {
   border-color: var(--primary);
 }
 
+/* ===== CHIPS ===== */
 .chips-group {
   display: flex;
   flex-wrap: wrap;
@@ -232,7 +231,7 @@ input, select, textarea {
   color: white;
 }
 
-/* ===== STEP INDICATOR ===== */
+/* ===== STEP INDICATOR & FORM STEPS (FIXED) ===== */
 .step-indicator {
   display: flex;
   align-items: center;
@@ -273,6 +272,21 @@ input, select, textarea {
 
 .step-line.done {
   background: var(--success);
+}
+
+/* CRITICAL FIX: only active step is visible */
+.form-step {
+  display: none;
+}
+
+.form-step.active {
+  display: block;
+  animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== TRIP GRID ===== */
@@ -346,7 +360,7 @@ input, select, textarea {
   font-weight: 600;
 }
 
-/* ===== OTHER ===== */
+/* ===== WELCOME ===== */
 .welcome-hero {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 32px;
@@ -385,6 +399,7 @@ input, select, textarea {
   text-decoration: none;
 }
 
+/* ===== TOAST ===== */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -407,13 +422,7 @@ input, select, textarea {
   font-size: 14px;
 }
 
-.disclaimer {
-  font-size: 11px;
-  text-align: center;
-  margin-top: 24px;
-  opacity: 0.7;
-}
-
+/* ===== PROFILE ===== */
 .avatar-circle {
   width: 80px;
   height: 80px;
@@ -426,4 +435,20 @@ input, select, textarea {
   font-weight: bold;
   color: white;
   margin: 0 auto 16px;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== DROPDOWN WITH FILTERING ===== */
+.datalist-input {
+  position: relative;
+}
+.datalist-input input {
+  width: 100%;
 }
