@@ -398,71 +398,79 @@ document.addEventListener('DOMContentLoaded', () => {
         return finalItems;
     }
 
-    // ---------- MODIFIED: Generate final trip with forecastType, improved name, and loading overlay ----------
     async function generateList() {
-        // Show loading overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="loading-spinner"></div>
-            <div>Analyzing weather and creating your smart packing list...</div>
-        `;
-        document.body.appendChild(overlay);
-        
-        try {
-            const country = countryInput.value;
-            const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
-            const start = startDateInput.value;
-            const end = endDateInput.value;
-            if (!country || cities.length === 0 || !start || !end) {
-                alert('Please complete all steps.');
-                overlay.remove();
-                return false;
-            }
-            let forecasts = weatherForecasts;
-            if (!forecasts || forecasts.length === 0) {
-                forecasts = [];
-                for (const city of cities) {
-                    const dailyData = await fetchDailyForecast(city, country, start, end);
-                    if (dailyData) forecasts.push(dailyData);
-                }
-            }
-            const combinedWeather = combineWeather(forecasts);
-            
-            const daysToTrip = Math.ceil((new Date(start) - new Date()) / (1000 * 3600 * 24));
-            const forecastType = daysToTrip <= 14 ? 'real' : 'climate';
-            
-            const preferences = { reason: selectedReason, style: selectedStyle, who: selectedWho, activities: selectedActivities, luggage: selectedLuggage, travelersCount: 1 };
-            const packingList = generatePackingListFromWeather(combinedWeather, preferences, forecastType);
-            
-            let tripName;
-            if (cities.length === 1) {
-                tripName = `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`;
-            } else {
-                tripName = `${cities[0]}, ${country} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`;
-            }
-            
-            const tripData = {
-                id: Date.now(),
-                name: tripName,
-                destinations: { main: { country, cities } },
-                dates: { start, end },
-                preferences: preferences,
-                weather: { ...combinedWeather, forecastType },
-                packingList: packingList,
-                createdAt: new Date().toISOString()
-            };
-            sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
-            window.location.href = 'list.html';
-            // The overlay will disappear because the page unloads
-        } catch (err) {
-            console.error(err);
-            alert('Something went wrong. Please try again.');
+    // Create loading overlay with cloud icon and dots (no text)
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay';
+    overlay.innerHTML = `
+        <div class="loading-cloud">
+            <i class="fa-solid fa-cloud"></i>
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Minimum loading time (0.8 seconds) to avoid flashing
+    const minLoadTime = new Promise(resolve => setTimeout(resolve, 800));
+    
+    try {
+        const country = countryInput.value;
+        const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
+        const start = startDateInput.value;
+        const end = endDateInput.value;
+        if (!country || cities.length === 0 || !start || !end) {
+            alert('Please complete all steps.');
             overlay.remove();
             return false;
         }
-        return true;
+        let forecasts = weatherForecasts;
+        if (!forecasts || forecasts.length === 0) {
+            forecasts = [];
+            for (const city of cities) {
+                const dailyData = await fetchDailyForecast(city, country, start, end);
+                if (dailyData) forecasts.push(dailyData);
+            }
+        }
+        const combinedWeather = combineWeather(forecasts);
+        const daysToTrip = Math.ceil((new Date(start) - new Date()) / (1000 * 3600 * 24));
+        const forecastType = daysToTrip <= 14 ? 'real' : 'climate';
+        const preferences = { reason: selectedReason, style: selectedStyle, who: selectedWho, activities: selectedActivities, luggage: selectedLuggage, travelersCount: 1 };
+        const packingList = generatePackingListFromWeather(combinedWeather, preferences, forecastType);
+        
+        let tripName;
+        if (cities.length === 1) {
+            tripName = `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`;
+        } else {
+            tripName = `${cities[0]}, ${country} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`;
+        }
+        
+        const tripData = {
+            id: Date.now(),
+            name: tripName,
+            destinations: { main: { country, cities } },
+            dates: { start, end },
+            preferences: preferences,
+            weather: { ...combinedWeather, forecastType },
+            packingList: packingList,
+            createdAt: new Date().toISOString()
+        };
+        sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
+        
+        // Wait for minimum loading time before redirect
+        await minLoadTime;
+        window.location.href = 'list.html';
+    } catch (err) {
+        console.error(err);
+        alert('Something went wrong. Please try again.');
+        overlay.remove();
+        return false;
     }
+    return true;
+                }
 
     // ---------- Step Navigation (unchanged) ----------
     let currentStep = 0;
