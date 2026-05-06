@@ -1,4 +1,4 @@
-// list.js – displays packing list, allows editing, saving
+// list.js – displays packing list, saves to localStorage (guest) or Supabase (logged-in)
 let currentList = [];
 let currentTrip = null;
 
@@ -85,56 +85,79 @@ function addCustomItem() {
     const category = prompt('Enter category (e.g., Accessories, Electronics):') || 'Other';
     currentList.push({ name, category, checked: false });
     renderPackingList();
-    showToast(`"${name}" added to your list`, 'success');
+    if (typeof showToast === 'function') showToast(`"${name}" added to your list`, 'success');
+    else alert('Item added');
 }
 
 async function saveTrip() {
-    console.log('saveTrip called', currentTrip);
+    console.log('saveTrip called, currentUser:', window.currentUser);
     if (!currentTrip) {
-        showToast('No trip data to save', 'warning');
+        const msg = 'No trip data to save. Please generate a list first.';
+        if (typeof showToast === 'function') showToast(msg, 'warning');
+        else alert(msg);
         return;
     }
-    // Ensure trip has an id
+    
+    // Ensure trip has an id (for localStorage key)
     if (!currentTrip.id) currentTrip.id = Date.now();
-    // Update packing list
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
     
-    // Guest mode: save to localStorage
-    let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
-    const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
-    if (existingIndex !== -1) {
-        savedTrips[existingIndex] = currentTrip;
-        console.log('Updating existing trip', currentTrip.id);
+    // Check if user is logged in (Supabase)
+    const isLoggedIn = window.currentUser && window.supabase;
+    console.log('isLoggedIn:', isLoggedIn);
+    
+    if (isLoggedIn) {
+        // Prepare data for Supabase trips table
+        const tripData = {
+            title: currentTrip.name,
+            start_date: currentTrip.dates?.start,
+            end_date: currentTrip.dates?.end,
+            travel_reason: currentTrip.preferences?.reason,
+            travel_style: currentTrip.preferences?.style,
+            travelers_count: currentTrip.preferences?.travelersCount || 1,
+            luggage_type: currentTrip.preferences?.luggage,
+            packing_list_json: currentList  // store the whole list as JSON
+        };
+        try {
+            const { data, error } = await window.supabase
+                .from('trips')
+                .upsert({ ...tripData, user_id: window.currentUser.id, id: currentTrip.id })
+                .select();
+            if (error) throw error;
+            console.log('Saved to Supabase', data);
+            if (typeof showToast === 'function') showToast('Trip saved to cloud!', 'success');
+            else alert('Saved to cloud');
+        } catch (err) {
+            console.error('Supabase error:', err);
+            if (typeof showToast === 'function') showToast('Failed to save to cloud: ' + err.message, 'danger');
+            else alert('Save failed');
+        }
     } else {
-        savedTrips.unshift(currentTrip);
-        console.log('Adding new trip', currentTrip.id);
+        // Guest mode: save to localStorage only
+        let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
+        const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
+        if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
+        else savedTrips.unshift(currentTrip);
+        localStorage.setItem('userTrips', JSON.stringify(savedTrips));
+        localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
+        localStorage.setItem('currentPackingList', JSON.stringify(currentList));
+        console.log('Saved to localStorage');
+        if (typeof showToast === 'function') showToast('Trip saved locally (guest)', 'success');
+        else alert('Saved locally');
     }
-    localStorage.setItem('userTrips', JSON.stringify(savedTrips));
-    
-    // Also update the currentTripMetadata in localStorage for consistency
-    localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
-    localStorage.setItem('currentPackingList', JSON.stringify(currentList));
-    
-    showToast('Trip saved successfully!', 'success');
 }
 
-// Load data from localStorage (set by plan.js or saved trip view)
 function loadData() {
     const storedList = localStorage.getItem('currentPackingList');
     const storedTrip = localStorage.getItem('currentTripMetadata');
-    console.log('Loading data', { storedList, storedTrip });
+    console.log('loadData: list', !!storedList, 'trip', !!storedTrip);
     if (storedList) {
-        try {
-            currentList = JSON.parse(storedList);
-        } catch(e) { console.error(e); }
+        try { currentList = JSON.parse(storedList); } catch(e) { console.error(e); }
     }
     if (storedTrip) {
-        try {
-            currentTrip = JSON.parse(storedTrip);
-        } catch(e) { console.error(e); }
+        try { currentTrip = JSON.parse(storedTrip); } catch(e) { console.error(e); }
     }
-    // If trip has a packing list but currentList is empty, use it
     if (currentTrip && currentTrip.packingList && currentList.length === 0) {
         currentList = currentTrip.packingList;
     }
@@ -142,6 +165,7 @@ function loadData() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM ready, initializing list page');
     loadData();
     const addBtn = document.getElementById('addCustomItemBtn');
     const saveBtn = document.getElementById('saveTripBtn');
@@ -150,8 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.addEventListener('click', saveTrip);
         console.log('Save button listener attached');
     } else {
-        console.error('Save button not found in DOM');
+        console.error('Save button not found – check ID in HTML');
     }
+    if (typeof showToast === 'undefined') console.warn('showToast not defined – shared.js may not be loaded');
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
