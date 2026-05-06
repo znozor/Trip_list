@@ -1,12 +1,22 @@
-// list.js – displays list with reasons, essential badges, and weather confidence
+// list.js – displays list with reasons, essential badges, weather confidence, and back button
 let currentList = [];
 let currentTrip = null;
+let cameFromTrips = false;
 
 function renderPackingList() {
     const container = document.getElementById('packingListBody');
     const badge = document.getElementById('tripBadge');
     const progressSpan = document.getElementById('listProgress');
     const confidenceDiv = document.getElementById('weatherConfidence');
+    const backBtn = document.getElementById('backButton');
+    
+    // Show/hide back button based on whether we came from trips
+    if (backBtn) {
+        backBtn.style.display = cameFromTrips ? 'inline-flex' : 'none';
+        if (cameFromTrips) {
+            backBtn.onclick = () => { window.location.href = 'trips.html'; };
+        }
+    }
     
     if (!currentList || currentList.length === 0) {
         container.innerHTML = '<div class="card"><p>No packing list. Please plan a trip first.</p></div>';
@@ -45,11 +55,13 @@ function renderPackingList() {
         checked += items.filter(i => i.checked).length;
         html += `<div class="card"><h3>${escapeHtml(category)}</h3>`;
         items.forEach((item, idx) => {
+            const checkedClass = item.checked ? 'checked' : '';
+            const textDecor = item.checked ? 'checked-text' : '';
             html += `
                 <div class="pack-item" data-cat="${escapeHtml(category)}" data-idx="${idx}">
-                    <div class="item-checkbox ${item.checked ? 'checked' : ''}" data-cat="${escapeHtml(category)}" data-idx="${idx}"></div>
+                    <div class="item-checkbox ${checkedClass}" data-cat="${escapeHtml(category)}" data-idx="${idx}"></div>
                     <div class="item-details">
-                        <span class="item-name">${escapeHtml(item.name)}</span>
+                        <span class="item-name ${textDecor}">${escapeHtml(item.name)}</span>
                         ${item.reason ? `<span class="item-reason">${escapeHtml(item.reason)}</span>` : ''}
                         ${item.essential !== undefined 
                             ? `<span class="${item.essential ? 'essential-badge' : 'optional-badge'}">${item.essential ? 'Essential' : 'Optional'}</span>`
@@ -63,7 +75,7 @@ function renderPackingList() {
     }
     container.innerHTML = html;
     
-    // Attach checkbox events
+    // Attach checkbox events with strike‑through animation
     document.querySelectorAll('.item-checkbox').forEach(cb => {
         cb.addEventListener('click', (e) => {
             const cat = cb.dataset.cat;
@@ -72,15 +84,13 @@ function renderPackingList() {
             if (categoryItems[idx]) {
                 categoryItems[idx].checked = !categoryItems[idx].checked;
                 cb.classList.toggle('checked');
+                // Toggle the name span's class for line‑through
+                const nameSpan = cb.closest('.pack-item').querySelector('.item-name');
+                if (nameSpan) nameSpan.classList.toggle('checked-text');
                 updateProgress();
             }
         });
     });
-    
-    // Add last‑minute reminders section (if not already present)
-    if (!document.querySelector('.reminders-card')) {
-        addRemindersSection();
-    }
     
     if (currentTrip && currentTrip.name) {
         badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(currentTrip.name)} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
@@ -94,31 +104,6 @@ function renderPackingList() {
         const checked = currentList.filter(i => i.checked).length;
         progressSpan.innerHTML = `${checked}/${total} items packed`;
     }
-}
-
-function addRemindersSection() {
-    const container = document.getElementById('packingListBody');
-    const reminders = [
-        { text: "🛂 Check passport expiry (need 6 months validity for many countries)", checked: false },
-        { text: "💳 Notify your bank of travel dates to avoid card freeze", checked: false },
-        { text: "📱 Download offline maps and translation apps", checked: false },
-        { text: "📸 Take photos of important documents (cloud backup)", checked: false },
-        { text: "🏠 Arrange pet / plant care at home", checked: false },
-        { text: "🔋 Charge all electronics and pack power bank", checked: false },
-        { text: "💊 Refill prescriptions and pack a small first‑aid kit", checked: false }
-    ];
-    let html = `<div class="card reminders-card"><h3><i class="fa-regular fa-bell"></i> Last‑minute reminders</h3>`;
-    reminders.forEach(r => {
-        html += `<div class="pack-item"><div class="item-checkbox"></div><span class="item-name">${escapeHtml(r.text)}</span></div>`;
-    });
-    html += `</div>`;
-    container.insertAdjacentHTML('beforeend', html);
-    
-    // Attach toggle for reminder checkboxes
-    const reminderCheckboxes = container.querySelectorAll('.reminders-card .item-checkbox');
-    reminderCheckboxes.forEach(cb => {
-        cb.addEventListener('click', () => cb.classList.toggle('checked'));
-    });
 }
 
 function escapeHtml(str) {
@@ -167,20 +152,22 @@ async function saveTrip() {
 }
 
 function loadData() {
-    // Only load from sessionStorage if coming from plan.html or trips.html
     const pending = sessionStorage.getItem('pendingTrip');
     const viewed = sessionStorage.getItem('viewTrip');
     if (pending) {
         currentTrip = JSON.parse(pending);
         currentList = currentTrip.packingList || [];
         sessionStorage.removeItem('pendingTrip');
+        cameFromTrips = false;
     } else if (viewed) {
         currentTrip = JSON.parse(viewed);
         currentList = currentTrip.packingList || [];
         sessionStorage.removeItem('viewTrip');
+        cameFromTrips = true;
     } else {
         currentTrip = null;
         currentList = [];
+        cameFromTrips = false;
     }
     renderPackingList();
 }
