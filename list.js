@@ -101,26 +101,40 @@ async function saveTrip() {
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
-    const isLoggedIn = window.currentUser && window.supabase;
+    const isLoggedIn = !!(window.currentUser && window.supabase);
     console.log('isLoggedIn:', isLoggedIn);
 
     if (isLoggedIn) {
+        // Save to Supabase
         const tripData = {
             title: currentTrip.name,
-            start_date: currentTrip.dates?.start,
-            end_date: currentTrip.dates?.end,
-            travel_reason: currentTrip.preferences?.reason,
-            travel_style: currentTrip.preferences?.style,
-            travelers_count: currentTrip.preferences?.travelersCount || 1,
-            luggage_type: currentTrip.preferences?.luggage,
-            packing_list_json: currentList,
-            preferences_json: currentTrip.preferences,
-            weather_json: currentTrip.weather
+            startDate: currentTrip.dates?.start,
+            endDate: currentTrip.dates?.end,
+            reason: currentTrip.preferences?.reason,
+            style: currentTrip.preferences?.style,
+            travelersCount: currentTrip.preferences?.travelersCount || 1,
+            luggage: currentTrip.preferences?.luggage,
+            packingList: currentList,
+            preferences: currentTrip.preferences,
+            weather: currentTrip.weather
         };
         try {
             const { data, error } = await window.supabase
                 .from('trips')
-                .upsert({ ...tripData, user_id: window.currentUser.id, id: currentTrip.id })
+                .upsert({
+                    id: currentTrip.id,
+                    user_id: window.currentUser.id,
+                    title: tripData.title,
+                    start_date: tripData.startDate,
+                    end_date: tripData.endDate,
+                    travel_reason: tripData.reason,
+                    travel_style: tripData.style,
+                    travelers_count: tripData.travelersCount,
+                    luggage_type: tripData.luggage,
+                    packing_list_json: tripData.packingList,
+                    preferences_json: tripData.preferences,
+                    weather_json: tripData.weather
+                })
                 .select();
             if (error) throw error;
             console.log('Saved to Supabase', data);
@@ -130,7 +144,7 @@ async function saveTrip() {
             if (typeof showToast === 'function') showToast('Failed to save to cloud: ' + err.message, 'danger');
         }
     } else {
-        // Guest mode – unchanged
+        // Guest mode: save to localStorage
         let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
         const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
         if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
@@ -138,7 +152,7 @@ async function saveTrip() {
         localStorage.setItem('userTrips', JSON.stringify(savedTrips));
         localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
         localStorage.setItem('currentPackingList', JSON.stringify(currentList));
-        console.log('Saved to localStorage');
+        console.log('Saved to localStorage. userTrips length:', savedTrips.length);
         if (typeof showToast === 'function') showToast('Trip saved locally (guest)', 'success');
     }
 }
@@ -172,6 +186,5 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Save button not found – check ID in HTML');
     }
     if (typeof showToast === 'undefined') console.warn('showToast not defined – shared.js may not be loaded');
-    // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
