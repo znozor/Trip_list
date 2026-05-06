@@ -1,4 +1,4 @@
-// list.js – displays list with reasons, essential badges, weather confidence, and back button
+// list.js – Complete working version with centered popup
 let currentList = [];
 let currentTrip = null;
 let cameFromTrips = false;
@@ -119,38 +119,55 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
 }
 
-// Custom HTML popup (replaces alert and browser notification)
-// Custom HTML popup – now with inline styles to guarantee centering
+// ========== CENTERED POPUP (no CSS dependencies, no browser notification) ==========
 function showCustomPopup(message, type = 'success') {
-    const existing = document.querySelector('.custom-popup');
+    console.log('📢 showCustomPopup:', message, type);
+    
+    // Remove any existing popup
+    const existing = document.querySelector('.custom-popup-fixed');
     if (existing) existing.remove();
     
     const popup = document.createElement('div');
-    popup.className = `custom-popup ${type}`;
+    popup.className = 'custom-popup-fixed';
     
-    // Inline styles – guarantees centering even if CSS fails
+    // Hardcoded inline styles – guarantees centering
     popup.style.position = 'fixed';
     popup.style.top = '50%';
     popup.style.left = '50%';
     popup.style.transform = 'translate(-50%, -50%)';
-    popup.style.zIndex = '10001';
-    popup.style.backgroundColor = 'var(--card-bg)';
+    popup.style.zIndex = '100000';
+    popup.style.backgroundColor = '#FFFFFF';
     popup.style.borderRadius = '28px';
     popup.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
     popup.style.padding = '24px 32px';
     popup.style.minWidth = '280px';
     popup.style.maxWidth = '90%';
     popup.style.textAlign = 'center';
-    popup.style.borderTop = `4px solid ${type === 'success' ? 'var(--success)' : 'var(--danger)'}`;
     
-    const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
+    let borderColor = '#2E9C6E';
+    let iconClass = 'fa-circle-check';
+    let iconColor = '#2E9C6E';
+    if (type === 'error') {
+        borderColor = '#e74c3c';
+        iconClass = 'fa-circle-exclamation';
+        iconColor = '#e74c3c';
+    } else if (type === 'info') {
+        borderColor = '#06A77D';
+        iconClass = 'fa-circle-info';
+        iconColor = '#06A77D';
+    }
+    popup.style.borderTop = `4px solid ${borderColor}`;
+    
     popup.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; font-size: 16px; font-weight: 500; color: var(--text);">
-            <i class="fa-solid ${icon}" style="font-size: 48px;"></i>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; font-size: 16px; font-weight: 500; color: #1e2b2c;">
+            <i class="fa-solid ${iconClass}" style="font-size: 48px; color: ${iconColor};"></i>
             <span>${message}</span>
         </div>
     `;
+    
     document.body.appendChild(popup);
+    
+    // Auto-remove after 2.5 seconds
     setTimeout(() => {
         if (popup.parentNode) popup.remove();
     }, 2500);
@@ -172,6 +189,7 @@ function addCustomItem() {
 }
 
 function saveTrip() {
+    console.log('💾 saveTrip called');
     if (!currentTrip) {
         showCustomPopup('No trip data to save. Please generate a list first.', 'error');
         return;
@@ -223,4 +241,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('saveTripBtn');
     if (addBtn) addBtn.addEventListener('click', addCustomItem);
     if (saveBtn) saveBtn.addEventListener('click', saveTrip);
+    console.log('✅ list.js initialized, save button ready');
 });
