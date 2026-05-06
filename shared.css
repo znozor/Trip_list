@@ -668,3 +668,34 @@ input:checked + .toggle-slider:before {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+/* Custom HTML popup notification */
+.custom-popup {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    background: var(--card-bg);
+    border-radius: 40px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    padding: 12px 24px;
+    min-width: 200px;
+    text-align: center;
+    border-left: 4px solid var(--success);
+    animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+}
+.custom-popup-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes fadeOut {
+    to { opacity: 0; visibility: hidden; }
+}
