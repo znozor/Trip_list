@@ -97,18 +97,14 @@ async function saveTrip() {
         else alert(msg);
         return;
     }
-    
-    // Ensure trip has an id (for localStorage key)
     if (!currentTrip.id) currentTrip.id = Date.now();
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
-    
-    // Check if user is logged in (Supabase)
+
     const isLoggedIn = window.currentUser && window.supabase;
     console.log('isLoggedIn:', isLoggedIn);
-    
+
     if (isLoggedIn) {
-        // Prepare data for Supabase trips table
         const tripData = {
             title: currentTrip.name,
             start_date: currentTrip.dates?.start,
@@ -117,7 +113,9 @@ async function saveTrip() {
             travel_style: currentTrip.preferences?.style,
             travelers_count: currentTrip.preferences?.travelersCount || 1,
             luggage_type: currentTrip.preferences?.luggage,
-            packing_list_json: currentList  // store the whole list as JSON
+            packing_list_json: currentList,
+            preferences_json: currentTrip.preferences,
+            weather_json: currentTrip.weather
         };
         try {
             const { data, error } = await window.supabase
@@ -127,14 +125,12 @@ async function saveTrip() {
             if (error) throw error;
             console.log('Saved to Supabase', data);
             if (typeof showToast === 'function') showToast('Trip saved to cloud!', 'success');
-            else alert('Saved to cloud');
         } catch (err) {
             console.error('Supabase error:', err);
             if (typeof showToast === 'function') showToast('Failed to save to cloud: ' + err.message, 'danger');
-            else alert('Save failed');
         }
     } else {
-        // Guest mode: save to localStorage only
+        // Guest mode – unchanged
         let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
         const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
         if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
@@ -144,7 +140,6 @@ async function saveTrip() {
         localStorage.setItem('currentPackingList', JSON.stringify(currentList));
         console.log('Saved to localStorage');
         if (typeof showToast === 'function') showToast('Trip saved locally (guest)', 'success');
-        else alert('Saved locally');
     }
 }
 
