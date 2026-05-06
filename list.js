@@ -1,4 +1,4 @@
-// list.js – displays packing list, allows editing, saving, updating weather
+// list.js – displays packing list, allows editing, saving
 let currentList = [];
 let currentTrip = null;
 
@@ -26,12 +26,11 @@ function renderPackingList() {
     for (const [category, items] of Object.entries(grouped)) {
         total += items.length;
         checked += items.filter(i => i.checked).length;
-        html += `<div class="card"><h3>${category}</h3>`;
+        html += `<div class="card"><h3>${escapeHtml(category)}</h3>`;
         items.forEach((item, idx) => {
-            const itemId = `${category}-${idx}`;
             html += `
-                <div class="pack-item" data-id="${itemId}">
-                    <div class="item-checkbox ${item.checked ? 'checked' : ''}" data-cat="${category}" data-idx="${idx}"></div>
+                <div class="pack-item">
+                    <div class="item-checkbox ${item.checked ? 'checked' : ''}" data-cat="${escapeHtml(category)}" data-idx="${idx}"></div>
                     <span class="item-name">${escapeHtml(item.name)}</span>
                     <a href="#" class="item-buy" onclick="event.preventDefault();showToast('Affiliate link (demo)')">Buy →</a>
                 </div>
@@ -51,16 +50,13 @@ function renderPackingList() {
                 categoryItems[idx].checked = !categoryItems[idx].checked;
                 cb.classList.toggle('checked');
                 updateProgress();
-                // Also update the same item in currentList reference
-                const actualItem = currentList.find(i => i.category === cat && i.name === categoryItems[idx].name);
-                if (actualItem) actualItem.checked = categoryItems[idx].checked;
             }
         });
     });
     
     // Trip badge
     if (currentTrip && currentTrip.name) {
-        badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${currentTrip.name} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
+        badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(currentTrip.name)} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
     } else {
         badge.innerHTML = 'Trip details not available';
     }
@@ -74,6 +70,7 @@ function renderPackingList() {
 }
 
 function escapeHtml(str) {
+    if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
         if (m === '&') return '&amp;';
         if (m === '<') return '&lt;';
@@ -92,62 +89,69 @@ function addCustomItem() {
 }
 
 async function saveTrip() {
+    console.log('saveTrip called', currentTrip);
     if (!currentTrip) {
         showToast('No trip data to save', 'warning');
         return;
     }
     // Ensure trip has an id
     if (!currentTrip.id) currentTrip.id = Date.now();
-    // Update the packing list in the trip object
+    // Update packing list
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
     
     // Guest mode: save to localStorage
     let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
     const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
-    if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
-    else savedTrips.unshift(currentTrip);
+    if (existingIndex !== -1) {
+        savedTrips[existingIndex] = currentTrip;
+        console.log('Updating existing trip', currentTrip.id);
+    } else {
+        savedTrips.unshift(currentTrip);
+        console.log('Adding new trip', currentTrip.id);
+    }
     localStorage.setItem('userTrips', JSON.stringify(savedTrips));
     
     // Also update the currentTripMetadata in localStorage for consistency
     localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
     localStorage.setItem('currentPackingList', JSON.stringify(currentList));
     
-    // If logged in with Supabase, also save there (optional)
-    if (window.currentUser && window.saveTripToSupabase) {
-        await window.saveTripToSupabase({
-            title: currentTrip.name,
-            startDate: currentTrip.dates?.start,
-            endDate: currentTrip.dates?.end,
-            reason: currentTrip.preferences?.reason,
-            style: currentTrip.preferences?.style,
-            luggage: currentTrip.preferences?.luggage
-        });
-        showToast('Trip saved to cloud!', 'success');
-    } else {
-        showToast('Trip saved locally (guest mode)', 'success');
-    }
+    showToast('Trip saved successfully!', 'success');
 }
 
 // Load data from localStorage (set by plan.js or saved trip view)
 function loadData() {
     const storedList = localStorage.getItem('currentPackingList');
     const storedTrip = localStorage.getItem('currentTripMetadata');
-    if (storedList) currentList = JSON.parse(storedList);
+    console.log('Loading data', { storedList, storedTrip });
+    if (storedList) {
+        try {
+            currentList = JSON.parse(storedList);
+        } catch(e) { console.error(e); }
+    }
     if (storedTrip) {
-        currentTrip = JSON.parse(storedTrip);
-        // If the trip was loaded from saved trips, ensure packingList is in sync
-        if (currentTrip.packingList && currentList.length === 0) {
-            currentList = currentTrip.packingList;
-        }
+        try {
+            currentTrip = JSON.parse(storedTrip);
+        } catch(e) { console.error(e); }
+    }
+    // If trip has a packing list but currentList is empty, use it
+    if (currentTrip && currentTrip.packingList && currentList.length === 0) {
+        currentList = currentTrip.packingList;
     }
     renderPackingList();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
-    document.getElementById('addCustomItemBtn')?.addEventListener('click', addCustomItem);
-    document.getElementById('saveTripBtn')?.addEventListener('click', saveTrip);
+    const addBtn = document.getElementById('addCustomItemBtn');
+    const saveBtn = document.getElementById('saveTripBtn');
+    if (addBtn) addBtn.addEventListener('click', addCustomItem);
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveTrip);
+        console.log('Save button listener attached');
+    } else {
+        console.error('Save button not found in DOM');
+    }
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
