@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WanderPack – Welcome</title>
   <link rel="stylesheet" href="shared.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -13,24 +13,49 @@
   <div class="welcome-hero">
     <span class="hero-illustration">🧳✈️</span>
     <div class="hero-title">WanderPack</div>
-    <div class="hero-subtitle">Pack Smarter, Travel Happier<br>AI‑powered lists tailored to your destination, weather & activities</div>
+    <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
   </div>
   <div class="welcome-body">
     <div class="auth-buttons">
-      <button class="btn btn-outline" id="loginBtn"><i class="fa-regular fa-user"></i> Login</button>
-      <button class="btn btn-primary" id="signupBtn"><i class="fa-solid fa-user-plus"></i> Sign Up</button>
+      <button class="btn btn-outline" id="googleBtn"><i class="fa-brands fa-google"></i> Google Login</button>
+      <button class="btn btn-primary" id="emailSignupBtn"><i class="fa-solid fa-envelope"></i> Sign Up</button>
     </div>
-    <a href="plan.html" class="guest-link">Continue as guest →</a>
-    <div class="offline-note">
-      <i class="fa-solid fa-wifi"></i> No AI? Our smart rules engine works offline too.
+    <div id="emailLoginForm" style="display:none; margin-top:20px;">
+      <input type="email" id="loginEmail" placeholder="Email" class="input-field" style="margin-bottom:10px;">
+      <input type="password" id="loginPassword" placeholder="Password" class="input-field">
+      <button class="btn btn-primary btn-full" id="doLoginBtn">Login</button>
     </div>
+    <a href="#" id="showLoginLink" class="guest-link">Already have an account? Login →</a>
+    <a href="plan.html" class="guest-link" id="guestLink">Continue as guest →</a>
     <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
   </div>
 </div>
+<script src="config.js"></script>
 <script src="shared.js"></script>
 <script>
-  document.getElementById('loginBtn')?.addEventListener('click', () => showToast('Demo mode — No backend connected', 'warning'));
-  document.getElementById('signupBtn')?.addEventListener('click', () => showToast('Demo mode — No backend connected', 'warning'));
+  document.getElementById('googleBtn').onclick = signInWithGoogle;
+  const signupBtn = document.getElementById('emailSignupBtn');
+  const showLoginLink = document.getElementById('showLoginLink');
+  const emailForm = document.getElementById('emailLoginForm');
+  signupBtn.onclick = () => {
+    const email = prompt('Enter email:');
+    if (!email) return;
+    const password = prompt('Enter password (min 6 chars):');
+    if (!password) return;
+    const fullName = prompt('Your full name:');
+    signUpWithEmail(email, password, fullName);
+  };
+  showLoginLink.onclick = (e) => {
+    e.preventDefault();
+    emailForm.style.display = emailForm.style.display === 'none' ? 'block' : 'none';
+  };
+  document.getElementById('doLoginBtn').onclick = () => {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    if (email && password) signInWithEmail(email, password);
+    else showToast('Enter email and password', 'warning');
+  };
+  initAuth();
 </script>
 </body>
 </html>
