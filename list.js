@@ -32,7 +32,7 @@ function renderPackingList() {
             html += `
                 <div class="pack-item" data-id="${itemId}">
                     <div class="item-checkbox ${item.checked ? 'checked' : ''}" data-cat="${category}" data-idx="${idx}"></div>
-                    <span class="item-name">${item.name}</span>
+                    <span class="item-name">${escapeHtml(item.name)}</span>
                     <a href="#" class="item-buy" onclick="event.preventDefault();showToast('Affiliate link (demo)')">Buy →</a>
                 </div>
             `;
@@ -46,11 +46,14 @@ function renderPackingList() {
         cb.addEventListener('click', (e) => {
             const cat = cb.dataset.cat;
             const idx = parseInt(cb.dataset.idx);
-            const item = currentList.find(i => i.category === cat && i.name === currentList.filter(i2 => i2.category === cat)[idx]?.name);
-            if (item) {
-                item.checked = !item.checked;
+            const categoryItems = currentList.filter(i => i.category === cat);
+            if (categoryItems[idx]) {
+                categoryItems[idx].checked = !categoryItems[idx].checked;
                 cb.classList.toggle('checked');
                 updateProgress();
+                // Also update the same item in currentList reference
+                const actualItem = currentList.find(i => i.category === cat && i.name === categoryItems[idx].name);
+                if (actualItem) actualItem.checked = categoryItems[idx].checked;
             }
         });
     });
@@ -70,6 +73,15 @@ function renderPackingList() {
     }
 }
 
+function escapeHtml(str) {
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
 function addCustomItem() {
     const name = prompt('Enter custom item name:');
     if (!name) return;
@@ -84,34 +96,32 @@ async function saveTrip() {
         showToast('No trip data to save', 'warning');
         return;
     }
-    const tripToSave = {
-        id: currentTrip.id || Date.now(),
-        name: currentTrip.name,
-        destinations: currentTrip.destinations,
-        dates: currentTrip.dates,
-        preferences: currentTrip.preferences,
-        weather: currentTrip.weather,
-        packingList: currentList,
-        savedAt: new Date().toISOString()
-    };
+    // Ensure trip has an id
+    if (!currentTrip.id) currentTrip.id = Date.now();
+    // Update the packing list in the trip object
+    currentTrip.packingList = currentList;
+    currentTrip.savedAt = new Date().toISOString();
     
     // Guest mode: save to localStorage
     let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
-    // Remove any existing trip with same id (update)
-    const existingIndex = savedTrips.findIndex(t => t.id === tripToSave.id);
-    if (existingIndex !== -1) savedTrips[existingIndex] = tripToSave;
-    else savedTrips.unshift(tripToSave);
+    const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
+    if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
+    else savedTrips.unshift(currentTrip);
     localStorage.setItem('userTrips', JSON.stringify(savedTrips));
+    
+    // Also update the currentTripMetadata in localStorage for consistency
+    localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
+    localStorage.setItem('currentPackingList', JSON.stringify(currentList));
     
     // If logged in with Supabase, also save there (optional)
     if (window.currentUser && window.saveTripToSupabase) {
         await window.saveTripToSupabase({
-            title: tripToSave.name,
-            startDate: tripToSave.dates.start,
-            endDate: tripToSave.dates.end,
-            reason: tripToSave.preferences?.reason,
-            style: tripToSave.preferences?.style,
-            luggage: tripToSave.preferences?.luggage
+            title: currentTrip.name,
+            startDate: currentTrip.dates?.start,
+            endDate: currentTrip.dates?.end,
+            reason: currentTrip.preferences?.reason,
+            style: currentTrip.preferences?.style,
+            luggage: currentTrip.preferences?.luggage
         });
         showToast('Trip saved to cloud!', 'success');
     } else {
@@ -119,12 +129,18 @@ async function saveTrip() {
     }
 }
 
-// Load data from localStorage (set by plan.js)
+// Load data from localStorage (set by plan.js or saved trip view)
 function loadData() {
     const storedList = localStorage.getItem('currentPackingList');
     const storedTrip = localStorage.getItem('currentTripMetadata');
     if (storedList) currentList = JSON.parse(storedList);
-    if (storedTrip) currentTrip = JSON.parse(storedTrip);
+    if (storedTrip) {
+        currentTrip = JSON.parse(storedTrip);
+        // If the trip was loaded from saved trips, ensure packingList is in sync
+        if (currentTrip.packingList && currentList.length === 0) {
+            currentList = currentTrip.packingList;
+        }
+    }
     renderPackingList();
 }
 
@@ -132,6 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadData();
     document.getElementById('addCustomItemBtn')?.addEventListener('click', addCustomItem);
     document.getElementById('saveTripBtn')?.addEventListener('click', saveTrip);
-    // Optionally, request notification permission
+    // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 });
