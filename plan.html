@@ -38,7 +38,7 @@
   </div>
 
   <div class="form-body">
-    <!-- STEP 1: DESTINATIONS (searchable dropdowns) -->
+    <!-- STEP 1: DESTINATIONS (single country, multiple cities) -->
     <div class="form-step active" id="step-0">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-map-location-dot"></i> Where are you going?</h2></div>
@@ -57,15 +57,7 @@
           </div>
         </div>
         <button class="btn btn-ghost btn-sm" type="button" onclick="addCityField()"><i class="fa-solid fa-plus"></i> Add another city</button>
-        <div class="toggle-row" style="margin-top:16px;"><span>Multi‑country trip</span><label class="toggle-switch"><input type="checkbox" id="multiCountryToggle"><span class="toggle-slider"></span></label></div>
-        <div id="extraCountries" style="display:none; margin-top:16px;">
-          <label class="input-label">2nd Country</label>
-          <input type="text" id="country2Input" list="countryList2" class="input-field" placeholder="Country">
-          <datalist id="countryList2"><option>France</option><option>Italy</option></datalist>
-          <label class="input-label">2nd City</label>
-          <input type="text" id="city2Input" list="cityList2" class="input-field" placeholder="City">
-          <datalist id="cityList2"></datalist>
-        </div>
+        <p class="city-hint" style="font-size:12px; margin-top:12px; color:var(--text-secondary);"><i class="fa-regular fa-lightbulb"></i> We'll show weather for all cities and combine recommendations.</p>
       </div>
     </div>
 
@@ -75,11 +67,10 @@
         <h2><i class="fa-solid fa-calendar-days"></i> When are you traveling?</h2>
         <label>Start Date</label><input type="date" id="startDate" class="input-field">
         <label>End Date</label><input type="date" id="endDate" class="input-field">
-        <div id="multiDates" style="display:none; margin-top:16px;"><hr><label>Second destination dates</label><input type="date" id="startDate2" class="input-field"><input type="date" id="endDate2" class="input-field" style="margin-top:8px;"></div>
       </div>
     </div>
 
-    <!-- STEP 3: TRIP STYLE -->
+    <!-- STEP 3: TRIP STYLE (unchanged) -->
     <div class="form-step" id="step-2">
       <div class="card">
         <h2><i class="fa-solid fa-heart"></i> Tell us about your trip</h2>
@@ -91,7 +82,7 @@
       </div>
     </div>
 
-    <!-- STEP 4: WEATHER PREVIEW -->
+    <!-- STEP 4: WEATHER PREVIEW (multi‑city) -->
     <div class="form-step" id="step-3">
       <div class="card">
         <h2><i class="fa-solid fa-cloud-sun"></i> Weather Preview</h2>
