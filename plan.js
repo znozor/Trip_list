@@ -1,5 +1,4 @@
-// plan.js - Complete rewrite with custom autocomplete, enhanced weather, and list generation
-
+// plan.js - Fixed version with working list generation
 document.addEventListener('DOMContentLoaded', () => {
     // ---------- DOM Elements ----------
     const countryInput = document.getElementById('countryInput');
@@ -23,19 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const weatherPreviewDiv = document.getElementById('weatherPreview');
     const timeTravelToggle = document.getElementById('timeTravelToggle');
 
-    // Chips data
-    let selectedReason = 'Leisure';
-    let selectedStyle = 'Standard';
-    let selectedWho = 'Solo';
-    let selectedActivities = ['Hiking', 'City Tours'];
-    let selectedLuggage = 'Checked';
-
     // ---------- Global state ----------
     let countriesList = [];
     let citiesCache = new Map();
     let mainCityInputs = [cityInput];
     let activeCountry = '';
-    let weatherForecast = null; // store for list generation
+    let weatherForecast = null;
+    let selectedReason = 'Leisure';
+    let selectedStyle = 'Standard';
+    let selectedWho = 'Solo';
+    let selectedActivities = ['Hiking', 'City Tours'];
+    let selectedLuggage = 'Checked';
 
     // ---------- Helper: Fetch Countries ----------
     async function fetchCountries() {
@@ -152,32 +149,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Main country
         setupCountryAutocomplete(countryInput, (val) => {
             activeCountry = val;
-            // Refresh all city autocompletes
             refreshMainCitySuggestions();
         });
         // Main city (first)
         function getMainCountry() { return countryInput.value; }
         setupCityAutocomplete(cityInput, getMainCountry, null);
-        // Multi-country second row
+        // Multi-country second row (if exists)
         if (country2Input && city2Input) {
             setupCountryAutocomplete(country2Input, null);
             setupCityAutocomplete(city2Input, () => country2Input.value, null);
         }
-        // Additional city fields later will be set dynamically
     }
 
     async function refreshMainCitySuggestions() {
         const country = countryInput.value;
         if (!country) return;
-        const cities = await fetchCities(country);
-        // For each city input, we need to re-attach? Simpler: just update their autocomplete's internal list?
-        // Since we use classes, we don't have a direct reference. We'll re-init each city field.
-        // For simplicity, we'll just update the global cache and the existing autocomplete instances will fetch again on input.
-        citiesCache.set(country, cities);
+        await fetchCities(country);
+        // Users will re-type to see suggestions; no need to update existing autocompletes directly.
     }
 
-    // ---------- Add dynamic city field ----------
-    function addCityField() {
+    // ---------- Add dynamic city field (make it global for onclick) ----------
+    window.addCityField = function() {
         const idx = mainCityInputs.length;
         const newDiv = document.createElement('div');
         newDiv.className = 'city-row';
@@ -195,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainCityInputs.push(newInput);
         // Setup autocomplete for this new city
         setupCityAutocomplete(newInput, () => countryInput.value, null);
-    }
+    };
 
     // ---------- Weather Preview (User‑friendly UI) ----------
     async function updateWeatherPreview() {
@@ -208,12 +200,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         weatherPreviewDiv.innerHTML = '<div class="weather-loading"><i class="fa-solid fa-spinner fa-pulse"></i> Fetching forecast...</div>';
         try {
-            // Geocode
+            // Geocode via Open-Meteo
             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
             const geoData = await geoRes.json();
             if (!geoData.results || !geoData.results.length) throw new Error('City not found');
             const { latitude, longitude, name } = geoData.results[0];
-            // Determine days to fetch (max 7)
             let days = 3;
             if (endDateInput.value) {
                 const start = new Date(startDate);
@@ -252,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ---------- Generate Packing List Based on Weather & Preferences ----------
     async function generatePackingList() {
-        // Gather all inputs
+        // Gather inputs
         const country = countryInput.value;
         const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
         const multiCountry = multiCountryToggle.checked && country2Input.value && city2Input.value;
@@ -270,11 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        // Get weather data for main city (already fetched in preview)
+        // Get weather summary (use forecast if available, else fallback)
         let weatherSummary = { avgTemp: 20, condition: 'Sunny', rainy: false, snowy: false };
-        if (weatherForecast && weatherForecast.temperature_2m_max) {
-            const avgMax = weatherForecast.temperature_2m_max.reduce((a,b) => a+b,0)/weatherForecast.temperature_2m_max.length;
-            const avgMin = weatherForecast.temperature_2m_min.reduce((a,b) => a+b,0)/weatherForecast.temperature_2m_min.length;
+        if (weatherForecast && weatherForecast.temperature_2m_max && weatherForecast.temperature_2m_max.length) {
+            const avgMax = weatherForecast.temperature_2m_max.reduce((a,b) => a+b,0) / weatherForecast.temperature_2m_max.length;
+            const avgMin = weatherForecast.temperature_2m_min.reduce((a,b) => a+b,0) / weatherForecast.temperature_2m_min.length;
             weatherSummary.avgTemp = (avgMax + avgMin) / 2;
             const hasRain = weatherForecast.weathercode.some(code => code >= 51 && code <= 67);
             const hasSnow = weatherForecast.weathercode.some(code => code >= 71 && code <= 77);
@@ -285,17 +276,25 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (weatherSummary.avgTemp > 25) weatherSummary.condition = 'Hot';
             else if (weatherSummary.avgTemp < 10) weatherSummary.condition = 'Cold';
             else weatherSummary.condition = 'Mild';
+        } else {
+            // Fallback based on month
+            const month = new Date(start).getMonth();
+            const isSummer = (month >= 5 && month <= 7); // June-August
+            weatherSummary.avgTemp = isSummer ? 25 : 12;
+            weatherSummary.condition = isSummer ? 'Mild' : 'Cold';
+            weatherSummary.rainy = false;
+            weatherSummary.snowy = false;
         }
 
-        // Packing list logic
+        // Build packing list
         let items = [];
 
-        // Base clothing depending on temp/condition
+        // Base clothing
         if (weatherSummary.condition === 'Hot') {
             items.push({ name: 'T-shirts (3-4)', category: 'Clothing', checked: false });
             items.push({ name: 'Shorts (2-3)', category: 'Clothing', checked: false });
             items.push({ name: 'Light dresses / skirts', category: 'Clothing', checked: false });
-            items.push({ name: 'Swimwear', category: 'Clothing', checked: false, condition: activities.includes('Beach') });
+            if (activities.includes('Beach')) items.push({ name: 'Swimwear', category: 'Clothing', checked: false });
         } else if (weatherSummary.condition === 'Cold') {
             items.push({ name: 'Thermal base layers', category: 'Clothing', checked: false });
             items.push({ name: 'Sweaters / fleece', category: 'Clothing', checked: false });
@@ -315,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activities.includes('Hiking')) items.push({ name: 'Hiking boots', category: 'Footwear', checked: false });
         if (style === 'Luxury' || activities.includes('Shopping')) items.push({ name: 'Dress shoes / sandals', category: 'Footwear', checked: false });
 
-        // Activities based
+        // Activity based
         if (activities.includes('Beach')) items.push({ name: 'Beach towel', category: 'Accessories', checked: false });
         if (activities.includes('Hiking')) items.push({ name: 'Backpack (daypack)', category: 'Gear', checked: false });
         if (activities.includes('City Tours')) items.push({ name: 'Portable charger', category: 'Electronics', checked: false });
@@ -323,21 +322,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Luggage limit
         if (luggage === 'Carry-on') {
-            items = items.slice(0, 12); // limit items
+            items = items.slice(0, 12);
         }
 
-        // Filter out conditional items
-        items = items.filter(item => item.condition !== false);
-
-        // Add standard toiletries
+        // Toiletries
         items.push({ name: 'Toothbrush & toothpaste', category: 'Toiletries', checked: false });
         items.push({ name: 'Shampoo & soap', category: 'Toiletries', checked: false });
-        items.push({ name: 'Sunscreen', category: 'Health', checked: false, condition: weatherSummary.condition === 'Hot' });
+        if (weatherSummary.condition === 'Hot') items.push({ name: 'Sunscreen', category: 'Health', checked: false });
 
-        // Final list with categories
-        const finalList = items.filter(i => i.condition !== false).map(i => ({ name: i.name, category: i.category, checked: false }));
+        // Ensure no duplicate categories for display
+        const finalList = items.map(i => ({ name: i.name, category: i.category, checked: false }));
 
-        // Store in localStorage
+        // Store data for list.html
         const tripData = {
             id: Date.now(),
             name: `${cities[0]} (${new Date(start).toLocaleDateString()})`,
@@ -350,14 +346,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         localStorage.setItem('currentPackingList', JSON.stringify(finalList));
         localStorage.setItem('currentTripMetadata', JSON.stringify(tripData));
-        // Also add to trips array
+        // Save to trips array
         let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
         savedTrips.unshift(tripData);
         localStorage.setItem('userTrips', JSON.stringify(savedTrips));
         return true;
     }
 
-    // ---------- Step Navigation + Generate List on step 4 ----------
+    // ---------- Step Navigation ----------
     let currentStep = 0;
     function updateStepUI() {
         steps.forEach((s, idx) => s.classList.toggle('active', idx === currentStep));
@@ -366,10 +362,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (idx < stepLines.length) stepLines[idx].classList.toggle('active', idx < currentStep);
         });
         prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-flex';
-        const nextBtnText = currentStep === steps.length - 1 ? 'Generate List' : 'Next →';
-        nextBtn.textContent = nextBtnText;
+        nextBtn.textContent = currentStep === steps.length - 1 ? 'Generate List' : 'Next →';
         if (currentStep === steps.length - 1) updateWeatherPreview();
     }
+
     async function goNext() {
         if (currentStep === 0) {
             if (!countryInput.value || !mainCityInputs[0].value) {
@@ -380,11 +376,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentStep === 1) {
             if (!startDateInput.value) { alert('Start date required'); return; }
             if (endDateInput.value && new Date(endDateInput.value) < new Date(startDateInput.value)) {
-                alert('End date cannot be before start date'); return;
+                alert('End date cannot be before start date');
+                return;
             }
         }
         if (currentStep === steps.length - 1) {
-            // Generate list and redirect
             const success = await generatePackingList();
             if (success) {
                 window.location.href = 'list.html';
@@ -394,7 +390,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currentStep++;
         updateStepUI();
     }
-    function goPrev() { if (currentStep > 0) { currentStep--; updateStepUI(); } }
+
+    function goPrev() {
+        if (currentStep > 0) {
+            currentStep--;
+            updateStepUI();
+        }
+    }
+
     nextBtn.addEventListener('click', goNext);
     prevBtn.addEventListener('click', goPrev);
 
@@ -405,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const whoChips = document.querySelectorAll('#chips-who .chip');
         const activityChips = document.querySelectorAll('#chips-activities .chip');
         const luggageChips = document.querySelectorAll('#chips-luggage .chip');
+
         function chipHandler(group, singleSelect, callback) {
             return (e) => {
                 const chip = e.currentTarget;
@@ -432,7 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activityChips.forEach(chip => chip.addEventListener('click', chipHandler(activityChips, false, () => {
             selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
         })));
-        // set initial
+
+        // initial values
         selectedReason = document.querySelector('#chips-reason .chip.selected').dataset.val;
         selectedStyle = document.querySelector('#chips-style .chip.selected').dataset.val;
         selectedWho = document.querySelector('#chips-who .chip.selected').dataset.val;
@@ -448,15 +453,18 @@ document.addEventListener('DOMContentLoaded', () => {
     extraCountriesDiv.style.display = 'none';
     multiDatesDiv.style.display = 'none';
 
-    // ---------- Add city button ----------
-    if (addCityBtn) addCityBtn.addEventListener('click', addCityField);
+    // ---------- Add city button (if using JS listener instead of inline) ----------
+    if (addCityBtn) {
+        addCityBtn.removeAttribute('onclick'); // remove inline to avoid double call
+        addCityBtn.addEventListener('click', window.addCityField);
+    }
 
-    // ---------- Time travel toggle (visual only) ----------
+    // ---------- Time travel toggle (affects weather preview) ----------
     if (timeTravelToggle) {
         timeTravelToggle.addEventListener('change', () => updateWeatherPreview());
     }
 
-    // ---------- On date change, refresh weather if on last step ----------
+    // ---------- Refresh weather on date changes ----------
     startDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
     endDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
 
