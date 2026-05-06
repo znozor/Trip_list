@@ -33,8 +33,9 @@ function renderPackingList() {
             <div class="confidence-card">
                 <i class="fa-solid ${isReal ? 'fa-cloud-sun' : 'fa-chart-line'}"></i>
                 ${isReal 
-                    ? '✅ Real‑time forecast (updated within 14 days) – High confidence' 
-                    : '📊 Climate averages (based on 30‑year data) – Moderate confidence'}
+                    ${isReal 
+    ? '✅ Real‑time forecast – High confidence' 
+    : '📊 Climate averages – Moderate confidence'}
             </div>
         `;
     } else if (confidenceDiv) {
