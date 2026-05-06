@@ -1,21 +1,6 @@
-// list.js – simplified, with visible alerts for phone debugging
+// list.js – displays list only when generated or opened from trips
 let currentList = [];
 let currentTrip = null;
-
-// At the top of list.js, after loadData() or inside DOMContentLoaded
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('view') === 'trip') {
-    const savedTrip = sessionStorage.getItem('viewTrip');
-    if (savedTrip) {
-        currentTrip = JSON.parse(savedTrip);
-        currentList = currentTrip.packingList || [];
-        localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
-        localStorage.setItem('currentPackingList', JSON.stringify(currentList));
-        renderPackingList();
-        // Clear the sessionStorage so it doesn't load again on refresh
-        sessionStorage.removeItem('viewTrip');
-    }
-}
 
 function renderPackingList() {
     const container = document.getElementById('packingListBody');
@@ -29,7 +14,6 @@ function renderPackingList() {
         return;
     }
     
-    // Group by category
     const grouped = {};
     currentList.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -55,7 +39,6 @@ function renderPackingList() {
     }
     container.innerHTML = html;
     
-    // Attach checkbox events
     document.querySelectorAll('.item-checkbox').forEach(cb => {
         cb.addEventListener('click', (e) => {
             const cat = cb.dataset.cat;
@@ -97,7 +80,7 @@ function addCustomItem() {
     alert(`"${name}" added!`);
 }
 
-function saveTrip() {
+async function saveTrip() {
     if (!currentTrip) {
         alert('No trip data to save. Please generate a list first.');
         return;
@@ -113,27 +96,38 @@ function saveTrip() {
     else savedTrips.unshift(currentTrip);
     localStorage.setItem('userTrips', JSON.stringify(savedTrips));
     
-    // Also keep current trip metadata for editing
-    localStorage.setItem('currentTripMetadata', JSON.stringify(currentTrip));
-    localStorage.setItem('currentPackingList', JSON.stringify(currentList));
+    // Clear current list and trip so page becomes empty
+    currentTrip = null;
+    currentList = [];
+    renderPackingList();
     
-    alert('✅ Trip saved! Go to "Trips" to see it.');
-    console.log('Saved trips count:', savedTrips.length);
+    alert('✅ Trip saved! Redirecting to Trips page.');
+    window.location.href = 'trips.html';
 }
 
 function loadData() {
-    const storedList = localStorage.getItem('currentPackingList');
-    const storedTrip = localStorage.getItem('currentTripMetadata');
-    if (storedList) currentList = JSON.parse(storedList);
-    if (storedTrip) currentTrip = JSON.parse(storedTrip);
-    if (currentTrip && currentTrip.packingList && !currentList.length) {
-        currentList = currentTrip.packingList;
+    // Only load from sessionStorage if coming from plan.html or trips.html
+    const pending = sessionStorage.getItem('pendingTrip');
+    const viewed = sessionStorage.getItem('viewTrip');
+    if (pending) {
+        currentTrip = JSON.parse(pending);
+        currentList = currentTrip.packingList || [];
+        sessionStorage.removeItem('pendingTrip');
+    } else if (viewed) {
+        currentTrip = JSON.parse(viewed);
+        currentList = currentTrip.packingList || [];
+        sessionStorage.removeItem('viewTrip');
+    } else {
+        currentTrip = null;
+        currentList = [];
     }
     renderPackingList();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
-    document.getElementById('addCustomItemBtn')?.addEventListener('click', addCustomItem);
-    document.getElementById('saveTripBtn')?.addEventListener('click', saveTrip);
+    const addBtn = document.getElementById('addCustomItemBtn');
+    const saveBtn = document.getElementById('saveTripBtn');
+    if (addBtn) addBtn.addEventListener('click', addCustomItem);
+    if (saveBtn) saveBtn.addEventListener('click', saveTrip);
 });
