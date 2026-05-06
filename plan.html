@@ -28,51 +28,43 @@
   </div>
 
   <div class="form-body">
-    <!-- STEP 1: DESTINATIONS (with auto-complete dropdown) -->
+    <!-- STEP 1: DESTINATIONS with select dropdowns -->
     <div class="form-step active" id="step-0">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-map-location-dot"></i> Where are you going?</h2></div>
-        <div class="input-group">
-          <label class="input-label">Country</label>
-          <input type="text" id="countryInput" list="countryList" class="input-field" placeholder="Type or select country" value="Japan">
-          <datalist id="countryList">
+        <div class="input-group"><label class="input-label">Country</label>
+          <select id="countrySelect" class="input-field">
             <option>Japan</option><option>France</option><option>Italy</option><option>Thailand</option><option>Spain</option><option>USA</option><option>UK</option>
-          </datalist>
+          </select>
         </div>
         <div id="cityFields">
-          <div class="city-row">
-            <label class="input-label">City</label>
-            <input type="text" class="input-field city-input" placeholder="City name" value="Tokyo" list="cityListJapan">
-            <datalist id="cityListJapan">
-              <option>Tokyo</option><option>Osaka</option><option>Kyoto</option><option>Hiroshima</option>
-            </datalist>
+          <div class="city-row"><label class="input-label">City</label>
+            <select id="citySelect0" class="input-field city-select">
+              <option>Tokyo</option><option>Osaka</option><option>Kyoto</option>
+            </select>
           </div>
         </div>
         <button class="btn btn-ghost btn-sm" type="button" onclick="addCity()"><i class="fa-solid fa-plus"></i> Add another city</button>
         <div class="toggle-row" style="margin-top:16px;"><span>Multi‑country trip</span><label class="toggle-switch"><input type="checkbox" id="multiCountryToggle"><span class="toggle-slider"></span></label></div>
         <div id="extraCountries" style="display:none; margin-top:16px;">
-          <input type="text" id="country2Input" class="input-field" placeholder="2nd Country" list="countryList2">
-          <datalist id="countryList2"><option>France</option><option>Italy</option><option>Spain</option></datalist>
-          <input type="text" id="city2Input" class="input-field" placeholder="2nd City" style="margin-top:8px;" list="cityList2">
-          <datalist id="cityList2"></datalist>
+          <label class="input-label">2nd Country</label><select id="country2Select" class="input-field"><option>France</option><option>Italy</option><option>Spain</option></select>
+          <label class="input-label">2nd City</label><select id="city2Select" class="input-field"><option>Paris</option><option>Lyon</option></select>
         </div>
       </div>
     </div>
 
-    <!-- STEP 2: DATES -->
+    <!-- STEP 2: DATES (same) -->
     <div class="form-step" id="step-1">
-      <div class="card">
-        <div class="section-header"><h2><i class="fa-solid fa-calendar-days"></i> When are you traveling?</h2></div>
+      <div class="card"><div class="section-header"><h2><i class="fa-solid fa-calendar-days"></i> When are you traveling?</h2></div>
         <div class="input-group"><label class="input-label">Start Date</label><input type="date" id="startDate" class="input-field"></div>
         <div class="input-group"><label class="input-label">End Date</label><input type="date" id="endDate" class="input-field"></div>
-        <div id="multiDates" style="display:none; margin-top:16px;"><hr><label class="input-label">Second destination dates</label><input type="date" id="startDate2" class="input-field" placeholder="Arrival"><input type="date" id="endDate2" class="input-field" placeholder="Departure" style="margin-top:8px;"></div>
+        <div id="multiDates" style="display:none; margin-top:16px;"><hr><label class="input-label">Second destination dates</label><input type="date" id="startDate2" class="input-field"><input type="date" id="endDate2" class="input-field" style="margin-top:8px;"></div>
       </div>
     </div>
 
-    <!-- STEP 3: TRIP STYLE -->
+    <!-- STEP 3: TRIP STYLE (same) -->
     <div class="form-step" id="step-2">
-      <div class="card">
-        <div class="section-header"><h2><i class="fa-solid fa-heart"></i> Tell us about your trip</h2></div>
+      <div class="card"><div class="section-header"><h2><i class="fa-solid fa-heart"></i> Tell us about your trip</h2></div>
         <label class="input-label">Reason</label><div class="chips-group" id="chips-reason"><div class="chip selected" data-val="Leisure">Leisure</div><div class="chip" data-val="Adventure">Adventure</div><div class="chip" data-val="Business">Business</div></div>
         <label class="input-label">Style</label><div class="chips-group" id="chips-style"><div class="chip selected" data-val="Standard">Standard</div><div class="chip" data-val="Backpacker">Backpacker</div><div class="chip" data-val="Luxury">Luxury</div></div>
         <label class="input-label">Who</label><div class="chips-group" id="chips-who"><div class="chip selected" data-val="Solo">Solo</div><div class="chip" data-val="Couple">Couple</div><div class="chip" data-val="Family">Family</div></div>
@@ -81,11 +73,10 @@
       </div>
     </div>
 
-    <!-- STEP 4: WEATHER PREVIEW -->
+    <!-- STEP 4: WEATHER PREVIEW (same) -->
     <div class="form-step" id="step-3">
-      <div class="card">
-        <div class="section-header"><h2><i class="fa-solid fa-cloud-sun"></i> Weather Prediction</h2></div>
-        <div id="weatherPreview" class="weather-preview">Loading...</div>
+      <div class="card"><div class="section-header"><h2><i class="fa-solid fa-cloud-sun"></i> Weather Prediction</h2></div>
+        <div id="weatherPreview">Loading...</div>
         <div class="time-travel-widget" style="margin-top:16px;"><label><i class="fa-solid fa-clock-rotate-left"></i> Simulate trip within 14 days</label><label class="toggle-switch"><input type="checkbox" id="timeTravelToggle"><span class="toggle-slider"></span></label></div>
       </div>
     </div>
