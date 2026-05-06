@@ -4,20 +4,34 @@
   <meta charset="UTF-8">
   <title>Profile – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app-wrapper">
-  <div class="card"><div class="avatar-circle">W</div><h3>Guest User</h3><input type="text" placeholder="Name" class="input-field" id="guestName"></div>
-  <div class="card"><div class="settings-row"><span>🌙 Dark Mode</span><label class="toggle-switch"><input type="checkbox" id="darkToggle"><span class="toggle-slider"></span></label></div></div>
-  <div class="card"><button class="btn btn-outline" onclick="exportAllData()">Export All Data</button><button class="btn btn-danger" onclick="deleteAllData()">Delete Account</button></div>
+  <nav class="bottom-nav">
+    <div class="nav-item" onclick="window.location.href='plan.html'"><i class="fa-solid fa-map"></i><span>Trip</span></div>
+    <div class="nav-item" onclick="window.location.href='list.html'"><i class="fa-solid fa-list-check"></i><span>List</span></div>
+    <div class="nav-item" onclick="window.location.href='trips.html'"><i class="fa-solid fa-folder-open"></i><span>Trips</span></div>
+    <div class="nav-item active" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
+  </nav>
+
+  <div class="card" style="text-align: center;">
+    <div class="avatar-circle" id="avatar">👤</div>
+    <h3 id="userName">Guest</h3>
+    <p id="userEmail"></p>
+    <button id="logoutBtn" class="btn btn-outline btn-full">Logout</button>
+  </div>
+  <div class="card">
+    <div class="settings-row"><span>🌙 Dark Mode</span><label class="toggle-switch"><input type="checkbox" id="darkToggle"><span class="toggle-slider"></span></label></div>
+  </div>
+  <div class="card">
+    <button class="btn btn-outline btn-full" onclick="exportData()">📁 Export All Data</button>
+    <button class="btn btn-danger btn-full" style="margin-top: 12px;" onclick="deleteAllData()">🗑️ Delete Account</button>
+  </div>
 </div>
+<script src="config.js"></script>
 <script src="shared.js"></script>
-<script>
-  document.getElementById('darkToggle').addEventListener('change', e => document.documentElement.setAttribute('data-theme', e.target.checked ? 'dark' : ''));
-  function exportAllData() { const data = JSON.stringify(getTrips(), null, 2); const blob = new Blob([data], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'wanderpack-data.json'; a.click(); showToast('Data exported'); }
-  function deleteAllData() { if(confirm('Delete all trips?')) { localStorage.removeItem('wanderpack_trips'); showToast('All data cleared'); } }
-</script>
+<script src="profile.js"></script>
 </body>
 </html>
