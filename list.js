@@ -135,9 +135,32 @@ function addCustomItem() {
     alert(`"${name}" added!`);
 }
 
+// Custom HTML popup notification
+function showCustomPopup(message, type = 'success') {
+    // Remove existing popup
+    const existing = document.querySelector('.custom-popup');
+    if (existing) existing.remove();
+    
+    const popup = document.createElement('div');
+    popup.className = `custom-popup ${type}`;
+    const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
+    popup.innerHTML = `
+        <div class="custom-popup-content">
+            <i class="fa-solid ${icon}" style="font-size: 20px;"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(popup);
+    
+    // Auto-remove after 2.5 seconds
+    setTimeout(() => {
+        if (popup.parentNode) popup.remove();
+    }, 2500);
+}
+
 async function saveTrip() {
     if (!currentTrip) {
-        alert('No trip data to save. Please generate a list first.');
+        showCustomPopup('No trip data to save. Please generate a list first.', 'error');
         return;
     }
     if (!currentTrip.id) currentTrip.id = Date.now();
@@ -156,21 +179,13 @@ async function saveTrip() {
     currentList = [];
     renderPackingList();
     
-    // Browser notification instead of alert
-    if (Notification.permission === 'granted') {
-        new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
-    } else if (Notification.permission !== 'denied') {
-        await Notification.requestPermission();
-        if (Notification.permission === 'granted') {
-            new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
-        } else {
-            alert('Trip saved! Redirecting to Trips page.');
-        }
-    } else {
-        alert('Trip saved! Redirecting to Trips page.');
-    }
+    // Show custom popup
+    showCustomPopup('✅ Trip saved! Redirecting to Trips page.');
     
-    window.location.href = 'trips.html';
+    // Redirect after a short delay
+    setTimeout(() => {
+        window.location.href = 'trips.html';
+    }, 1500);
 }
 
 function loadData() {
@@ -192,11 +207,6 @@ function loadData() {
         cameFromTrips = false;
     }
     renderPackingList();
-}
-
-// Request notification permission on page load
-if ('Notification' in window && Notification.permission !== 'denied') {
-    Notification.requestPermission();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
