@@ -25,7 +25,7 @@ function renderPackingList() {
         return;
     }
     
-    // Weather confidence (updated text)
+    // Weather confidence
     if (confidenceDiv && currentTrip?.weather?.forecastType) {
         const isReal = currentTrip.weather.forecastType === 'real';
         confidenceDiv.innerHTML = `
@@ -66,7 +66,7 @@ function renderPackingList() {
                             ? `<span class="${item.essential ? 'essential-badge' : 'optional-badge'}">${item.essential ? 'Essential' : 'Optional'}</span>`
                             : ''}
                     </div>
-                    <a href="#" class="item-buy" onclick="event.preventDefault();alert('Affiliate link demo')">Buy →</a>
+                    <a href="#" class="item-buy" onclick="event.preventDefault();showCustomPopup('Affiliate link demo', 'info')">Buy →</a>
                 </div>
             `;
         });
@@ -101,7 +101,6 @@ function renderPackingList() {
             <div style="font-size: 12px; margin-top: 2px; color: var(--text-secondary);">${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}</div>
         `;
     } else if (currentTrip && currentTrip.name) {
-        // fallback to old style
         badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(currentTrip.name)} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
     } else {
         badge.innerHTML = 'Trip details not available';
@@ -120,6 +119,26 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
 }
 
+// Custom HTML popup (replaces alert and browser notification)
+function showCustomPopup(message, type = 'success') {
+    const existing = document.querySelector('.custom-popup');
+    if (existing) existing.remove();
+    
+    const popup = document.createElement('div');
+    popup.className = `custom-popup ${type}`;
+    const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
+    popup.innerHTML = `
+        <div class="custom-popup-content">
+            <i class="fa-solid ${icon}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(popup);
+    setTimeout(() => {
+        if (popup.parentNode) popup.remove();
+    }, 2500);
+}
+
 function addCustomItem() {
     const name = prompt('Enter custom item name:');
     if (!name) return;
@@ -132,33 +151,10 @@ function addCustomItem() {
         checked: false 
     });
     renderPackingList();
-    alert(`"${name}" added!`);
+    showCustomPopup(`"${name}" added!`, 'success');
 }
 
-// Custom HTML popup notification
-function showCustomPopup(message, type = 'success') {
-    // Remove existing popup
-    const existing = document.querySelector('.custom-popup');
-    if (existing) existing.remove();
-    
-    const popup = document.createElement('div');
-    popup.className = `custom-popup ${type}`;
-    const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
-    popup.innerHTML = `
-        <div class="custom-popup-content">
-            <i class="fa-solid ${icon}" style="font-size: 20px;"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    document.body.appendChild(popup);
-    
-    // Auto-remove after 2.5 seconds
-    setTimeout(() => {
-        if (popup.parentNode) popup.remove();
-    }, 2500);
-}
-
-async function saveTrip() {
+function saveTrip() {
     if (!currentTrip) {
         showCustomPopup('No trip data to save. Please generate a list first.', 'error');
         return;
@@ -167,22 +163,17 @@ async function saveTrip() {
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
-    // Save to localStorage (guest mode)
     let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
     const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
     if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
     else savedTrips.unshift(currentTrip);
     localStorage.setItem('userTrips', JSON.stringify(savedTrips));
     
-    // Clear current list and trip so page becomes empty
     currentTrip = null;
     currentList = [];
     renderPackingList();
     
-    // Show custom popup
-    showCustomPopup('✅ Trip saved! Redirecting to Trips page.');
-    
-    // Redirect after a short delay
+    showCustomPopup('✅ Trip saved! Redirecting to Trips page.', 'success');
     setTimeout(() => {
         window.location.href = 'trips.html';
     }, 1500);
