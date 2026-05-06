@@ -120,16 +120,33 @@ function escapeHtml(str) {
 }
 
 // Custom HTML popup (replaces alert and browser notification)
+// Custom HTML popup – now with inline styles to guarantee centering
 function showCustomPopup(message, type = 'success') {
     const existing = document.querySelector('.custom-popup');
     if (existing) existing.remove();
     
     const popup = document.createElement('div');
     popup.className = `custom-popup ${type}`;
+    
+    // Inline styles – guarantees centering even if CSS fails
+    popup.style.position = 'fixed';
+    popup.style.top = '50%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.zIndex = '10001';
+    popup.style.backgroundColor = 'var(--card-bg)';
+    popup.style.borderRadius = '28px';
+    popup.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+    popup.style.padding = '24px 32px';
+    popup.style.minWidth = '280px';
+    popup.style.maxWidth = '90%';
+    popup.style.textAlign = 'center';
+    popup.style.borderTop = `4px solid ${type === 'success' ? 'var(--success)' : 'var(--danger)'}`;
+    
     const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
     popup.innerHTML = `
-        <div class="custom-popup-content">
-            <i class="fa-solid ${icon}"></i>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; font-size: 16px; font-weight: 500; color: var(--text);">
+            <i class="fa-solid ${icon}" style="font-size: 48px;"></i>
             <span>${message}</span>
         </div>
     `;
