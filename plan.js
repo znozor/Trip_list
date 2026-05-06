@@ -1,7 +1,8 @@
 // plan.js – multi‑city, multi‑day forecast with collapsible sections
 // Enhanced packing list generator with reasons, quantities, essential/optional badges, and medicine
+// Removed simulate‑trip toggle, added country to trip name
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------- DOM Elements (unchanged) ----------
+    // ---------- DOM Elements (unchanged, except removed timeTravelToggle) ----------
     const countryInput = document.getElementById('countryInput');
     const cityInput = document.getElementById('cityInput0');
     const addCityBtn = document.querySelector('.btn-ghost.btn-sm');
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepDots = document.querySelectorAll('.step-dot');
     const stepLines = document.querySelectorAll('.step-line');
     const weatherPreviewDiv = document.getElementById('weatherPreview');
-    const timeTravelToggle = document.getElementById('timeTravelToggle');
+    // timeTravelToggle removed
 
     // ---------- Global state (unchanged) ----------
     let countriesList = [];
@@ -365,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addItem('Entertainment (tablet, books)', 'Electronics', 'Keep kids occupied', '1', false);
         }
 
-        // ----- Medicine & health variety (NEW) -----
+        // ----- Medicine & health variety -----
         addItem('Pain relievers (ibuprofen/paracetamol)', 'Health', 'Headaches, minor pain', 'small pack', true);
         addItem('Antihistamines', 'Health', 'Allergies or insect bites', '1 strip', false);
         addItem('Motion sickness pills', 'Health', 'Car/boat/plane travel', '6 tablets', false);
@@ -412,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return finalItems;
     }
 
-    // ---------- MODIFIED: Generate final trip with forecastType ----------
+    // ---------- MODIFIED: Generate final trip with forecastType and improved name (includes country) ----------
     async function generateList() {
         const country = countryInput.value;
         const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
@@ -432,16 +433,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const combinedWeather = combineWeather(forecasts);
         
-        // Determine forecast confidence
+        // Determine forecast confidence based on actual days to trip
         const daysToTrip = Math.ceil((new Date(start) - new Date()) / (1000 * 3600 * 24));
         const forecastType = daysToTrip <= 14 ? 'real' : 'climate';
         
         const preferences = { reason: selectedReason, style: selectedStyle, who: selectedWho, activities: selectedActivities, luggage: selectedLuggage, travelersCount: 1 };
         const packingList = generatePackingListFromWeather(combinedWeather, preferences, forecastType);
         
+        // Improved trip name with country and "& X more" (no extra city names)
+        let tripName;
+        if (cities.length === 1) {
+            tripName = `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`;
+        } else {
+            tripName = `${cities[0]}, ${country} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`;
+        }
+        
         const tripData = {
             id: Date.now(),
-            name: cities.length === 1 ? `${cities[0]} (${new Date(start).toLocaleDateString()})` : `${cities[0]} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`,
+            name: tripName,
             destinations: { main: { country, cities } },
             dates: { start, end },
             preferences: preferences,
@@ -532,14 +541,12 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
     }
 
-    // ---------- Additional listeners (unchanged) ----------
+    // ---------- Additional listeners (timeTravelToggle removed) ----------
     if (addCityBtn) {
         addCityBtn.removeAttribute('onclick');
         addCityBtn.addEventListener('click', window.addCityField);
     }
-    if (timeTravelToggle) {
-        timeTravelToggle.addEventListener('change', () => updateWeatherPreview());
-    }
+    // timeTravelToggle event listener removed
     startDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
     endDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
 
