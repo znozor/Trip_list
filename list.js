@@ -10,7 +10,6 @@ function renderPackingList() {
     const confidenceDiv = document.getElementById('weatherConfidence');
     const backBtn = document.getElementById('backButton');
     
-    // Show/hide back button based on whether we came from trips
     if (backBtn) {
         backBtn.style.display = cameFromTrips ? 'inline-flex' : 'none';
         if (cameFromTrips) {
@@ -26,16 +25,15 @@ function renderPackingList() {
         return;
     }
     
-    // Show weather confidence
+    // Weather confidence (updated text)
     if (confidenceDiv && currentTrip?.weather?.forecastType) {
         const isReal = currentTrip.weather.forecastType === 'real';
         confidenceDiv.innerHTML = `
             <div class="confidence-card">
                 <i class="fa-solid ${isReal ? 'fa-cloud-sun' : 'fa-chart-line'}"></i>
                 ${isReal 
-                    ${isReal 
-    ? '✅ Real‑time forecast – High confidence' 
-    : '📊 Climate averages – Moderate confidence'}
+                    ? '✅ Real‑time forecast – High confidence' 
+                    : '📊 Climate averages – Moderate confidence'}
             </div>
         `;
     } else if (confidenceDiv) {
@@ -76,7 +74,7 @@ function renderPackingList() {
     }
     container.innerHTML = html;
     
-    // Attach checkbox events with strike‑through animation
+    // Attach checkbox events
     document.querySelectorAll('.item-checkbox').forEach(cb => {
         cb.addEventListener('click', (e) => {
             const cat = cb.dataset.cat;
@@ -85,7 +83,6 @@ function renderPackingList() {
             if (categoryItems[idx]) {
                 categoryItems[idx].checked = !categoryItems[idx].checked;
                 cb.classList.toggle('checked');
-                // Toggle the name span's class for line‑through
                 const nameSpan = cb.closest('.pack-item').querySelector('.item-name');
                 if (nameSpan) nameSpan.classList.toggle('checked-text');
                 updateProgress();
@@ -93,15 +90,20 @@ function renderPackingList() {
         });
     });
     
-    if (currentTrip && currentTrip.name) {
-        const country = currentTrip.destinations?.main?.country || '';
-const cities = currentTrip.destinations?.main?.cities || [];
-const cityNames = cities.join(', ');
-badge.innerHTML = `
-    <div><strong>${escapeHtml(country)}</strong></div>
-    <div style="font-size: 13px; margin-top: 4px;">${escapeHtml(cityNames)}</div>
-    <div style="font-size: 12px; margin-top: 2px; color: var(--text-secondary);">${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}</div>
-`;} else {
+    // Trip badge – country above, full city names below
+    if (currentTrip && currentTrip.destinations) {
+        const country = currentTrip.destinations.main?.country || '';
+        const cities = currentTrip.destinations.main?.cities || [];
+        const cityNames = cities.join(', ');
+        badge.innerHTML = `
+            <div><strong>${escapeHtml(country)}</strong></div>
+            <div style="font-size: 13px; margin-top: 4px;">${escapeHtml(cityNames)}</div>
+            <div style="font-size: 12px; margin-top: 2px; color: var(--text-secondary);">${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}</div>
+        `;
+    } else if (currentTrip && currentTrip.name) {
+        // fallback to old style
+        badge.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(currentTrip.name)} · ${currentTrip.dates?.start || ''} to ${currentTrip.dates?.end || ''}`;
+    } else {
         badge.innerHTML = 'Trip details not available';
     }
     updateProgress();
@@ -154,15 +156,20 @@ async function saveTrip() {
     currentList = [];
     renderPackingList();
     
+    // Browser notification instead of alert
     if (Notification.permission === 'granted') {
-    new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
-} else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then(perm => {
-        if (perm === 'granted') {
+        new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
+    } else if (Notification.permission !== 'denied') {
+        await Notification.requestPermission();
+        if (Notification.permission === 'granted') {
             new Notification('WanderPack', { body: 'Trip saved successfully! Redirecting to Trips page.' });
+        } else {
+            alert('Trip saved! Redirecting to Trips page.');
         }
-    });
-}
+    } else {
+        alert('Trip saved! Redirecting to Trips page.');
+    }
+    
     window.location.href = 'trips.html';
 }
 
@@ -185,6 +192,11 @@ function loadData() {
         cameFromTrips = false;
     }
     renderPackingList();
+}
+
+// Request notification permission on page load
+if ('Notification' in window && Notification.permission !== 'denied') {
+    Notification.requestPermission();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
