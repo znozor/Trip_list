@@ -1,4 +1,3 @@
-/* ===== CSS VARIABLES ===== */
 :root {
   --primary: #06A77D;
   --primary-dark: #048f6a;
@@ -41,8 +40,7 @@ body {
   color: var(--text);
   min-height: 100vh;
   transition: background var(--transition), color var(--transition);
-  overflow-x: hidden;
-  font-size: 16px; /* prevent zoom on focus in mobile */
+  font-size: 16px;
 }
 
 button {
@@ -52,12 +50,11 @@ button {
   font-family: inherit;
 }
 
-input, select, textarea, datalist {
+input, select {
   font-family: inherit;
   font-size: 16px;
 }
 
-/* ===== LAYOUT ===== */
 .app-wrapper {
   max-width: 1200px;
   margin: 0 auto;
@@ -66,12 +63,9 @@ input, select, textarea, datalist {
 }
 
 @media (min-width: 768px) {
-  .app-wrapper {
-    padding-bottom: 40px;
-  }
+  .app-wrapper { padding-bottom: 40px; }
 }
 
-/* ===== BOTTOM NAVIGATION ===== */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -85,7 +79,6 @@ input, select, textarea, datalist {
   padding: 8px 12px;
   z-index: 1000;
   backdrop-filter: blur(10px);
-  background: rgba(var(--card-bg-rgb), 0.95);
 }
 
 @media (min-width: 768px) {
@@ -112,31 +105,16 @@ input, select, textarea, datalist {
   font-weight: 500;
   transition: all var(--transition);
   cursor: pointer;
-  background: transparent;
 }
 
-.nav-item i {
-  font-size: 22px;
-}
-
-.nav-item.active {
-  color: var(--primary);
-  background: rgba(6, 167, 125, 0.1);
-}
+.nav-item i { font-size: 22px; }
+.nav-item.active { color: var(--primary); background: rgba(6,167,125,0.1); }
 
 @media (min-width: 768px) {
-  .nav-item {
-    flex-direction: row;
-    gap: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-  }
-  .nav-item i {
-    font-size: 18px;
-  }
+  .nav-item { flex-direction: row; gap: 8px; padding: 10px 20px; font-size: 14px; }
+  .nav-item i { font-size: 18px; }
 }
 
-/* ===== CARDS ===== */
 .card {
   background: var(--card-bg);
   border-radius: var(--radius-card);
@@ -144,10 +122,8 @@ input, select, textarea, datalist {
   padding: 20px;
   margin-bottom: 20px;
   border: 1px solid var(--border);
-  transition: all var(--transition);
 }
 
-/* ===== BUTTONS ===== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -159,37 +135,14 @@ input, select, textarea, datalist {
   font-size: 15px;
   transition: all var(--transition);
   cursor: pointer;
-  white-space: nowrap;
 }
+.btn-primary { background: var(--primary); color: white; border: 2px solid var(--primary); }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.btn-ghost { background: rgba(6,167,125,0.08); color: var(--primary); }
+.btn-sm { padding: 8px 16px; font-size: 13px; }
+.btn-full { width: 100%; }
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  border: 2px solid var(--primary);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
-}
-
-.btn-ghost {
-  background: rgba(6,167,125,0.08);
-  color: var(--primary);
-}
-
-.btn-sm {
-  padding: 8px 16px;
-  font-size: 13px;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-/* ===== INPUTS ===== */
-.input-field {
+.input-field, select {
   width: 100%;
   padding: 14px 16px;
   border: 2px solid var(--border);
@@ -201,19 +154,9 @@ input, select, textarea, datalist {
   outline: none;
   margin-bottom: 12px;
 }
+.input-field:focus, select:focus { border-color: var(--primary); }
 
-.input-field:focus {
-  border-color: var(--primary);
-}
-
-/* ===== CHIPS ===== */
-.chips-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 12px 0;
-}
-
+.chips-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
 .chip {
   padding: 8px 18px;
   border-radius: 40px;
@@ -221,92 +164,40 @@ input, select, textarea, datalist {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition);
   background: var(--bg);
 }
+.chip.selected { background: var(--primary); border-color: var(--primary); color: white; }
 
-.chip.selected {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-
-/* ===== STEP INDICATOR & FORM STEPS (FIXED) ===== */
+/* Step indicator & form steps */
 .step-indicator {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 24px 0;
 }
-
 .step-dot {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--card-bg);
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--card-bg); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
   font-weight: bold;
 }
+.step-dot.active { background: var(--primary); border-color: var(--primary); color: white; }
+.step-dot.done { background: var(--success); border-color: var(--success); color: white; }
+.step-line { flex: 1; height: 2px; background: var(--border); margin: 0 4px; }
+.step-line.done { background: var(--success); }
 
-.step-dot.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
+.form-step { display: none; }
+.form-step.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-.step-dot.done {
-  background: var(--success);
-  border-color: var(--success);
-  color: white;
-}
-
-.step-line {
-  flex: 1;
-  height: 2px;
-  background: var(--border);
-  margin: 0 4px;
-}
-
-.step-line.done {
-  background: var(--success);
-}
-
-/* CRITICAL FIX: only active step is visible */
-.form-step {
-  display: none;
-}
-
-.form-step.active {
-  display: block;
-  animation: fadeUp 0.3s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== TRIP GRID ===== */
+/* Trips grid */
 .trips-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
 }
-
-@media (min-width: 640px) {
-  .trips-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .trips-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+@media (min-width: 640px) { .trips-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .trips-grid { grid-template-columns: repeat(3, 1fr); } }
 
 .trip-card {
   background: var(--card-bg);
@@ -314,14 +205,11 @@ input, select, textarea, datalist {
   padding: 16px;
   border: 1px solid var(--border);
   transition: all var(--transition);
+  cursor: pointer;
 }
+.trip-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
 
-.trip-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-}
-
-/* ===== PACKING LIST ITEMS ===== */
+/* Packing items */
 .pack-item {
   display: flex;
   align-items: center;
@@ -329,38 +217,16 @@ input, select, textarea, datalist {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-
 .item-checkbox {
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
+  width: 24px; height: 24px; border-radius: 8px;
   border: 2px solid var(--border);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition);
+  display: flex; align-items: center; justify-content: center;
 }
+.item-checkbox.checked { background: var(--primary); border-color: var(--primary); color: white; }
+.item-name { flex: 1; font-size: 15px; }
 
-.item-checkbox.checked {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-
-.item-name {
-  flex: 1;
-  font-size: 15px;
-}
-
-.item-buy {
-  font-size: 13px;
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-/* ===== WELCOME ===== */
+/* Welcome screen */
 .welcome-hero {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: 32px;
@@ -369,86 +235,23 @@ input, select, textarea, datalist {
   color: white;
   margin-bottom: 32px;
 }
+.hero-illustration { font-size: 64px; display: block; margin-bottom: 16px; }
+.auth-buttons { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
+@media (min-width: 480px) { .auth-buttons { flex-direction: row; justify-content: center; } }
+.guest-link { display: block; text-align: center; margin-top: 16px; color: var(--primary); font-weight: 600; text-decoration: none; }
 
-.hero-illustration {
-  font-size: 64px;
-  display: block;
-  margin-bottom: 16px;
-}
+/* Toast */
+.toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 90%; max-width: 400px; }
+.toast { background: var(--card-bg); padding: 12px 20px; border-radius: 40px; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; }
 
-.auth-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 24px 0;
-}
+/* Profile */
+.avatar-circle { width: 80px; height: 80px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: white; margin: 0 auto 16px; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 34px; }
+.toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .3s; }
+input:checked + .toggle-slider { background-color: var(--primary); }
+input:checked + .toggle-slider:before { transform: translateX(26px); }
 
-@media (min-width: 480px) {
-  .auth-buttons {
-    flex-direction: row;
-    justify-content: center;
-  }
-}
-
-.guest-link {
-  display: block;
-  text-align: center;
-  margin-top: 16px;
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-/* ===== TOAST ===== */
-.toast-container {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10000;
-  width: 90%;
-  max-width: 400px;
-}
-
-.toast {
-  background: var(--card-bg);
-  padding: 12px 20px;
-  border-radius: 40px;
-  margin-bottom: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-/* ===== PROFILE ===== */
-.avatar-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  font-weight: bold;
-  color: white;
-  margin: 0 auto 16px;
-}
-
-.settings-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-/* ===== DROPDOWN WITH FILTERING ===== */
-.datalist-input {
-  position: relative;
-}
-.datalist-input input {
-  width: 100%;
-}
+.disclaimer { font-size: 11px; text-align: center; margin-top: 24px; opacity: 0.7; }
