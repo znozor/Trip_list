@@ -1,4 +1,3 @@
-// shared.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
@@ -58,7 +57,6 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
-// Trip helpers
 async function saveTripToSupabase(tripData) {
   if (!currentUser) return null;
   const { data, error } = await supabase.from('trips').insert({
