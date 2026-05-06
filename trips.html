@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Trips – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app-wrapper">
@@ -16,27 +15,14 @@
     <div class="nav-item active" onclick="window.location.href='trips.html'"><i class="fa-solid fa-folder-open"></i><span>Trips</span></div>
     <div class="nav-item" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
-  <div class="trips-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+  <div class="trips-header" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
     <h2><i class="fa-solid fa-folder-open"></i> My Saved Trips</h2>
     <a href="plan.html" class="btn btn-primary btn-sm">+ New Trip</a>
   </div>
   <div id="tripsList" class="trips-grid"></div>
 </div>
-
-<!-- Modal for trip detail (update weather) -->
-<div id="tripModal" style="display:none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); z-index:1000; justify-content: center; align-items: center;">
-  <div style="background: var(--card-bg); max-width: 500px; width: 90%; border-radius: 28px; padding: 20px; max-height: 80vh; overflow-y: auto;">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
-      <h3>✈️ Trip Details</h3>
-      <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-    </div>
-    <div id="modalContent"></div>
-    <div id="updateWeatherBtn" style="margin-top: 16px; display: none;">
-      <button class="btn btn-primary btn-full" id="doUpdateWeather">🌦️ Update with Latest Weather</button>
-    </div>
-  </div>
-</div>
-
+<!-- Modal (required for future use, hidden) -->
+<div id="tripModal" style="display:none;"></div>
 <script src="config.js"></script>
 <script src="shared.js"></script>
 <script src="trips.js"></script>
