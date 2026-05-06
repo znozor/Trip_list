@@ -19,6 +19,7 @@ function updateStepUI() {
     }
     if (line) line.classList.toggle('done', i < currentStep);
   }
+  // Only show the current step
   document.querySelectorAll('.form-step').forEach((s, i) => {
     s.classList.toggle('active', i === currentStep);
   });
@@ -50,8 +51,13 @@ function addCity() {
   const container = document.getElementById('cityFields');
   const row = document.createElement('div');
   row.className = 'city-row';
-  row.style.marginTop = '8px';
-  row.innerHTML = `<input class="input-field" placeholder="City ${cityCount}" id="city-${cityCount-1}"/><span class="remove-city" onclick="this.parentElement.remove()" style="margin-left:8px; cursor:pointer;">✖</span>`;
+  row.style.marginTop = '12px';
+  row.innerHTML = `
+    <label class="input-label">City</label>
+    <input type="text" class="input-field city-input" placeholder="City name" list="cityListGeneric">
+    <datalist id="cityListGeneric"><option>Tokyo</option><option>Paris</option><option>London</option></datalist>
+    <span class="remove-city" onclick="this.parentElement.remove()" style="margin-left:8px; cursor:pointer;">✖</span>
+  `;
   container.appendChild(row);
 }
 
@@ -72,13 +78,13 @@ function getSelectedChips(groupId) {
 }
 
 function updateWeatherPreview() {
-  const country = document.getElementById('countrySelect').value;
-  const city = document.getElementById('city-0').value;
+  const country = document.getElementById('countryInput').value;
+  const city = document.querySelector('.city-input')?.value || 'Tokyo';
   const startDate = document.getElementById('startDate').value;
   const endDate = document.getElementById('endDate').value;
   // Mock weather data (replace with real API later)
   document.getElementById('weatherPreview').innerHTML = `
-    <div style="display:flex; justify-content:space-between;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
       <div><div style="opacity:0.8;">${city}, ${country}</div><div style="font-size:28px; font-weight:bold;">28°C / 22°C</div><div>Warm, humid</div></div>
       <div style="font-size:48px;">🌤️</div>
     </div>
@@ -87,22 +93,21 @@ function updateWeatherPreview() {
 }
 
 function generateList() {
-  const tripInfo = {
-    country: document.getElementById('countrySelect').value,
-    city: document.getElementById('city-0').value,
-    startDate: document.getElementById('startDate').value,
-    endDate: document.getElementById('endDate').value,
-    reason: getSelectedChips('chips-reason')[0] || 'Leisure',
-    style: getSelectedChips('chips-style')[0] || 'Standard',
-    activities: getSelectedChips('chips-activities'),
-    luggage: getSelectedChips('chips-luggage')[0] || 'Checked',
-    simClose: document.getElementById('timeTravelToggle').checked
-  };
+  const country = document.getElementById('countryInput').value;
+  const city = document.querySelector('.city-input')?.value || 'Tokyo';
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const reason = getSelectedChips('chips-reason')[0] || 'Leisure';
+  const style = getSelectedChips('chips-style')[0] || 'Standard';
+  const activities = getSelectedChips('chips-activities');
+  const luggage = getSelectedChips('chips-luggage')[0] || 'Checked';
+  const simClose = document.getElementById('timeTravelToggle').checked;
+  const tripInfo = { country, city, startDate, endDate, reason, style, activities, luggage, simClose };
   sessionStorage.setItem('pendingTrip', JSON.stringify(tripInfo));
   window.location.href = 'list.html';
 }
 
-// Event listeners
+// Attach event listeners after DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nextBtn').addEventListener('click', formNext);
   document.getElementById('prevBtn').addEventListener('click', formPrev);
