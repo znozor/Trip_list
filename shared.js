@@ -2,11 +2,18 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 let supabase = null;
 let currentUser = null;
+
 try {
   if (window.CONFIG && window.CONFIG.SUPABASE_URL) {
-    supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    supabase = createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
+  } else {
+    console.warn('Supabase not configured – guest mode only');
   }
-} catch(e) { console.log('Supabase not configured'); }
+} catch(e) { console.warn('Supabase init error:', e); }
+
+// Expose supabase and currentUser globally
+window.supabase = supabase;
+window.currentUser = currentUser;
 
 window.showToast = function(msg, type='info') {
   let container = document.getElementById('toastContainer');
@@ -24,49 +31,52 @@ window.showToast = function(msg, type='info') {
 };
 
 window.initAuth = async function() {
-  if (supabase) {
-    const { data: { session } } = await supabase.auth.getSession();
-    currentUser = session?.user || null;
+  if (window.supabase) {
+    const { data: { session } } = await window.supabase.auth.getSession();
+    window.currentUser = session?.user || null;
+    currentUser = window.currentUser;
   }
-  return currentUser;
+  return window.currentUser;
 };
 
 window.signInWithGoogle = async function() {
-  if (!supabase) { showToast('Demo mode – no backend', 'warning'); return; }
-  await supabase.auth.signInWithOAuth({ provider: 'google' });
+  if (!window.supabase) { window.showToast('Demo mode – no backend', 'warning'); return; }
+  await window.supabase.auth.signInWithOAuth({ provider: 'google' });
 };
 
 window.signUpWithEmail = async function(email, password, fullName) {
-  if (!supabase) { showToast('Demo mode – signup disabled', 'warning'); return; }
-  const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
-  if (error) showToast(error.message, 'danger');
-  else showToast('Check email to confirm', 'success');
+  if (!window.supabase) { window.showToast('Demo mode – signup disabled', 'warning'); return; }
+  const { error } = await window.supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+  if (error) window.showToast(error.message, 'danger');
+  else window.showToast('Check email to confirm', 'success');
 };
 
 window.signInWithEmail = async function(email, password) {
-  if (!supabase) { showToast('Demo mode – login disabled', 'warning'); return; }
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) showToast(error.message, 'danger');
+  if (!window.supabase) { window.showToast('Demo mode – login disabled', 'warning'); return; }
+  const { error } = await window.supabase.auth.signInWithPassword({ email, password });
+  if (error) window.showToast(error.message, 'danger');
   else window.location.href = 'plan.html';
 };
 
 window.signOut = async function() {
-  if (supabase) await supabase.auth.signOut();
+  if (window.supabase) await window.supabase.auth.signOut();
   window.location.href = 'index.html';
 };
 
-if (supabase) {
-  supabase.auth.onAuthStateChange((event, session) => {
-    currentUser = session?.user || null;
-    if (event === 'SIGNED_IN' && window.location.pathname.includes('index.html'))
+if (window.supabase) {
+  window.supabase.auth.onAuthStateChange((event, session) => {
+    window.currentUser = session?.user || null;
+    currentUser = window.currentUser;
+    if (event === 'SIGNED_IN' && window.location.pathname.includes('index.html')) {
       window.location.href = 'plan.html';
+    }
   });
 }
 
 window.saveTripToSupabase = async function(tripData) {
-  if (!supabase || !currentUser) return null;
-  const { data, error } = await supabase.from('trips').insert({
-    user_id: currentUser.id,
+  if (!window.supabase || !window.currentUser) return null;
+  const { data, error } = await window.supabase.from('trips').insert({
+    user_id: window.currentUser.id,
     title: tripData.title,
     start_date: tripData.startDate,
     end_date: tripData.endDate,
@@ -75,14 +85,14 @@ window.saveTripToSupabase = async function(tripData) {
     travelers_count: tripData.travelersCount || 1,
     luggage_type: tripData.luggage
   }).select().single();
-  if (error) showToast(error.message, 'danger');
+  if (error) window.showToast(error.message, 'danger');
   return data;
 };
 
 window.getTripsFromSupabase = async function() {
-  if (!supabase || !currentUser) return [];
-  const { data, error } = await supabase.from('trips').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-  if (error) showToast(error.message, 'danger');
+  if (!window.supabase || !window.currentUser) return [];
+  const { data, error } = await window.supabase.from('trips').select('*').eq('user_id', window.currentUser.id).order('created_at', { ascending: false });
+  if (error) window.showToast(error.message, 'danger');
   return data || [];
 };
 
