@@ -624,3 +624,16 @@ input:checked + .toggle-slider:before {
 .reminders-card .pack-item {
     padding: 8px 0;
 }
+/* Strike‑through animation for checked items */
+.item-name.checked-text {
+    text-decoration: line-through;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+.item-checkbox {
+    transition: background 0.2s, transform 0.1s;
+}
+.item-checkbox:active {
+    transform: scale(0.9);
+}
+/* No reminders section, so no extra styles needed */
