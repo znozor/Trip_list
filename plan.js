@@ -83,3 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
   updateWeatherPreview();
   updateStepUI();
 });
+
+const cityMap = {
+  Japan: ['Tokyo','Osaka','Kyoto'],
+  France: ['Paris','Lyon','Marseille'],
+  Italy: ['Rome','Milan','Venice'],
+  Thailand: ['Bangkok','Phuket','Chiang Mai']
+};
+const countrySelect = document.getElementById('countrySelect');
+const citySelect = document.getElementById('citySelect');
+countrySelect.addEventListener('change', () => {
+  const country = countrySelect.value;
+  const cities = cityMap[country] || [];
+  citySelect.innerHTML = '<option value="">Select city</option>' + cities.map(c => `<option>${c}</option>`).join('');
+});
+// similarly for additional city rows (use same map)
