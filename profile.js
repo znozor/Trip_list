@@ -1,4 +1,3 @@
-// profile.js
 async function loadProfile() {
   const user = window.currentUser;
   if (user) {
@@ -10,7 +9,6 @@ async function loadProfile() {
     document.getElementById('userEmail').innerText = 'Not logged in';
   }
 }
-
 document.getElementById('logoutBtn')?.addEventListener('click', signOut);
 const darkToggle = document.getElementById('darkModeToggle');
 if (darkToggle) {
@@ -19,27 +17,17 @@ if (darkToggle) {
     localStorage.setItem('theme', e.target.checked ? 'dark' : 'light');
   });
   const saved = localStorage.getItem('theme');
-  if (saved === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    darkToggle.checked = true;
-  }
+  if (saved === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); darkToggle.checked = true; }
 }
 document.getElementById('exportBtn')?.addEventListener('click', () => {
   const trips = JSON.parse(localStorage.getItem('wanderpack_trips') || '[]');
   const dataStr = JSON.stringify(trips, null, 2);
   const blob = new Blob([dataStr], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'wanderpack-data.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('Data exported', 'success');
+  const a = document.createElement('a'); a.href = url; a.download = 'wanderpack-data.json'; a.click(); URL.revokeObjectURL(url);
+  showToast('Data exported');
 });
 document.getElementById('deleteAccountBtn')?.addEventListener('click', () => {
-  if (confirm('Delete all your locally stored trips? This cannot be undone.')) {
-    localStorage.removeItem('wanderpack_trips');
-    showToast('All local data cleared', 'success');
-  }
+  if (confirm('Delete all local trips?')) { localStorage.removeItem('wanderpack_trips'); showToast('Local data cleared'); }
 });
 initAuth().then(loadProfile);
