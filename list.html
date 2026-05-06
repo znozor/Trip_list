@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
   <title>Packing List – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -18,14 +19,15 @@
 
   <div class="list-header">
     <h2><i class="fa-solid fa-list-check"></i> Your Packing List</h2>
-    <div id="tripBadge" class="list-trip-badge"></div>
-    <div id="listProgress">0 / 0 items</div>
+    <div id="tripBadge" class="list-trip-badge" style="margin: 12px 0;"></div>
+    <div id="listProgress">0 / 0 items packed</div>
   </div>
   <div id="packingListBody"></div>
-  <div class="list-actions" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
-    <button class="btn btn-ghost" onclick="addCustomItem()">+ Custom Item</button>
-    <button class="btn btn-primary" id="saveTripBtn">💾 Save Trip</button>
+  <div class="list-actions" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px;">
+    <button class="btn btn-ghost" id="addCustomItemBtn"><i class="fa-solid fa-plus"></i> Custom Item</button>
+    <button class="btn btn-primary" id="saveTripBtn"><i class="fa-solid fa-heart"></i> Save Trip</button>
   </div>
+  <div class="disclaimer">As an Amazon Associate we earn from qualifying purchases.</div>
 </div>
 <script src="config.js"></script>
 <script src="shared.js"></script>
