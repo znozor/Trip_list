@@ -27,11 +27,14 @@
     <div class="nav-item" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
   <div class="list-header">
-    <h2><i class="fa-solid fa-list-check"></i> Your Packing List</h2>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <button id="backButton" class="btn btn-ghost btn-sm" style="display: none;"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        <h2><i class="fa-solid fa-list-check"></i> Your Packing List</h2>
+    </div>
     <div id="tripBadge" class="list-trip-badge"></div>
     <div id="weatherConfidence"></div>
     <div id="listProgress"></div>
-  </div>
+</div>
   <div id="packingListBody"></div>
   <div class="list-actions" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px;">
     <button class="btn btn-ghost" id="addCustomItemBtn">+ Custom Item</button>
