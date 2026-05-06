@@ -1,4 +1,4 @@
-// plan.js – handles multi-step form, weather preview, and passes data to list.html
+// plan.js
 let currentStep = 0;
 const totalSteps = 4;
 let cityCount = 1;
@@ -13,69 +13,43 @@ function updateStepUI() {
     const line = document.getElementById(`line-${i}`);
     if (line) line.classList.toggle('done', i < currentStep);
   }
-  document.querySelectorAll('.form-step').forEach((s, i) => s.classList.toggle('active', i === currentStep));
+  document.querySelectorAll('.form-step').forEach((s,i) => s.classList.toggle('active', i === currentStep));
   document.getElementById('prevBtn').style.display = currentStep > 0 ? 'inline-flex' : 'none';
-  document.getElementById('nextBtn').innerHTML = currentStep < totalSteps-1 ? '<i class="fa-solid fa-arrow-right"></i> Next' : '<i class="fa-solid fa-magic-wand-sparkles"></i> Generate List';
+  document.getElementById('nextBtn').innerHTML = currentStep < totalSteps-1 ? 'Next →' : '✨ Generate List';
 }
 
 function formNext() {
-  if (currentStep < totalSteps-1) {
-    if (currentStep === 2) updateWeatherPreview();
-    currentStep++;
-    updateStepUI();
-  } else {
-    generateList();
-  }
+  if (currentStep < totalSteps-1) { currentStep++; updateStepUI(); }
+  else generateList();
 }
-
 function formPrev() { if (currentStep > 0) { currentStep--; updateStepUI(); } }
 
-function addCity() { cityCount++; const cf = document.getElementById('cityFields'); const row = document.createElement('div'); row.className = 'city-row'; row.innerHTML = `<input class="input-field" placeholder="City ${cityCount}" id="city-${cityCount-1}"/><span class="remove-city" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></span>`; cf.appendChild(row); }
-
-function toggleChip(el, multi = false) { if (multi) el.classList.toggle('selected'); else { const group = el.closest('.chips-group').id; document.querySelectorAll(`#${group} .chip`).forEach(c => c.classList.remove('selected')); el.classList.add('selected'); } }
-
-function getSelectedChips(groupId) { return Array.from(document.querySelectorAll(`#${groupId} .chip.selected`)).map(c => c.dataset.val); }
-
-function updateWeatherPreview() {
-  const country = document.getElementById('countrySelect').value || 'Japan';
-  const startDate = document.getElementById('startDate').value;
-  const endDate = document.getElementById('endDate').value;
-  const city = document.getElementById('city-0').value || 'Tokyo';
-  // Mock climate data (replace with real API later)
-  const climate = { high: 28, low: 22, desc: 'Warm, humid', note: 'Rainy season starts mid-June.' };
-  document.getElementById('wpLocation').innerHTML = `${city}, ${country} • ${startDate ? startDate.slice(5) : 'Jun 10'} – ${endDate ? endDate.slice(5) : 'Jun 15'}`;
-  document.getElementById('wpTemp').innerHTML = `${climate.high}°C / ${climate.low}°C`;
-  document.getElementById('wpDesc').innerHTML = climate.desc;
-  document.getElementById('wpNote').innerHTML = `⚠️ ${climate.note}`;
-}
-
 function generateList() {
-  const country = document.getElementById('countrySelect').value || 'Japan';
-  const city = document.getElementById('city-0').value || 'Tokyo';
-  const startDate = document.getElementById('startDate').value;
-  const endDate = document.getElementById('endDate').value;
-  const activities = getSelectedChips('chips-activities');
-  const style = getSelectedChips('chips-style')[0] || 'Standard';
-  const who = getSelectedChips('chips-who')[0] || 'Solo';
-  const simClose = document.getElementById('timeTravelToggle').checked;
-  const tripInfo = { country, city, startDate, endDate, activities, style, who, simClose };
-  sessionStorage.setItem('pendingTrip', JSON.stringify(tripInfo));
+  const trip = {
+    country: document.getElementById('countrySelect').value,
+    city: document.getElementById('city-0').value,
+    startDate: document.getElementById('startDate').value,
+    endDate: document.getElementById('endDate').value,
+    activities: Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val),
+    style: document.querySelector('#chips-style .chip.selected')?.dataset.val || 'Standard',
+    reason: document.querySelector('#chips-reason .chip.selected')?.dataset.val || 'Leisure'
+  };
+  sessionStorage.setItem('pendingTrip', JSON.stringify(trip));
   window.location.href = 'list.html';
 }
 
-// Attach event listeners after DOM ready
+window.addCity = () => { cityCount++; const cf = document.getElementById('cityFields'); const row = document.createElement('div'); row.className = 'city-row'; row.innerHTML = `<input class="input-field" placeholder="City ${cityCount}" id="city-${cityCount-1}"/><span onclick="this.parentElement.remove()" class="remove-city">✖</span>`; cf.appendChild(row); };
+function toggleChip(el, multi) { if (multi) el.classList.toggle('selected'); else { document.querySelectorAll(`.${el.parentElement.id} .chip`).forEach(c => c.classList.remove('selected')); el.classList.add('selected'); } }
+
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('nextBtn').addEventListener('click', formNext);
-  document.getElementById('prevBtn').addEventListener('click', formPrev);
-  document.getElementById('multiCountryToggle').addEventListener('change', (e) => {
-    document.getElementById('extraCountries').style.display = e.target.checked ? 'block' : 'none';
-    document.getElementById('multiDates').style.display = e.target.checked ? 'block' : 'none';
-  });
-  // Set default dates (3 months from now)
-  const d = new Date(); d.setMonth(d.getMonth()+3);
-  const d2 = new Date(d); d2.setDate(d2.getDate()+5);
-  document.getElementById('startDate').value = d.toISOString().split('T')[0];
-  document.getElementById('endDate').value = d2.toISOString().split('T')[0];
+  document.getElementById('nextBtn').onclick = formNext;
+  document.getElementById('prevBtn').onclick = formPrev;
+  document.getElementById('multiCountryToggle').onchange = e => document.getElementById('extraCountries').style.display = e.target.checked ? 'block' : 'none';
+  const now = new Date(); now.setMonth(now.getMonth()+3);
+  document.getElementById('startDate').valueAsDate = now;
+  now.setDate(now.getDate()+5);
+  document.getElementById('endDate').valueAsDate = now;
   updateStepUI();
-  updateWeatherPreview();
+  // Attach chip toggles
+  document.querySelectorAll('.chip').forEach(c => c.onclick = function(e) { toggleChip(this, e.currentTarget.parentElement.id === 'chips-activities'); });
 });
