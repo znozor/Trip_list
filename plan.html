@@ -59,8 +59,21 @@ document.body.style.minHeight = window.innerHeight + 'px';
     }
 
     applyMobileFix();
+    sessionStorage.removeItem('mobile_fixed');
   });
 })();
+
+    window.addEventListener('pageshow', function (event) {
+  // Fix Android Chrome OAuth desktop view bug
+  if (event.persisted || window.performance.navigation.type === 2) {
+
+    if (!sessionStorage.getItem('mobile_fixed')) {
+      sessionStorage.setItem('mobile_fixed', 'true');
+      location.reload();
+    }
+
+  }
+});
 </script>
 </head>
 
