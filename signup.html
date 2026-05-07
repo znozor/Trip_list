@@ -17,50 +17,47 @@
 <body>
 <div class="app-wrapper">
   <div class="card" style="max-width: 400px; margin: 40px auto;">
-    <h2 style="text-align: center; margin-bottom: 24px;"><i class="fa-solid fa-user-plus"></i> Create Account</h2>
-    <div class="input-group">
-      <label class="input-label">Full Name</label>
-      <input type="text" id="signupName" class="input-field" placeholder="John Doe">
-    </div>
-    <div class="input-group">
-      <label class="input-label">Email</label>
-      <input type="email" id="signupEmail" class="input-field" placeholder="you@example.com">
-    </div>
-    <div class="input-group">
-      <label class="input-label">Password (min 6 characters)</label>
-      <input type="password" id="signupPassword" class="input-field" placeholder="••••••">
-    </div>
+    <h2 style="text-align: center;"><i class="fa-solid fa-user-plus"></i> Create Account</h2>
+    <div class="input-group"><label>Full Name</label><input type="text" id="signupName" class="input-field"></div>
+    <div class="input-group"><label>Email</label><input type="email" id="signupEmail" class="input-field"></div>
+    <div class="input-group"><label>Password (min 6)</label><input type="password" id="signupPassword" class="input-field"></div>
     <button id="signupSubmitBtn" class="btn btn-primary btn-full">Sign Up</button>
-    <div style="text-align: center; margin-top: 16px;">
-      Already have an account? <a href="login.html" class="guest-link">Login →</a>
-    </div>
-    <div style="text-align: center; margin-top: 16px;">
-      <a href="index.html" class="guest-link">← Back</a>
-    </div>
+    <div style="text-align:center; margin-top:16px;"><a href="login.html">Already have an account? Login</a></div>
   </div>
 </div>
+
 <script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
+
 <script>
-  document.getElementById('signupSubmitBtn').onclick = async () => {
-    const fullName = document.getElementById('signupName').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    if (!fullName || !email || !password) {
-      showToast('Please fill all fields', 'warning');
-      return;
+  let supabaseClient = null;
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (window.sb) {
+      clearInterval(interval);
+      supabaseClient = window.sb;
+      const btn = document.getElementById('signupSubmitBtn');
+      btn.onclick = async () => {
+        const fullName = document.getElementById('signupName').value.trim();
+        const email = document.getElementById('signupEmail').value.trim();
+        const password = document.getElementById('signupPassword').value;
+        if (!fullName || !email || !password) return alert('All fields required');
+        if (password.length < 6) return alert('Password must be at least 6 characters');
+        const { error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } }
+        });
+        if (error) alert(error.message);
+        else alert('Check your email to confirm. Then login.');
+      };
+    } else if (attempts > 25) {
+      clearInterval(interval);
+      console.warn('Supabase client not ready');
     }
-    if (password.length < 6) {
-      showToast('Password must be at least 6 characters', 'warning');
-      return;
-    }
-    await signUpWithEmail(email, password, fullName);
-    // Show success and redirect to login after delay
-    showToast('Account created! Please check your email to confirm.', 'success');
-    setTimeout(() => {
-      window.location.href = 'login.html';
-    }, 2000);
-  };
+  }, 200);
 </script>
 </body>
 </html>
