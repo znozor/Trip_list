@@ -46,6 +46,53 @@
     setTimeout(forceMobileScaling, 100);
     setTimeout(forceMobileScaling, 500);
   </script>
+  <script>
+(function () {
+
+  // Force proper mobile viewport after Google OAuth redirect
+  function fixMobileViewport() {
+
+    // Reset zoom
+    document.body.style.zoom = "1";
+    document.body.style.transform = "scale(1)";
+    document.body.style.transformOrigin = "top left";
+
+    // Reset width
+    document.documentElement.style.width = "100%";
+    document.body.style.width = "100%";
+    document.body.style.maxWidth = "100vw";
+    document.body.style.overflowX = "hidden";
+
+    // Force mobile viewport
+    let viewport = document.querySelector('meta[name="viewport"]');
+
+    if (viewport) {
+      viewport.setAttribute(
+        "content",
+        "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      );
+    }
+
+    // Force reflow
+    document.body.offsetHeight;
+
+    // Scroll tiny amount to trigger mobile repaint
+    window.scrollTo(0, 1);
+
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 50);
+  }
+
+  // Run multiple times because Android OAuth webview is buggy
+  window.addEventListener("load", fixMobileViewport);
+
+  setTimeout(fixMobileViewport, 100);
+  setTimeout(fixMobileViewport, 500);
+  setTimeout(fixMobileViewport, 1000);
+
+})();
+</script>
 </head>
 <body>
 <div class="app-wrapper">
