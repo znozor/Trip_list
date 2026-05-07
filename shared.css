@@ -727,3 +727,21 @@ input:checked + .toggle-slider:before {
         transform: translate(-50%, -50%) scale(1);
     }
 }
+/* Force mobile layout – prevent desktop view on phones */
+body {
+  min-width: 320px;
+  width: 100%;
+  overflow-x: hidden;
+}
+.app-wrapper {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 20px 16px;
+}
+@media (max-width: 480px) {
+  .app-wrapper {
+    padding: 16px 12px;
+  }
+}
