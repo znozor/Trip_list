@@ -35,6 +35,18 @@
     // Reset Android Chrome zoom after Google OAuth
     document.documentElement.style.zoom = '1';
     document.body.style.zoom = '1';
+    // Force correct mobile scale after Google OAuth
+const viewport = document.querySelector('meta[name="viewport"]');
+
+if (viewport) {
+  viewport.setAttribute(
+    'content',
+    'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+  );
+}
+
+// Small reflow fix for Android Chrome
+document.body.style.minHeight = window.innerHeight + 'px';
 
     // Prevent flicker
     document.body.style.visibility = 'visible';
