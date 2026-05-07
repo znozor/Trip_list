@@ -1,4 +1,4 @@
-// shared.js – using global supabase from CDN (loaded in HTML)
+// shared.js – uses window.supabase from global CDN
 let supabase = null;
 let currentUser = null;
 
@@ -6,14 +6,15 @@ function showGlobalDebug(msg) {
   const div = document.getElementById('debugMsg');
   if (div) {
     div.innerText = msg;
-    document.getElementById('debugArea').style.display = 'block';
-    setTimeout(() => { document.getElementById('debugArea').style.display = 'none'; }, 8000);
+    const area = document.getElementById('debugArea');
+    if (area) area.style.display = 'block';
+    setTimeout(() => { if (area) area.style.display = 'none'; }, 8000);
   }
   console.log(msg);
 }
 showGlobalDebug('shared.js loaded');
 
-// Initialize Supabase using the global supabase object (from CDN)
+// Initialize Supabase using the global supabase object from CDN
 try {
   if (window.CONFIG && window.CONFIG.SUPABASE_URL && window.supabase) {
     supabase = window.supabase.createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
