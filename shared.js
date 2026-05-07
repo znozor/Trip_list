@@ -63,16 +63,17 @@
   };
 
   window.signInWithGoogle = async function() {
-    if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/plan.html',
-        skipBrowserRedirect: false
-      }
-    });
-    if (error) window.showToast(error.message, 'danger');
-  };
+  if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
+  const redirectUrl = window.location.origin + '/plan.html?nocache=' + Date.now();
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectUrl,
+      skipBrowserRedirect: false
+    }
+  });
+  if (error) window.showToast(error.message, 'danger');
+};
 
   window.signUpWithEmail = async function(email, password, fullName) {
     if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
