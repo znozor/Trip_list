@@ -21,48 +21,7 @@
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
-  function forceViewport() {
-    // Remove and re-insert viewport meta to force browser to re-apply it
-    const existing = document.querySelector('meta[name="viewport"]');
-    if (existing) existing.remove();
-
-    const meta = document.createElement('meta');
-    meta.name = 'viewport';
-    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover';
-    document.head.prepend(meta);
-
-    // Force layout recalculation
-    document.documentElement.style.width = '100%';
-    document.documentElement.style.maxWidth = '100%';
-    document.documentElement.style.overflowX = 'hidden';
-    document.body.style.width = '100%';
-    document.body.style.maxWidth = '100%';
-    document.body.style.overflowX = 'hidden';
-
-    // Scroll trick forces Android Chrome to reflow at correct scale
-    window.scrollTo(0, 1);
-    window.scrollTo(0, 0);
-  }
-
-  // Run immediately on DOMContentLoaded
-  document.addEventListener('DOMContentLoaded', forceViewport);
-
-  window.addEventListener('load', () => {
-    if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    forceViewport();
-    requestAnimationFrame(forceViewport);
-    setTimeout(forceViewport, 150);
-    setTimeout(forceViewport, 400);
-
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        document.body.classList.add('app-ready');
-      }, 50);
-    });
-  });
-})();
+  
 </script>
 </head>
 
