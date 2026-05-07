@@ -2,50 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Force no caching to prevent old viewport -->
+  <!-- Prevent caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <!-- Simple viewport – no restrictions that cause desktop zoom -->
+  <!-- Standard viewport -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Plan Trip – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
   <script>
+    // Dark mode
     (function() {
       const theme = localStorage.getItem('theme');
       if (theme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
-      } else {
-        document.documentElement.removeAttribute('data-theme');
       }
     })();
-  </script>
-  <!-- One‑time viewport re‑enforcement (once, not repeatedly) -->
-  <script>
-    (function() {
-      function enforceMobileView() {
-        const meta = document.querySelector('meta[name="viewport"]');
-        if (meta) {
-          // Re‑set the content to the same value – forces browser to re‑evaluate
-          meta.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
-        }
-        // Ensure body width is device width (prevents zoom‑out)
-        document.body.style.width = '100%';
-        document.body.style.overflowX = 'hidden';
-        // Also force the root element
-        document.documentElement.style.overflowX = 'hidden';
+    // Force correct mobile scaling (overrides any browser zoom after redirect)
+    function enforceMobileView() {
+      const meta = document.querySelector('meta[name="viewport"]');
+      if (meta) {
+        meta.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
       }
-      // Run after DOM is ready, but only once
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', enforceMobileView);
-      } else {
-        enforceMobileView();
+      document.body.style.width = '100%';
+      document.body.style.overflowX = 'hidden';
+      document.documentElement.style.width = '100%';
+      document.documentElement.style.overflowX = 'hidden';
+      // Additional force for modern browsers
+      if (window.visualViewport) {
+        window.visualViewport.scale = 1;
       }
-      // Also run after a short delay to catch any late changes (but only once)
-      setTimeout(enforceMobileView, 100);
-    })();
+    }
+    // Run immediately, on load, and after a short delay to catch any late rescaling
+    enforceMobileView();
+    window.addEventListener('load', enforceMobileView);
+    setTimeout(enforceMobileView, 100);
+    setTimeout(enforceMobileView, 500);
   </script>
 </head>
 <body>
