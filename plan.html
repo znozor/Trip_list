@@ -40,59 +40,113 @@
       }
     }
 
-    // Run as early as possible
-    forceMobileScaling();
-    window.addEventListener('load', forceMobileScaling);
-    setTimeout(forceMobileScaling, 100);
-    setTimeout(forceMobileScaling, 500);
-  </script>
+    // R<head>
+  <meta charset="UTF-8">
+
+  <!-- Proper mobile viewport -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- Disable cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <title>Plan Trip – WanderPack</title>
+
+  <link rel="stylesheet" href="shared.css">
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap"
+        rel="stylesheet">
+
   <script>
-(function () {
+    // Theme
+    (function () {
+      const theme = localStorage.getItem('theme');
 
-  // Force proper mobile viewport after Google OAuth redirect
-  function fixMobileViewport() {
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
 
-    // Reset zoom
-    document.body.style.zoom = "1";
-    document.body.style.transform = "scale(1)";
-    document.body.style.transformOrigin = "top left";
+  <style>
+    /* Prevent desktop zoom after OAuth redirect */
 
-    // Reset width
-    document.documentElement.style.width = "100%";
-    document.body.style.width = "100%";
-    document.body.style.maxWidth = "100vw";
-    document.body.style.overflowX = "hidden";
-
-    // Force mobile viewport
-    let viewport = document.querySelector('meta[name="viewport"]');
-
-    if (viewport) {
-      viewport.setAttribute(
-        "content",
-        "width=device-width, initial-scale=1.0, viewport-fit=cover"
-      );
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
     }
 
-    // Force reflow
-    document.body.offsetHeight;
+    body {
+      position: relative;
+    }
 
-    // Scroll tiny amount to trigger mobile repaint
-    window.scrollTo(0, 1);
+    .app-wrapper {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+  </style>
 
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-    }, 50);
-  }
+  <script>
+    // FIX Android + Google OAuth desktop scaling issue
 
-  // Run multiple times because Android OAuth webview is buggy
-  window.addEventListener("load", fixMobileViewport);
+    function fixMobileView() {
 
-  setTimeout(fixMobileViewport, 100);
-  setTimeout(fixMobileViewport, 500);
-  setTimeout(fixMobileViewport, 1000);
+      // Reset zoom
+      document.body.style.zoom = "1";
 
-})();
-</script>
+      // Force correct widths
+      document.documentElement.style.width = "100%";
+      document.body.style.width = "100%";
+
+      // Remove accidental scaling
+      document.body.style.transform = "none";
+
+      // Re-apply viewport
+      const viewport = document.querySelector(
+        'meta[name="viewport"]'
+      );
+
+      if (viewport) {
+        viewport.setAttribute(
+          "content",
+          "width=device-width, initial-scale=1.0, viewport-fit=cover"
+        );
+      }
+
+      // Force browser repaint
+      document.body.offsetHeight;
+
+      // Tiny scroll trick fixes Android OAuth bug
+      window.scrollTo(0, 1);
+
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 50);
+    }
+
+    window.addEventListener("load", () => {
+
+      fixMobileView();
+
+      // Run multiple times because Android webview is buggy
+      setTimeout(fixMobileView, 100);
+      setTimeout(fixMobileView, 500);
+      setTimeout(fixMobileView, 1000);
+
+    });
+  </script>
 </head>
 <body>
 <div class="app-wrapper">
