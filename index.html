@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <meta name="vercel:toolbar" content="disable">
   <title>WanderPack – Welcome</title>
   <link rel="stylesheet" href="shared.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="config.js"></script>
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
 </head>
 <body>
 <div class="app-wrapper">
@@ -33,91 +36,57 @@
     <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
   </div>
 </div>
+<script src="config.js"></script>
+<script src="shared.js"></script>
 <script>
-  // ------ Debug helper ------
-  const debugDiv = document.getElementById('debugArea');
-  const debugSpan = document.getElementById('debugMsg');
-  function debug(msg, isError = false) {
-    if (debugDiv && debugSpan) {
-      debugSpan.innerText = msg;
-      debugDiv.style.display = 'block';
-      debugDiv.style.background = isError ? '#ffcccc' : '#ffe0e0';
-      setTimeout(() => { debugDiv.style.display = 'none'; }, 6000);
-    }
-    console.log(msg);
-  }
-
-  // ------ Init Supabase ------
-  let supabase = null;
-  if (typeof CONFIG === 'undefined') {
-    debug('ERROR: config.js not loaded', true);
-  } else if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
-    debug('ERROR: SUPABASE_URL or ANON_KEY missing', true);
-  } else if (typeof window.supabase === 'undefined') {
-    debug('ERROR: Supabase CDN not loaded', true);
-  } else {
-    try {
-      supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-      debug('Supabase ready');
-    } catch(e) {
-      debug('Supabase init error: ' + e.message, true);
-    }
-  }
-
-  // ------ Google Sign-In ------
-  window.signInWithGoogle = async function() {
-    debug('Google button clicked');
-    if (!supabase) {
-      debug('Supabase not ready – cannot login', true);
-      alert('Supabase not ready. Please refresh the page.');
-      return;
-    }
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin + '/plan.html' }
-      });
-      if (error) {
-        debug('Google error: ' + error.message, true);
-        alert('Google login error: ' + error.message);
-      } else {
-        debug('Redirecting to Google...');
-      }
-    } catch(err) {
-      debug('Unexpected error: ' + err.message, true);
-      alert('Error: ' + err.message);
-    }
-  };
-
-  // ------ Enable Google button after Supabase is ready ------
+  // Wait for shared.js to fully load and expose the function
+  let checkInterval;
   const googleBtn = document.getElementById('googleBtn');
-  if (googleBtn) {
-    googleBtn.disabled = true;
-    googleBtn.style.opacity = '0.6';
 
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      if (supabase) {
-        clearInterval(interval);
-        googleBtn.disabled = false;
-        googleBtn.style.opacity = '1';
-        googleBtn.onclick = () => window.signInWithGoogle();
-        debug('Google button enabled');
-      } else if (attempts > 20) {
-        clearInterval(interval);
-        debug('Timeout – Supabase never ready', true);
+  function enableGoogleButton() {
+    if (typeof window.signInWithGoogle === 'function') {
+      clearInterval(checkInterval);
+      googleBtn.disabled = false;
+      googleBtn.style.opacity = '1';
+      const debugDiv = document.getElementById('debugArea');
+      if (debugDiv) {
+        debugDiv.style.display = 'none';
       }
-    }, 250);
-  } else {
-    debug('Google button not found', true);
+      googleBtn.onclick = () => {
+        window.signInWithGoogle();
+      };
+    }
   }
 
-  // ------ Email signup redirect ------
-  const signupBtn = document.getElementById('signupRedirectBtn');
-  if (signupBtn) {
-    signupBtn.onclick = () => { window.location.href = 'signup.html'; };
-  }
+  // Check every 200ms for up to 5 seconds
+  let attempts = 0;
+  checkInterval = setInterval(() => {
+    attempts++;
+    if (typeof window.signInWithGoogle === 'function') {
+      clearInterval(checkInterval);
+      googleBtn.disabled = false;
+      googleBtn.style.opacity = '1';
+      googleBtn.onclick = () => { window.signInWithGoogle(); };
+      const debugDiv = document.getElementById('debugArea');
+      if (debugDiv) debugDiv.style.display = 'none';
+    } else if (attempts > 25) { // 5 seconds total
+      clearInterval(checkInterval);
+      const debugDiv = document.getElementById('debugArea');
+      if (debugDiv) {
+        debugDiv.style.display = 'block';
+        document.getElementById('debugMsg').innerText = 'ERROR: signInWithGoogle not available. Check shared.js.';
+      }
+    }
+  }, 200);
+
+  // Initially disable button until ready
+  googleBtn.disabled = true;
+  googleBtn.style.opacity = '0.6';
+
+  // Email signup redirect
+  document.getElementById('signupRedirectBtn').onclick = () => {
+    window.location.href = 'signup.html';
+  };
 </script>
 </body>
 </html>
