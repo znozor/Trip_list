@@ -2,12 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Prevent caching -->
+  <!-- Force no caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <!-- Standard viewport -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Plan Trip – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -16,41 +14,50 @@
     // Dark mode
     (function() {
       const theme = localStorage.getItem('theme');
-      if (theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     })();
-    // Force correct mobile scaling (overrides any browser zoom after redirect)
-    function enforceMobileView() {
-      const meta = document.querySelector('meta[name="viewport"]');
-      if (meta) {
-        meta.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
+
+    // Force correct mobile viewport and scaling
+    function forceMobileScaling() {
+      // 1. Ensure viewport meta is exactly as needed
+      let viewport = document.querySelector('meta[name="viewport"]');
+      if (!viewport) {
+        viewport = document.createElement('meta');
+        viewport.name = 'viewport';
+        document.head.appendChild(viewport);
       }
-      document.body.style.width = '100%';
-      document.body.style.overflowX = 'hidden';
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover');
+      
+      // 2. Reset any possible body/html scaling from previous loads
       document.documentElement.style.width = '100%';
       document.documentElement.style.overflowX = 'hidden';
-      // Additional force for modern browsers
-      if (window.visualViewport) {
-        window.visualViewport.scale = 1;
+      document.body.style.width = '100%';
+      document.body.style.overflowX = 'hidden';
+      
+      // 3. If the viewport width is unusually large (desktop mode), reload the page (happens rarely)
+      if (window.innerWidth > 800 && window.innerWidth > screen.width) {
+        location.reload(true);
       }
     }
-    // Run immediately, on load, and after a short delay to catch any late rescaling
-    enforceMobileView();
-    window.addEventListener('load', enforceMobileView);
-    setTimeout(enforceMobileView, 100);
-    setTimeout(enforceMobileView, 500);
+
+    // Run as early as possible
+    forceMobileScaling();
+    window.addEventListener('load', forceMobileScaling);
+    setTimeout(forceMobileScaling, 100);
+    setTimeout(forceMobileScaling, 500);
   </script>
 </head>
 <body>
 <div class="app-wrapper">
+  <!-- Bottom navigation (unchanged) -->
   <nav class="bottom-nav">
-    <div class="nav-item active" onclick="window.location.href='plan.html'"><i class="fa-solid fa-map"></i><span>Trip</span></div>
-    <div class="nav-item" onclick="window.location.href='list.html'"><i class="fa-solid fa-list-check"></i><span>List</span></div>
-    <div class="nav-item" onclick="window.location.href='trips.html'"><i class="fa-solid fa-folder-open"></i><span>Trips</span></div>
-    <div class="nav-item" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
+    <div class="nav-item active" onclick="location.href='plan.html'"><i class="fa-solid fa-map"></i><span>Trip</span></div>
+    <div class="nav-item" onclick="location.href='list.html'"><i class="fa-solid fa-list-check"></i><span>List</span></div>
+    <div class="nav-item" onclick="location.href='trips.html'"><i class="fa-solid fa-folder-open"></i><span>Trips</span></div>
+    <div class="nav-item" onclick="location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
 
+  <!-- Rest of your plan.html content – same as before -->
   <div class="form-header">
     <h2><i class="fa-solid fa-suitcase-rolling"></i> Plan Your Trip</h2>
     <div class="step-indicator" id="stepIndicator">
@@ -62,7 +69,7 @@
   </div>
 
   <div class="form-body">
-    <!-- STEP 1 -->
+    <!-- STEP 1 (same as before) -->
     <div class="form-step active" id="step-0">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-map-location-dot"></i> Where are you going?</h2></div>
@@ -117,6 +124,7 @@
     <button class="btn btn-primary" id="nextBtn" style="margin-left:auto">Next →</button>
   </div>
 </div>
+
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
