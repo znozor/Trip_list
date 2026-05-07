@@ -1,10 +1,7 @@
-// shared.js – fixed syntax
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
+// shared.js – using global supabase from CDN (loaded in HTML)
 let supabase = null;
 let currentUser = null;
 
-// Debug helper (optional, uses debugArea if available)
 function showGlobalDebug(msg) {
   const div = document.getElementById('debugMsg');
   if (div) {
@@ -16,12 +13,14 @@ function showGlobalDebug(msg) {
 }
 showGlobalDebug('shared.js loaded');
 
+// Initialize Supabase using the global supabase object (from CDN)
 try {
-  if (window.CONFIG && window.CONFIG.SUPABASE_URL) {
-    supabase = createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
+  if (window.CONFIG && window.CONFIG.SUPABASE_URL && window.supabase) {
+    supabase = window.supabase.createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
     showGlobalDebug('Supabase client created');
+  } else if (!window.supabase) {
+    showGlobalDebug('ERROR: supabase CDN not loaded');
   } else {
-    console.warn('Supabase not configured – guest mode only');
     showGlobalDebug('Supabase not configured (guest mode)');
   }
 } catch(e) {
@@ -56,11 +55,10 @@ window.initAuth = async function() {
   return window.currentUser;
 };
 
-// ========== FIXED Google Sign‑in ==========
 window.signInWithGoogle = async function() {
   showGlobalDebug('signInWithGoogle called');
   if (!window.supabase) {
-    const msg = 'Supabase not initialized. Check config.js.';
+    const msg = 'Supabase not initialized. Check config.js and CDN.';
     showGlobalDebug(msg);
     window.showToast(msg, 'danger');
     return;
@@ -111,7 +109,6 @@ if (window.supabase) {
   });
 }
 
-// Helper to reconstruct trip from Supabase row
 function rowToTrip(row) {
   return {
     id: row.id,
