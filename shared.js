@@ -64,11 +64,16 @@
 
   window.signInWithGoogle = async function() {
     if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/plan.html', skipBrowserRedirect: false
-      }
-    });
+    const { data, error } = await window.supabase.auth.signInWithOAuth({
+  provider: 'google',
+  options: {
+    redirectTo: window.location.origin + '/plan.html',
+    queryParams: {
+      access_type: 'offline',
+      prompt: 'select_account'
+    }
+  }
+});
     if (error) window.showToast(error.message, 'danger');
   };
 
