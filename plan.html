@@ -42,12 +42,6 @@ if (window.visualViewport && window.visualViewport.scale !== 1) {
   document.body.style.transformOrigin = 'top left';
 }
       
-      // 3. Check if we are in desktop mode (window too wide for a phone)
-      //    If yes, reload once to clear the bad state
-      if (!sessionStorage.getItem('fixApplied')) {
-        sessionStorage.setItem('fixApplied', 'true');
-        if (window.innerWidth > 600 && window.innerWidth > screen.width) {
-          location.reload(true);
         }
       }
     }
