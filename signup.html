@@ -5,59 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
   <title>Sign Up – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script>
-    (function() {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
-  </script>
+  <script>(function(){const t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();</script>
 </head>
 <body>
 <div class="app-wrapper">
-  <div class="card" style="max-width: 400px; margin: 40px auto;">
-    <h2 style="text-align: center;"><i class="fa-solid fa-user-plus"></i> Create Account</h2>
-    <div class="input-group"><label>Full Name</label><input type="text" id="signupName" class="input-field"></div>
-    <div class="input-group"><label>Email</label><input type="email" id="signupEmail" class="input-field"></div>
-    <div class="input-group"><label>Password (min 6)</label><input type="password" id="signupPassword" class="input-field"></div>
+  <div class="card" style="max-width:400px; margin:40px auto;">
+    <h2 style="text-align:center;"><i class="fa-solid fa-user-plus"></i> Create Account</h2>
+    <div><input type="text" id="signupName" placeholder="Full Name" class="input-field"></div>
+    <div><input type="email" id="signupEmail" placeholder="Email" class="input-field"></div>
+    <div><input type="password" id="signupPassword" placeholder="Password (min 6)" class="input-field"></div>
     <button id="signupSubmitBtn" class="btn btn-primary btn-full">Sign Up</button>
     <div style="text-align:center; margin-top:16px;"><a href="login.html">Already have an account? Login</a></div>
   </div>
 </div>
-
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
-
 <script>
   let supabaseClient = null;
-  let attempts = 0;
   const interval = setInterval(() => {
-    attempts++;
-    if (window.sb) {
-      clearInterval(interval);
-      supabaseClient = window.sb;
-      const btn = document.getElementById('signupSubmitBtn');
-      btn.onclick = async () => {
-        const fullName = document.getElementById('signupName').value.trim();
-        const email = document.getElementById('signupEmail').value.trim();
-        const password = document.getElementById('signupPassword').value;
-        if (!fullName || !email || !password) return alert('All fields required');
-        if (password.length < 6) return alert('Password must be at least 6 characters');
-        const { error } = await supabaseClient.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: fullName } }
-        });
-        if (error) alert(error.message);
-        else alert('Check your email to confirm. Then login.');
-      };
-    } else if (attempts > 25) {
-      clearInterval(interval);
-      console.warn('Supabase client not ready');
-    }
+    if (window.sb) { clearInterval(interval); supabaseClient = window.sb; enableButton(); }
   }, 200);
+  function enableButton() {
+    const btn = document.getElementById('signupSubmitBtn');
+    btn.onclick = async () => {
+      const fullName = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      if (!fullName || !email || !password) { alert('All fields required'); return; }
+      if (password.length < 6) { alert('Password must be at least 6 characters'); return; }
+      const { error } = await supabaseClient.auth.signUp({
+        email, password,
+        options: { data: { full_name: fullName } }
+      });
+      if (error) alert(error.message);
+      else alert('Check your email to confirm. Then login.');
+    };
+  }
 </script>
 </body>
 </html>
