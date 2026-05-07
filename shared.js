@@ -112,19 +112,27 @@
   // Auth state listener
   if (sb) {
     sb.auth.onAuthStateChange(async (event, session) => {
-      window.currentUser = session?.user || null;
-      if (event === 'SIGNED_IN') {
-        const name = window.currentUser.user_metadata?.full_name ||
-                     window.currentUser.user_metadata?.name ||
-                     window.currentUser.email?.split('@')[0] ||
-                     'Traveler';
-        window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
-        const path = window.location.pathname;
-        if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
-          window.location.href = 'plan.html';
-        }
-      }
-    });
+  window.currentUser = session?.user || null;
+  if (event === 'SIGNED_IN') {
+
+    // OAuth redirect lands with #access_token in URL — do a clean
+    // same-origin reload to fix the Android Chrome viewport bug
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      window.location.replace(window.location.pathname);
+      return;
+    }
+
+    const name = window.currentUser.user_metadata?.full_name ||
+                 window.currentUser.user_metadata?.name ||
+                 window.currentUser.email?.split('@')[0] ||
+                 'Traveler';
+    window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
+    const path = window.location.pathname;
+    if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
+      window.location.href = 'plan.html';
+    }
+  }
+});
   }
 
   // Trip helpers (keep as before)
