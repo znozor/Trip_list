@@ -1,64 +1,60 @@
-// profile.js – waits for window.currentUser and displays profile
+// profile.js – works after any login (Google or email)
 let supabaseClient = null;
 let currentUser = null;
 
-// Wait for shared.js to set up window.sb and window.currentUser
-let attempts = 0;
-const interval = setInterval(async () => {
-  attempts++;
-  if (window.sb) {
-    clearInterval(interval);
-    supabaseClient = window.sb;
-    // Get fresh session to ensure we have the latest user
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    currentUser = session?.user || null;
-    window.currentUser = currentUser;
-    loadProfile();
-    attachEventListeners();
-  } else if (attempts > 30) {
-    clearInterval(interval);
-    // Fallback: show guest
-    document.getElementById('userName').innerText = 'Guest';
-    document.getElementById('userEmail').innerText = 'Not logged in';
-    document.getElementById('avatar').innerText = '👤';
-  }
-}, 200);
+async function getUser() {
+  if (!window.sb) return null;
+  const { data: { session } } = await window.sb.auth.getSession();
+  return session?.user || null;
+}
 
-function loadProfile() {
-  const isLoggedIn = !!(currentUser && supabaseClient);
-  const editBtn = document.getElementById('editNameBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  
-  if (isLoggedIn) {
-    const fullName = currentUser.user_metadata?.full_name || 
-                     currentUser.user_metadata?.name || 
-                     currentUser.email?.split('@')[0] || 
-                     'User';
+async function loadProfile() {
+  const user = await getUser();
+  currentUser = user;
+  if (user) {
+    const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
     document.getElementById('userName').innerText = fullName;
-    document.getElementById('userEmail').innerText = currentUser.email;
+    document.getElementById('userEmail').innerText = user.email;
     document.getElementById('avatar').innerText = fullName.charAt(0).toUpperCase();
-    if (editBtn) editBtn.style.display = 'inline-flex';
-    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+    document.getElementById('editNameBtn').style.display = 'inline-flex';
   } else {
     document.getElementById('userName').innerText = 'Guest';
     document.getElementById('userEmail').innerText = 'Not logged in';
     document.getElementById('avatar').innerText = '👤';
-    if (editBtn) editBtn.style.display = 'none';
-    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+    document.getElementById('editNameBtn').style.display = 'none';
   }
 }
 
+document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for Supabase client
+  let attempts = 0;
+  const interval = setInterval(async () => {
+    attempts++;
+    if (window.sb) {
+      clearInterval(interval);
+      supabaseClient = window.sb;
+      await loadProfile();
+      attachEventListeners();
+    } else if (attempts > 30) {
+      clearInterval(interval);
+      console.warn('Supabase not ready');
+      document.getElementById('userName').innerText = 'Guest';
+      document.getElementById('userEmail').innerText = 'Not logged in';
+    }
+  }, 200);
+});
+
 function attachEventListeners() {
-  // Edit name button
-  const editNameBtn = document.getElementById('editNameBtn');
+  const editBtn = document.getElementById('editNameBtn');
   const displaySection = document.getElementById('displayNameSection');
   const editSection = document.getElementById('editNameSection');
   const editInput = document.getElementById('editNameInput');
   const saveBtn = document.getElementById('saveNameBtn');
   const cancelBtn = document.getElementById('cancelEditBtn');
-  
-  if (editNameBtn) {
-    editNameBtn.onclick = () => {
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  if (editBtn) {
+    editBtn.onclick = () => {
       const currentName = document.getElementById('userName').innerText;
       editInput.value = currentName;
       displaySection.style.display = 'none';
@@ -76,9 +72,8 @@ function attachEventListeners() {
           data: { full_name: newName, name: newName }
         });
         if (error) throw error;
-        // Update local user object
+        // Also update local user object
         currentUser.user_metadata = { ...currentUser.user_metadata, full_name: newName, name: newName };
-        window.currentUser = currentUser;
         document.getElementById('userName').innerText = newName;
         document.getElementById('avatar').innerText = newName.charAt(0).toUpperCase();
         window.showToast('Name updated!', 'success');
@@ -97,8 +92,6 @@ function attachEventListeners() {
     };
   }
 
-  // Logout button
-  const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
       if (supabaseClient) await supabaseClient.auth.signOut();
@@ -106,7 +99,6 @@ function attachEventListeners() {
     };
   }
 
-  // Dark mode toggle
   const darkToggle = document.getElementById('darkModeToggle');
   if (darkToggle) {
     darkToggle.onchange = (e) => {
@@ -120,27 +112,15 @@ function attachEventListeners() {
     }
   }
 
-  // Export data
-  const exportBtn = document.getElementById('exportBtn');
-  if (exportBtn) {
-    exportBtn.onclick = () => {
-      const trips = JSON.parse(localStorage.getItem('userTrips') || '[]');
-      const dataStr = JSON.stringify(trips, null, 2);
-      const blob = new Blob([dataStr], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'wanderpack-data.json'; a.click(); URL.revokeObjectURL(url);
-      window.showToast('Data exported', 'success');
-    };
-  }
-
-  // Delete local data
-  const deleteBtn = document.getElementById('deleteAccountBtn');
-  if (deleteBtn) {
-    deleteBtn.onclick = () => {
-      if (confirm('Delete all local trips? (Cloud trips remain)')) {
-        localStorage.removeItem('userTrips');
-        window.showToast('Local data cleared', 'success');
-      }
-    };
-  }
+  document.getElementById('exportBtn')?.addEventListener('click', () => {
+    const trips = JSON.parse(localStorage.getItem('userTrips') || '[]');
+    const dataStr = JSON.stringify(trips, null, 2);
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'wanderpack-data.json'; a.click(); URL.revokeObjectURL(url);
+    window.showToast('Data exported', 'success');
+  });
+  document.getElementById('deleteAccountBtn')?.addEventListener('click', () => {
+    if (confirm('Delete all local trips?')) { localStorage.removeItem('userTrips'); window.showToast('Local data cleared', 'success'); }
+  });
 }
