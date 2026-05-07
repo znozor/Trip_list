@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Force no caching -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -17,39 +16,42 @@
       if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     })();
 
-    // Force correct mobile viewport and scaling
-    function forceMobileScaling() {
-      // 1. Ensure viewport meta is exactly as needed
-      let viewport = document.querySelector('meta[name="viewport"]');
-      if (!viewport) {
-        viewport = document.createElement('meta');
-        viewport.name = 'viewport';
-        document.head.appendChild(viewport);
+    // Force correct viewport and detect desktop view
+    function fixMobileView() {
+      // 1. Set viewport meta dynamically (overrides any stale cache)
+      let meta = document.querySelector('meta[name="viewport"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'viewport';
+        document.head.appendChild(meta);
       }
-      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover');
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover');
       
-      // 2. Reset any possible body/html scaling from previous loads
+      // 2. Ensure body/html take full width without overflow
       document.documentElement.style.width = '100%';
       document.documentElement.style.overflowX = 'hidden';
       document.body.style.width = '100%';
       document.body.style.overflowX = 'hidden';
       
-      // 3. If the viewport width is unusually large (desktop mode), reload the page (happens rarely)
-      if (window.innerWidth > 800 && window.innerWidth > screen.width) {
-        location.reload(true);
+      // 3. Check if we are in desktop mode (window too wide for a phone)
+      //    If yes, reload once to clear the bad state
+      if (!sessionStorage.getItem('fixApplied')) {
+        sessionStorage.setItem('fixApplied', 'true');
+        if (window.innerWidth > 600 && window.innerWidth > screen.width) {
+          location.reload(true);
+        }
       }
     }
-
-    // Run as early as possible
-    forceMobileScaling();
-    window.addEventListener('load', forceMobileScaling);
-    setTimeout(forceMobileScaling, 100);
-    setTimeout(forceMobileScaling, 500);
+    
+    fixMobileView();
+    window.addEventListener('load', fixMobileView);
+    setTimeout(fixMobileView, 100);
+    setTimeout(fixMobileView, 500);
   </script>
 </head>
 <body>
 <div class="app-wrapper">
-  <!-- Bottom navigation (unchanged) -->
+  <!-- Same bottom navigation -->
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="location.href='plan.html'"><i class="fa-solid fa-map"></i><span>Trip</span></div>
     <div class="nav-item" onclick="location.href='list.html'"><i class="fa-solid fa-list-check"></i><span>List</span></div>
@@ -57,7 +59,7 @@
     <div class="nav-item" onclick="location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
 
-  <!-- Rest of your plan.html content – same as before -->
+  <!-- The rest of your existing plan.html content (form steps) -->
   <div class="form-header">
     <h2><i class="fa-solid fa-suitcase-rolling"></i> Plan Your Trip</h2>
     <div class="step-indicator" id="stepIndicator">
@@ -69,7 +71,7 @@
   </div>
 
   <div class="form-body">
-    <!-- STEP 1 (same as before) -->
+    <!-- STEP 1 -->
     <div class="form-step active" id="step-0">
       <div class="card">
         <div class="section-header"><h2><i class="fa-solid fa-map-location-dot"></i> Where are you going?</h2></div>
