@@ -1,10 +1,10 @@
-// shared.js – full working version with welcome popup and correct user sync
+// shared.js – fully working version
 (function() {
 
   let sb = null;
   let currentUser = null;
 
-  // Toast helper (already present)
+  // ================= TOAST =================
   window.showToast = function(msg, type = 'info') {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -20,7 +20,7 @@
     setTimeout(() => toast.remove(), 3000);
   };
 
-  // Custom popup (centered)
+  // ================= CUSTOM POPUP =================
   window.showCustomPopup = function(message, type = 'success') {
     const existing = document.querySelector('.custom-popup');
     if (existing) existing.remove();
@@ -44,7 +44,7 @@
     setTimeout(() => popup.remove(), 3000);
   };
 
-  // Initialize Supabase
+  // ================= SUPABASE INIT =================
   try {
     if (window.CONFIG && window.CONFIG.SUPABASE_URL && window.supabase) {
       sb = window.supabase.createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
@@ -52,7 +52,7 @@
     }
   } catch(e) { console.warn(e); }
 
-  // Auth functions
+  // ================= AUTH FUNCTIONS =================
   window.initAuth = async function() {
     if (sb) {
       const { data: { session } } = await sb.auth.getSession();
@@ -64,16 +64,13 @@
 
   window.signInWithGoogle = async function() {
     if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
-    const { data, error } = await window.supabase.auth.signInWithOAuth({
-  provider: 'google',
-  options: {
-    redirectTo: window.location.origin + '/plan.html',
-    queryParams: {
-      access_type: 'offline',
-      prompt: 'select_account'
-    }
-  }
-});
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/plan.html',
+        skipBrowserRedirect: false
+      }
+    });
     if (error) window.showToast(error.message, 'danger');
   };
 
@@ -98,7 +95,6 @@
       }
       return;
     }
-    // Welcome popup will be shown on auth state change after redirect
     window.location.href = 'plan.html';
   };
 
@@ -107,19 +103,17 @@
     window.location.href = 'index.html';
   };
 
-  // Auth state listener – redirects and shows welcome popup
+  // ================= AUTH STATE LISTENER =================
   if (sb) {
     sb.auth.onAuthStateChange(async (event, session) => {
       currentUser = session?.user || null;
       window.currentUser = currentUser;
       if (event === 'SIGNED_IN') {
-        // Show welcome popup on the page that is loaded after redirect
         const name = currentUser.user_metadata?.full_name ||
                      currentUser.user_metadata?.name ||
                      currentUser.email?.split('@')[0] ||
                      'Traveler';
         window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
-        // If we are on index.html or login.html, redirect to plan.html
         const path = window.location.pathname;
         if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
           window.location.href = 'plan.html';
@@ -128,9 +122,56 @@
     });
   }
 
-  // Export trip functions (keep your existing ones, they are fine)
-  window.saveTripToSupabase = async function(tripData) { /* your existing code */ };
-  window.getTripsFromSupabase = async function() { /* your existing code */ };
-  window.requestNotificationPermission = function() { /* your existing code */ };
+  // ================= TRIP HELPER FUNCTIONS =================
+  function rowToTrip(row) {
+    return {
+      id: row.id,
+      name: row.title,
+      dates: { start: row.start_date, end: row.end_date },
+      destinations: row.preferences_json?.destinations || { main: { country: '', cities: [] } },
+      preferences: row.preferences_json || {},
+      weather: row.weather_json || {},
+      packingList: row.packing_list_json || [],
+      createdAt: row.created_at,
+      savedAt: row.updated_at
+    };
+  }
+
+  window.saveTripToSupabase = async function(tripData) {
+    if (!sb || !window.currentUser) return null;
+    const { data, error } = await sb.from('trips').insert({
+      user_id: window.currentUser.id,
+      title: tripData.title,
+      start_date: tripData.startDate,
+      end_date: tripData.endDate,
+      travel_reason: tripData.reason,
+      travel_style: tripData.style,
+      travelers_count: tripData.travelersCount || 1,
+      luggage_type: tripData.luggage,
+      packing_list_json: tripData.packingList,
+      preferences_json: tripData.preferences,
+      weather_json: tripData.weather
+    }).select().single();
+    if (error) window.showToast(error.message, 'danger');
+    return data ? rowToTrip(data) : null;
+  };
+
+  window.getTripsFromSupabase = async function() {
+    if (!sb || !window.currentUser) return [];
+    const { data, error } = await sb
+      .from('trips')
+      .select('*')
+      .eq('user_id', window.currentUser.id)
+      .order('created_at', { ascending: false });
+    if (error) {
+      window.showToast(error.message, 'danger');
+      return [];
+    }
+    return data.map(rowToTrip);
+  };
+
+  window.requestNotificationPermission = function() {
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+  };
 
 })();
