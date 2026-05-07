@@ -2,91 +2,284 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
+  >
+
   <title>WanderPack – Welcome</title>
+
   <link rel="stylesheet" href="shared.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  >
+
   <script>
-    (function() {
+    (function () {
+
       const theme = localStorage.getItem('theme');
-      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+
+      if (theme === 'dark') {
+        document.documentElement.setAttribute(
+          'data-theme',
+          'dark'
+        );
+      }
+
     })();
   </script>
-</head>
-<body>
-<div class="app-wrapper">
-  <div class="welcome-hero">
-    <span class="hero-illustration">🧳✈️</span>
-    <div class="hero-title">WanderPack</div>
-    <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
-  </div>
-  <div class="welcome-body">
-    <div class="auth-buttons">
-      <button class="btn btn-outline" id="googleBtn"><i class="fa-brands fa-google"></i> Continue with Google</button>
-      <button class="btn btn-primary" id="signupRedirectBtn"><i class="fa-solid fa-envelope"></i> Sign Up with Email</button>
-    </div>
-    <div style="text-align: center; margin: 16px 0;">
-      <span>Already have an account? <a href="login.html" class="guest-link">Login →</a></span>
-    </div>
-    <a href="plan.html" class="guest-link">Continue as guest →</a>
-    <div id="debugArea" style="background: #ffe0e0; border-radius: 12px; padding: 8px; margin-top: 12px; font-size: 12px; display: none;">
-      <strong>Debug:</strong> <span id="debugMsg">No message</span>
-    </div>
-    <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
-  </div>
-</div>
-<script src="config.js"></script>
-<script src="shared.js"></script>
-<script>
-  // Wait for shared.js to fully load and expose the function
-  let checkInterval;
-  const googleBtn = document.getElementById('googleBtn');
 
-  function enableGoogleButton() {
-    if (typeof window.signInWithGoogle === 'function') {
-      clearInterval(checkInterval);
-      googleBtn.disabled = false;
-      googleBtn.style.opacity = '1';
-      const debugDiv = document.getElementById('debugArea');
-      if (debugDiv) {
-        debugDiv.style.display = 'none';
-      }
-      googleBtn.onclick = () => {
-        window.signInWithGoogle();
-      };
+</head>
+
+<body>
+
+<div class="app-wrapper">
+
+  <div class="welcome-hero">
+
+    <span class="hero-illustration">🧳✈️</span>
+
+    <div class="hero-title">
+      WanderPack
+    </div>
+
+    <div class="hero-subtitle">
+      Pack Smarter, Travel Happier
+    </div>
+
+  </div>
+
+  <div class="welcome-body">
+
+    <div class="auth-buttons">
+
+      <button
+        class="btn btn-outline"
+        id="googleBtn"
+      >
+        <i class="fa-brands fa-google"></i>
+        Continue with Google
+      </button>
+
+      <button
+        class="btn btn-primary"
+        id="signupRedirectBtn"
+      >
+        <i class="fa-solid fa-envelope"></i>
+        Sign Up with Email
+      </button>
+
+    </div>
+
+    <div
+      style="
+        text-align:center;
+        margin:16px 0;
+      "
+    >
+      <span>
+        Already have an account?
+
+        <a
+          href="login.html"
+          class="guest-link"
+        >
+          Login →
+        </a>
+
+      </span>
+    </div>
+
+    <a
+      href="plan.html"
+      class="guest-link"
+    >
+      Continue as guest →
+    </a>
+
+    <div
+      id="debugArea"
+      style="
+        background:#ffe0e0;
+        border-radius:12px;
+        padding:8px;
+        margin-top:12px;
+        font-size:12px;
+        display:none;
+      "
+    >
+
+      <strong>Debug:</strong>
+
+      <span id="debugMsg">
+        No message
+      </span>
+
+    </div>
+
+    <div class="disclaimer">
+      Weather predictions are estimates.
+      Use common sense when packing.
+    </div>
+
+  </div>
+
+</div>
+
+<!-- CONFIG -->
+<script src="config.js"></script>
+
+<!-- SUPABASE CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- SHARED -->
+<script src="shared.js"></script>
+
+<script>
+
+  // ================= ELEMENTS =================
+
+  const googleBtn =
+    document.getElementById('googleBtn');
+
+  const signupBtn =
+    document.getElementById('signupRedirectBtn');
+
+  const debugArea =
+    document.getElementById('debugArea');
+
+  const debugMsg =
+    document.getElementById('debugMsg');
+
+  // ================= DEBUG =================
+
+  function showDebug(message) {
+
+    console.log(message);
+
+    if (debugArea && debugMsg) {
+
+      debugArea.style.display = 'block';
+
+      debugMsg.innerText = message;
+
     }
+
   }
 
-  // Check every 200ms for up to 5 seconds
-  let attempts = 0;
-  checkInterval = setInterval(() => {
-    attempts++;
-    if (typeof window.signInWithGoogle === 'function') {
-      clearInterval(checkInterval);
-      googleBtn.disabled = false;
-      googleBtn.style.opacity = '1';
-      googleBtn.onclick = () => { window.signInWithGoogle(); };
-      const debugDiv = document.getElementById('debugArea');
-      if (debugDiv) debugDiv.style.display = 'none';
-    } else if (attempts > 25) { // 5 seconds total
-      clearInterval(checkInterval);
-      const debugDiv = document.getElementById('debugArea');
-      if (debugDiv) {
-        debugDiv.style.display = 'block';
-        document.getElementById('debugMsg').innerText = 'ERROR: signInWithGoogle not available. Check shared.js.';
-      }
-    }
-  }, 200);
+  // ================= INITIAL BUTTON STATE =================
 
-  // Initially disable button until ready
   googleBtn.disabled = true;
+
   googleBtn.style.opacity = '0.6';
 
-  // Email signup redirect
-  document.getElementById('signupRedirectBtn').onclick = () => {
+  // ================= WAIT FOR SHARED.JS =================
+
+  window.addEventListener('load', () => {
+
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+
+      attempts++;
+
+      // Function exists
+      if (
+        typeof window.signInWithGoogle === 'function'
+      ) {
+
+        clearInterval(interval);
+
+        console.log(
+          'signInWithGoogle loaded successfully'
+        );
+
+        googleBtn.disabled = false;
+
+        googleBtn.style.opacity = '1';
+
+        if (debugArea) {
+          debugArea.style.display = 'none';
+        }
+
+        // Google button click
+        googleBtn.onclick = async () => {
+
+          try {
+
+            googleBtn.disabled = true;
+
+            googleBtn.innerHTML = `
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              Connecting...
+            `;
+
+            await window.signInWithGoogle();
+
+            // Restore if redirect fails
+            setTimeout(() => {
+
+              googleBtn.disabled = false;
+
+              googleBtn.innerHTML = `
+                <i class="fa-brands fa-google"></i>
+                Continue with Google
+              `;
+
+            }, 5000);
+
+          } catch (e) {
+
+            showDebug(
+              'Google Sign-In Error: ' +
+              e.message
+            );
+
+            googleBtn.disabled = false;
+
+            googleBtn.innerHTML = `
+              <i class="fa-brands fa-google"></i>
+              Continue with Google
+            `;
+
+          }
+
+        };
+
+      }
+
+      // Timeout
+      else if (attempts >= 25) {
+
+        clearInterval(interval);
+
+        showDebug(
+          'ERROR: signInWithGoogle not available. Check shared.js'
+        );
+
+      }
+
+    }, 200);
+
+  });
+
+  // ================= SIGNUP REDIRECT =================
+
+  signupBtn.onclick = () => {
+
     window.location.href = 'signup.html';
+
   };
+
 </script>
+
 </body>
 </html>
