@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="vercel:toolbar" content="disable">
   <title>WanderPack – Welcome</title>
   <link rel="stylesheet" href="shared.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
@@ -13,6 +14,9 @@
       if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     })();
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="shared.js"></script>
 </head>
 <body>
 <div class="app-wrapper">
@@ -36,29 +40,23 @@
     <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
   </div>
 </div>
-<script src="config.js"></script>
-<script src="shared.js"></script>
 <script>
-  // Wait for shared.js to fully load and expose the function
+  // Wait for shared.js to define window.signInWithGoogle
   let checkInterval;
   const googleBtn = document.getElementById('googleBtn');
+  const debugDiv = document.getElementById('debugArea');
+  const debugMsg = document.getElementById('debugMsg');
 
   function enableGoogleButton() {
     if (typeof window.signInWithGoogle === 'function') {
       clearInterval(checkInterval);
       googleBtn.disabled = false;
       googleBtn.style.opacity = '1';
-      const debugDiv = document.getElementById('debugArea');
-      if (debugDiv) {
-        debugDiv.style.display = 'none';
-      }
-      googleBtn.onclick = () => {
-        window.signInWithGoogle();
-      };
+      if (debugDiv) debugDiv.style.display = 'none';
+      googleBtn.onclick = () => window.signInWithGoogle();
     }
   }
 
-  // Check every 200ms for up to 5 seconds
   let attempts = 0;
   checkInterval = setInterval(() => {
     attempts++;
@@ -66,24 +64,20 @@
       clearInterval(checkInterval);
       googleBtn.disabled = false;
       googleBtn.style.opacity = '1';
-      googleBtn.onclick = () => { window.signInWithGoogle(); };
-      const debugDiv = document.getElementById('debugArea');
+      googleBtn.onclick = () => window.signInWithGoogle();
       if (debugDiv) debugDiv.style.display = 'none';
-    } else if (attempts > 25) { // 5 seconds total
+    } else if (attempts > 25) {
       clearInterval(checkInterval);
-      const debugDiv = document.getElementById('debugArea');
       if (debugDiv) {
         debugDiv.style.display = 'block';
-        document.getElementById('debugMsg').innerText = 'ERROR: signInWithGoogle not available. Check shared.js.';
+        debugMsg.innerText = 'ERROR: signInWithGoogle not available. Check shared.js.';
       }
     }
   }, 200);
 
-  // Initially disable button until ready
   googleBtn.disabled = true;
   googleBtn.style.opacity = '0.6';
 
-  // Email signup redirect
   document.getElementById('signupRedirectBtn').onclick = () => {
     window.location.href = 'signup.html';
   };
