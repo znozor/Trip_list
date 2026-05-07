@@ -22,28 +22,62 @@
         rel="stylesheet">
 
   <script>
-(function () {
-  // Dark mode
-  const theme = localStorage.getItem('theme');
+    // DARK MODE
+    (function () {
+      const theme = localStorage.getItem('theme');
 
-  if (theme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
 
-  // Mobile viewport fix
-  const viewport = document.querySelector('meta[name="viewport"]');
+    // MOBILE VIEW FIX AFTER GOOGLE LOGIN
+    function fixMobileView() {
 
-  if (viewport) {
-    viewport.setAttribute(
-      'content',
-      'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
-    );
-  }
+      // Force viewport again
+      let meta = document.querySelector('meta[name="viewport"]');
 
-  document.documentElement.style.overflowX = 'hidden';
-  document.body.style.overflowX = 'hidden';
-})();
-</script>
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'viewport';
+        document.head.appendChild(meta);
+      }
+
+      meta.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+      );
+
+      // Reset zoom/scaling
+      document.documentElement.style.zoom = '1';
+      document.body.style.zoom = '1';
+
+      document.documentElement.style.width = '100%';
+      document.body.style.width = '100%';
+
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.overflowX = 'hidden';
+
+      // Fix Chrome Android weird scale after OAuth
+      if (window.visualViewport) {
+        document.body.style.transform = 'scale(1)';
+        document.body.style.transformOrigin = 'top left';
+      }
+
+      // Force repaint
+      document.body.style.display = 'none';
+      document.body.offsetHeight;
+      document.body.style.display = '';
+    }
+
+    window.addEventListener('load', () => {
+      fixMobileView();
+
+      setTimeout(fixMobileView, 100);
+      setTimeout(fixMobileView, 500);
+      setTimeout(fixMobileView, 1000);
+    });
+  </script>
 </head>
 
 <body>
