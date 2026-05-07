@@ -87,7 +87,7 @@
   window.signInWithGoogle = async function() {
     if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
     // Direct redirect to plan.html (no intermediate page)
-    const redirectUrl = window.location.origin + '/plan.html';
+    const redirectUrl = window.location.origin + '/callback.html';
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: {
