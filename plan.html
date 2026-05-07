@@ -15,47 +15,41 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
 
   <script>
-    (function () {
-      const theme = localStorage.getItem('theme');
+(function () {
+  const theme = localStorage.getItem('theme');
 
-      // Apply dark mode immediately
-      if (theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
+  // Apply dark mode immediately
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
 
-      function applyMobileFix() {
-        document.documentElement.style.width = '100%';
-        document.documentElement.style.maxWidth = '100%';
-        document.documentElement.style.overflowX = 'hidden';
+  function applyMobileFix() {
+    document.documentElement.style.width = '100%';
+    document.documentElement.style.maxWidth = '100%';
+    document.documentElement.style.overflowX = 'hidden';
 
-        document.body.style.width = '100%';
-        document.body.style.maxWidth = '100%';
-        document.body.style.overflowX = 'hidden';
+    document.body.style.width = '100%';
+    document.body.style.maxWidth = '100%';
+    document.body.style.overflowX = 'hidden';
 
-        // Reset Android Chrome zoom after Google OAuth
-        document.documentElement.style.zoom = '1';
-        document.body.style.zoom = '1';
+    // Reset Android Chrome zoom after Google OAuth
+    document.documentElement.style.zoom = '1';
+    document.body.style.zoom = '1';
 
-        // Force redraw
-        document.body.style.display = 'none';
-        document.body.offsetHeight;
-        document.body.style.display = '';
-      }
+    // Prevent flicker
+    document.body.style.visibility = 'visible';
+  }
 
-      window.addEventListener('load', () => {
-        // Reapply dark mode after redirect
-        if (theme === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
+  window.addEventListener('load', () => {
+    // Reapply dark mode after redirect
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
 
-        applyMobileFix();
-
-        // Android Chrome sometimes reapplies scaling after OAuth
-        setTimeout(applyMobileFix, 100);
-        setTimeout(applyMobileFix, 500);
-      });
-    })();
-  </script>
+    applyMobileFix();
+  });
+})();
+</script>
 </head>
 
 <body>
