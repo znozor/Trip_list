@@ -66,7 +66,8 @@
     if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/plan.html' }
+      options: { redirectTo: window.location.origin + '/plan.html', skipBrowserRedirect: false
+      }
     });
     if (error) window.showToast(error.message, 'danger');
   };
