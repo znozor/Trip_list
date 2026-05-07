@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Plan Trip – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -17,26 +17,7 @@
       }
     })();
   </script>
-  <!-- Force viewport scale for mobile devices -->
-  <script>
-    (function() {
-      // Ensure the viewport meta is correctly set
-      function setViewport() {
-        const meta = document.querySelector('meta[name="viewport"]');
-        if (meta) {
-          meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover');
-        }
-        // Force body width to device width (prevents desktop layout)
-        document.body.style.width = '100%';
-        document.body.style.overflowX = 'hidden';
-      }
-      // Run immediately and after load
-      setViewport();
-      window.addEventListener('load', setViewport);
-      // Also after a short delay (for any dynamic changes)
-      setTimeout(setViewport, 100);
-    })();
-  </script>
+  <!-- REMOVED the forced viewport script -->
 </head>
 <body>
 <div class="app-wrapper">
