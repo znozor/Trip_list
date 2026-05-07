@@ -17,86 +17,52 @@
   <script>
 (function () {
   const theme = localStorage.getItem('theme');
-
-  // Apply dark mode instantly
   if (theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
-  function applyMobileFix() {
+  function forceViewport() {
+    // Remove and re-insert viewport meta to force browser to re-apply it
+    const existing = document.querySelector('meta[name="viewport"]');
+    if (existing) existing.remove();
 
-    // Keep viewport correct after Google OAuth
-    const viewport = document.querySelector('meta[name="viewport"]');
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover';
+    document.head.prepend(meta);
 
-    if (viewport) {
-      viewport.setAttribute(
-        'content',
-        'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover'
-      );
-    }
-
-    // Prevent horizontal overflow
+    // Force layout recalculation
     document.documentElement.style.width = '100%';
     document.documentElement.style.maxWidth = '100%';
     document.documentElement.style.overflowX = 'hidden';
-
     document.body.style.width = '100%';
     document.body.style.maxWidth = '100%';
     document.body.style.overflowX = 'hidden';
 
-    // Force Android Chrome to recalculate layout
-    document.body.style.width = window.innerWidth + 'px';
-
-    // Keep visibility stable
-    document.body.style.visibility = 'visible';
+    // Scroll trick forces Android Chrome to reflow at correct scale
+    window.scrollTo(0, 1);
+    window.scrollTo(0, 0);
   }
 
-  window.addEventListener('load', () => {
+  // Run immediately on DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', forceViewport);
 
-    // Reapply dark mode after redirect
+  window.addEventListener('load', () => {
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
+    forceViewport();
+    requestAnimationFrame(forceViewport);
+    setTimeout(forceViewport, 150);
+    setTimeout(forceViewport, 400);
 
-    applyMobileFix();
-
-    // Extra Android OAuth reflow fix
     requestAnimationFrame(() => {
-      applyMobileFix();
+      setTimeout(() => {
+        document.body.classList.add('app-ready');
+      }, 50);
     });
-
-    setTimeout(() => {
-      applyMobileFix();
-    }, 100);
   });
-
 })();
-    function stabilizeLayout() {
-  document.documentElement.style.overflowX = "hidden";
-  document.body.style.overflowX = "hidden";
-
-  document.documentElement.style.width = "100%";
-  document.body.style.width = "100%";
-
-  // force repaint
-  document.body.offsetHeight;
-}
-
-window.addEventListener("load", () => {
-  requestAnimationFrame(() => {
-    stabilizeLayout();
-  });
-
-  setTimeout(stabilizeLayout, 200);
-});
-
-    window.addEventListener("load", () => {
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      document.body.classList.add("app-ready");
-    }, 50);
-  });
-});
 </script>
 </head>
 
