@@ -148,7 +148,7 @@
       const { data, error } =
         await window.sb.auth.signInWithOAuth({
 
-          provider: 'google',
+          provider: "google",
 
           options: {
             redirectTo: redirectUrl
