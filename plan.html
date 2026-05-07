@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+
+  <!-- IMPORTANT -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -11,74 +14,100 @@
   <title>Plan Trip – WanderPack</title>
 
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap"
+        rel="stylesheet">
 
   <script>
+    // DARK MODE
     (function () {
       const theme = localStorage.getItem('theme');
 
-      // Apply dark mode immediately
       if (theme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
       }
+    })();
 
-      function applyMobileFix() {
-        document.documentElement.style.width = '100%';
-        document.documentElement.style.maxWidth = '100%';
-        document.documentElement.style.overflowX = 'hidden';
+    // MOBILE VIEW FIX AFTER GOOGLE LOGIN
+    function fixMobileView() {
 
-        document.body.style.width = '100%';
-        document.body.style.maxWidth = '100%';
-        document.body.style.overflowX = 'hidden';
+      // Force viewport again
+      let meta = document.querySelector('meta[name="viewport"]');
 
-        // Reset Android Chrome zoom after Google OAuth
-        document.documentElement.style.zoom = '1';
-        document.body.style.zoom = '1';
-
-        // Force redraw
-        document.body.style.display = 'none';
-        document.body.offsetHeight;
-        document.body.style.display = '';
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'viewport';
+        document.head.appendChild(meta);
       }
 
-      window.addEventListener('load', () => {
-        // Reapply dark mode after redirect
-        if (theme === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
+      meta.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+      );
 
-        applyMobileFix();
+      // Reset zoom/scaling
+      document.documentElement.style.zoom = '1';
+      document.body.style.zoom = '1';
 
-        // Android Chrome sometimes reapplies scaling after OAuth
-        setTimeout(applyMobileFix, 100);
-        setTimeout(applyMobileFix, 500);
-      });
-    })();
+      document.documentElement.style.width = '100%';
+      document.body.style.width = '100%';
+
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.overflowX = 'hidden';
+
+      // Fix Chrome Android weird scale after OAuth
+      if (window.visualViewport) {
+        document.body.style.transform = 'scale(1)';
+        document.body.style.transformOrigin = 'top left';
+      }
+
+      // Force repaint
+      document.body.style.display = 'none';
+      document.body.offsetHeight;
+      document.body.style.display = '';
+    }
+
+    window.addEventListener('load', () => {
+      fixMobileView();
+
+      setTimeout(fixMobileView, 100);
+      setTimeout(fixMobileView, 500);
+      setTimeout(fixMobileView, 1000);
+    });
   </script>
 </head>
 
 <body>
+
 <div class="app-wrapper">
 
+  <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="location.href='plan.html'">
-      <i class="fa-solid fa-map"></i><span>Trip</span>
+      <i class="fa-solid fa-map"></i>
+      <span>Trip</span>
     </div>
 
     <div class="nav-item" onclick="location.href='list.html'">
-      <i class="fa-solid fa-list-check"></i><span>List</span>
+      <i class="fa-solid fa-list-check"></i>
+      <span>List</span>
     </div>
 
     <div class="nav-item" onclick="location.href='trips.html'">
-      <i class="fa-solid fa-folder-open"></i><span>Trips</span>
+      <i class="fa-solid fa-folder-open"></i>
+      <span>Trips</span>
     </div>
 
     <div class="nav-item" onclick="location.href='profile.html'">
-      <i class="fa-solid fa-user"></i><span>Profile</span>
+      <i class="fa-solid fa-user"></i>
+      <span>Profile</span>
     </div>
   </nav>
 
+  <!-- Header -->
   <div class="form-header">
     <h2>
       <i class="fa-solid fa-suitcase-rolling"></i>
@@ -99,6 +128,7 @@
     </div>
   </div>
 
+  <!-- Form Body -->
   <div class="form-body">
 
     <!-- STEP 1 -->
@@ -121,8 +151,7 @@
             list="countryList"
             class="input-field"
             placeholder="Type or select country"
-            autocomplete="off"
-          >
+            autocomplete="off">
 
           <datalist id="countryList">
             <option>Japan</option>
@@ -137,6 +166,7 @@
 
         <div id="cityFields">
           <div class="city-row">
+
             <label class="input-label">City</label>
 
             <input
@@ -145,26 +175,24 @@
               list="cityList0"
               class="input-field"
               placeholder="Type or select city"
-              autocomplete="off"
-            >
+              autocomplete="off">
 
             <datalist id="cityList0"></datalist>
+
           </div>
         </div>
 
-        <button
-          class="btn btn-ghost btn-sm"
-          type="button"
-          onclick="addCityField()"
-        >
+        <button class="btn btn-ghost btn-sm"
+                type="button"
+                onclick="addCityField()">
+
           <i class="fa-solid fa-plus"></i>
           Add another city
         </button>
 
-        <p
-          class="city-hint"
-          style="font-size:12px; margin-top:12px; color:var(--text-secondary);"
-        >
+        <p class="city-hint"
+           style="font-size:12px; margin-top:12px; color:var(--text-secondary);">
+
           <i class="fa-regular fa-lightbulb"></i>
           We'll show weather for all cities and combine recommendations.
         </p>
@@ -172,114 +200,37 @@
       </div>
     </div>
 
-    <!-- STEP 2 -->
-    <div class="form-step" id="step-1">
-      <div class="card">
-        <h2>
-          <i class="fa-solid fa-calendar-days"></i>
-          When are you traveling?
-        </h2>
-
-        <label>Start Date</label>
-        <input type="date" id="startDate" class="input-field">
-
-        <label>End Date</label>
-        <input type="date" id="endDate" class="input-field">
-      </div>
-    </div>
-
-    <!-- STEP 3 -->
-    <div class="form-step" id="step-2">
-      <div class="card">
-
-        <h2>
-          <i class="fa-solid fa-heart"></i>
-          Tell us about your trip
-        </h2>
-
-        <label>Reason</label>
-
-        <div class="chips-group" id="chips-reason">
-          <div class="chip selected" data-val="Leisure">Leisure</div>
-          <div class="chip" data-val="Adventure">Adventure</div>
-          <div class="chip" data-val="Business">Business</div>
-        </div>
-
-        <label>Style</label>
-
-        <div class="chips-group" id="chips-style">
-          <div class="chip selected" data-val="Standard">Standard</div>
-          <div class="chip" data-val="Backpacker">Backpacker</div>
-          <div class="chip" data-val="Luxury">Luxury</div>
-        </div>
-
-        <label>Who</label>
-
-        <div class="chips-group" id="chips-who">
-          <div class="chip selected" data-val="Solo">Solo</div>
-          <div class="chip" data-val="Couple">Couple</div>
-          <div class="chip" data-val="Family">Family</div>
-        </div>
-
-        <label>Activities</label>
-
-        <div class="chips-group" id="chips-activities">
-          <div class="chip selected" data-val="Hiking">Hiking</div>
-          <div class="chip selected" data-val="City Tours">City Tours</div>
-          <div class="chip" data-val="Beach">Beach</div>
-          <div class="chip" data-val="Shopping">Shopping</div>
-        </div>
-
-        <label>Luggage</label>
-
-        <div class="chips-group" id="chips-luggage">
-          <div class="chip selected" data-val="Checked">Checked Bag</div>
-          <div class="chip" data-val="Carry-on">Carry-on</div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- STEP 4 -->
-    <div class="form-step" id="step-3">
-      <div class="card">
-        <h2>
-          <i class="fa-solid fa-cloud-sun"></i>
-          Weather Preview
-        </h2>
-
-        <div id="weatherPreview">
-          Loading forecast...
-        </div>
-      </div>
-    </div>
-
   </div>
 
-  <div class="form-nav" style="display:flex; gap:12px; margin-top:20px;">
-    <button
-      class="btn btn-outline"
-      id="prevBtn"
-      style="display:none"
-    >
+  <!-- Buttons -->
+  <div class="form-nav"
+       style="display:flex; gap:12px; margin-top:20px;">
+
+    <button class="btn btn-outline"
+            id="prevBtn"
+            style="display:none">
+
       <i class="fa-solid fa-arrow-left"></i>
       Back
     </button>
 
-    <button
-      class="btn btn-primary"
-      id="nextBtn"
-      style="margin-left:auto"
-    >
+    <button class="btn btn-primary"
+            id="nextBtn"
+            style="margin-left:auto">
+
       Next →
     </button>
+
   </div>
 
 </div>
 
 <script src="config.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="shared.js"></script>
+
 <script src="plan.js"></script>
 
 </body>
