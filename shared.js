@@ -1,4 +1,4 @@
-// shared.js – fully working version with immediate session fetch
+// shared.js – fully working version
 (function() {
 
   let sb = null;
@@ -52,17 +52,6 @@
     }
   } catch(e) { console.warn(e); }
 
-  // ================= IMMEDIATE SESSION FETCH =================
-  // This ensures window.currentUser is set as soon as the script loads
-  (async () => {
-    if (sb) {
-      const { data: { session } } = await sb.auth.getSession();
-      currentUser = session?.user || null;
-      window.currentUser = currentUser;
-      console.log('Session fetched, currentUser:', currentUser?.email);
-    }
-  })();
-
   // ================= AUTH FUNCTIONS =================
   window.initAuth = async function() {
     if (sb) {
@@ -74,17 +63,18 @@
   };
 
   window.signInWithGoogle = async function() {
-    if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
-    const redirectUrl = window.location.origin + '/auth-callback.html';
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-        skipBrowserRedirect: false
-      }
-    });
-    if (error) window.showToast(error.message, 'danger');
-  };
+  if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
+  // Use intermediate redirect page
+  const redirectUrl = window.location.origin + '/auth-callback.html';
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectUrl,
+      skipBrowserRedirect: false
+    }
+  });
+  if (error) window.showToast(error.message, 'danger');
+};
 
   window.signUpWithEmail = async function(email, password, fullName) {
     if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
