@@ -40,7 +40,11 @@ window.initAuth = async function() {
 
 window.signInWithGoogle = async function() {
   if (!window.supabase) { window.showToast('Demo mode – no backend', 'warning'); return; }
-  await window.supabase.auth.signInWithOAuth({ provider: 'google' });
+  const { error } = await window.supabase.auth.signInWithOAuth({ 
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/plan.html' }
+  });
+  if (error) window.showToast(error.message, 'danger');
 };
 
 window.signUpWithEmail = async function(email, password, fullName) {
