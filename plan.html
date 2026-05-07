@@ -32,6 +32,15 @@
       document.documentElement.style.overflowX = 'hidden';
       document.body.style.width = '100%';
       document.body.style.overflowX = 'hidden';
+
+      // Force browser zoom reset after Google OAuth
+document.documentElement.style.zoom = '1';
+document.body.style.zoom = '1';
+
+if (window.visualViewport && window.visualViewport.scale !== 1) {
+  document.body.style.transform = 'scale(1)';
+  document.body.style.transformOrigin = 'top left';
+}
       
       // 3. Check if we are in desktop mode (window too wide for a phone)
       //    If yes, reload once to clear the bad state
