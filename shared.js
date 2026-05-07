@@ -38,13 +38,25 @@ window.initAuth = async function() {
   return window.currentUser;
 };
 
+// … keep everything above the same, but replace signInWithGoogle
 window.signInWithGoogle = async function() {
-  if (!window.supabase) { window.showToast('Demo mode – no backend', 'warning'); return; }
-  const { error } = await window.supabase.auth.signInWithOAuth({ 
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/plan.html' }
-  });
-  if (error) window.showToast(error.message, 'danger');
+  if (!window.supabase) {
+    alert('Supabase not initialized. Check config.js and console.');
+    window.showToast('Supabase not initialized', 'danger');
+    return;
+  }
+  try {
+    const { error } = await window.supabase.auth.signInWithOAuth({ 
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/plan.html' }
+    });
+    if (error) {
+      alert('Google login error: ' + error.message);
+      window.showToast(error.message, 'danger');
+    }
+  } catch (err) {
+    alert('Unexpected error: ' + err.message);
+  }
 };
 
 window.signUpWithEmail = async function(email, password, fullName) {
