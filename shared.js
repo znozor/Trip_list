@@ -1,3 +1,15 @@
+// Visual debug helper (if the debug area exists)
+function showGlobalDebug(msg) {
+  const div = document.getElementById('debugMsg');
+  if (div) {
+    div.innerText = msg;
+    document.getElementById('debugArea').style.display = 'block';
+    setTimeout(() => { document.getElementById('debugArea').style.display = 'none'; }, 8000);
+  }
+  console.log(msg);
+}
+showGlobalDebug('shared.js loaded');
+
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 let supabase = null;
@@ -57,6 +69,12 @@ window.signInWithGoogle = async function() {
   } catch (err) {
     alert('Unexpected error: ' + err.message);
   }
+  showGlobalDebug('signInWithGoogle called');
+if (!window.supabase) {
+  showGlobalDebug('ERROR: window.supabase is null');
+  alert('Supabase not initialized');
+  return;
+}
 };
 
 window.signUpWithEmail = async function(email, password, fullName) {
