@@ -64,7 +64,7 @@
 
   window.signInWithGoogle = async function() {
   if (!sb) { window.showToast('Supabase not ready', 'danger'); return; }
-  const redirectUrl = window.location.origin + '/plan.html?nocache=' + Date.now();
+  const redirectUrl = window.location.origin + '/plan.html?t=' + Date.now();
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
