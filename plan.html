@@ -15,88 +15,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
 
   <script>
-(function () {
-  const theme = localStorage.getItem('theme');
-
-  // Apply dark mode instantly
-  if (theme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-
-  function applyMobileFix() {
-
-    // Keep viewport correct after Google OAuth
-    const viewport = document.querySelector('meta[name="viewport"]');
-
-    if (viewport) {
-      viewport.setAttribute(
-        'content',
-        'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover'
-      );
-    }
-
-    // Prevent horizontal overflow
-    document.documentElement.style.width = '100%';
-    document.documentElement.style.maxWidth = '100%';
-    document.documentElement.style.overflowX = 'hidden';
-
-    document.body.style.width = '100%';
-    document.body.style.maxWidth = '100%';
-    document.body.style.overflowX = 'hidden';
-
-    // Force Android Chrome to recalculate layout
-    document.body.style.width = window.innerWidth + 'px';
-
-    // Keep visibility stable
-    document.body.style.visibility = 'visible';
-  }
-
-  window.addEventListener('load', () => {
-
-    // Reapply dark mode after redirect
+  (function () {
+    const theme = localStorage.getItem('theme');
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
-
-    applyMobileFix();
-
-    // Extra Android OAuth reflow fix
-    requestAnimationFrame(() => {
-      applyMobileFix();
-    });
-
-    setTimeout(() => {
-      applyMobileFix();
-    }, 100);
-  });
-
-})();
-    function stabilizeLayout() {
-  document.documentElement.style.overflowX = "hidden";
-  document.body.style.overflowX = "hidden";
-
-  document.documentElement.style.width = "100%";
-  document.body.style.width = "100%";
-
-  // force repaint
-  document.body.offsetHeight;
-}
-
-window.addEventListener("load", () => {
-  requestAnimationFrame(() => {
-    stabilizeLayout();
-  });
-
-  setTimeout(stabilizeLayout, 200);
-});
-
-    window.addEventListener("load", () => {
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      document.body.classList.add("app-ready");
-    }, 50);
-  });
-});
+  })();
 </script>
 </head>
 
