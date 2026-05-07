@@ -1,18 +1,3 @@
-// Fix viewport on every page load (catches OAuth redirects)
-(function fixViewportAfterOAuth() {
-  const meta = document.querySelector('meta[name="viewport"]');
-  if (meta) {
-    // Toggle content to force browser re-evaluation
-    meta.content = '';
-    requestAnimationFrame(() => {
-      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover';
-    });
-  }
-  window.scrollTo(0, 1);
-  window.scrollTo(0, 0);
-})();
-
-
 
 // shared.js – direct Google redirect (no intermediate page) with session sync
 (function() {
