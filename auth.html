@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+
+<title>Loading...</title>
+
+<style>
+html,
+body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  background:#0f1115;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font-family:sans-serif;
+  color:white;
+}
+
+.loader{
+  width:42px;
+  height:42px;
+  border:4px solid rgba(255,255,255,.2);
+  border-top-color:white;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="loader"></div>
+
+<script>
+(function(){
+
+  // Force proper mobile rendering BEFORE redirect
+  const viewport = document.querySelector('meta[name="viewport"]');
+
+  viewport.setAttribute(
+    'content',
+    'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover'
+  );
+
+  document.documentElement.style.width = '100%';
+  document.documentElement.style.overflowX = 'hidden';
+
+  document.body.style.width = '100%';
+  document.body.style.overflowX = 'hidden';
+
+  // Hard reload fixes Android Chrome OAuth desktop view bug
+  setTimeout(() => {
+    window.location.replace('plan.html');
+  }, 150);
+
+})();
+</script>
+
+</body>
+</html>
