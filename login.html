@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <title>Login – WanderPack</title>
+  <link rel="stylesheet" href="shared.css">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+</head>
+<body>
+<div class="app-wrapper">
+  <div class="card" style="max-width: 400px; margin: 40px auto;">
+    <h2 style="text-align: center; margin-bottom: 24px;"><i class="fa-solid fa-key"></i> Login</h2>
+    <div class="input-group">
+      <label class="input-label">Email</label>
+      <input type="email" id="loginEmail" class="input-field" placeholder="you@example.com">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Password</label>
+      <input type="password" id="loginPassword" class="input-field" placeholder="••••••">
+    </div>
+    <button id="loginSubmitBtn" class="btn btn-primary btn-full">Login</button>
+    <div style="text-align: center; margin: 16px 0;">
+      <span>or</span>
+    </div>
+    <button id="googleLoginBtn" class="btn btn-outline btn-full"><i class="fa-brands fa-google"></i> Continue with Google</button>
+    <div style="text-align: center; margin-top: 16px;">
+      Don't have an account? <a href="signup.html" class="guest-link">Sign up →</a>
+    </div>
+    <div style="text-align: center; margin-top: 16px;">
+      <a href="index.html" class="guest-link">← Back</a>
+    </div>
+  </div>
+</div>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('loginSubmitBtn').onclick = () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) {
+      showToast('Please enter email and password', 'warning');
+      return;
+    }
+    signInWithEmail(email, password);
+  };
+  document.getElementById('googleLoginBtn').onclick = () => {
+    signInWithGoogle();
+  };
+</script>
+</body>
+</html>
