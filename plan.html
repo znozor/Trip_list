@@ -18,12 +18,24 @@
 (function () {
   const theme = localStorage.getItem('theme');
 
-  // Apply dark mode immediately
+  // Apply dark mode instantly
   if (theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
   function applyMobileFix() {
+
+    // Keep viewport correct after Google OAuth
+    const viewport = document.querySelector('meta[name="viewport"]');
+
+    if (viewport) {
+      viewport.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover'
+      );
+    }
+
+    // Prevent horizontal overflow
     document.documentElement.style.width = '100%';
     document.documentElement.style.maxWidth = '100%';
     document.documentElement.style.overflowX = 'hidden';
@@ -32,48 +44,33 @@
     document.body.style.maxWidth = '100%';
     document.body.style.overflowX = 'hidden';
 
-    // Reset Android Chrome zoom after Google OAuth
-    document.documentElement.style.zoom = '1';
-    document.body.style.zoom = '1';
-    // Force correct mobile scale after Google OAuth
-const viewport = document.querySelector('meta[name="viewport"]');
+    // Force Android Chrome to recalculate layout
+    document.body.style.width = window.innerWidth + 'px';
 
-if (viewport) {
-  viewport.setAttribute(
-    'content',
-    'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
-  );
-}
-
-// Small reflow fix for Android Chrome
-document.body.style.minHeight = window.innerHeight + 'px';
-
-    // Prevent flicker
+    // Keep visibility stable
     document.body.style.visibility = 'visible';
   }
 
   window.addEventListener('load', () => {
+
     // Reapply dark mode after redirect
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
 
     applyMobileFix();
-    sessionStorage.removeItem('mobile_fixed');
+
+    // Extra Android OAuth reflow fix
+    requestAnimationFrame(() => {
+      applyMobileFix();
+    });
+
+    setTimeout(() => {
+      applyMobileFix();
+    }, 100);
   });
+
 })();
-
-    window.addEventListener('pageshow', function (event) {
-  // Fix Android Chrome OAuth desktop view bug
-  if (event.persisted || window.performance.navigation.type === 2) {
-
-    if (!sessionStorage.getItem('mobile_fixed')) {
-      sessionStorage.setItem('mobile_fixed', 'true');
-      location.reload();
-    }
-
-  }
-});
 </script>
 </head>
 
