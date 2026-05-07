@@ -1,132 +1,352 @@
-// shared.js – safe version with error logging to debug area
-(function() {
-  // Helper to show debug messages (if debugArea exists)
+// shared.js – fixed full version with safe Supabase handling
+(function () {
+
+  // ================= DEBUG =================
   function debug(msg, isError = false) {
     const area = document.getElementById('debugArea');
     const span = document.getElementById('debugMsg');
+
     if (area && span) {
       span.innerText = msg;
       area.style.display = 'block';
-      if (isError) area.style.background = '#ffcccc';
-      setTimeout(() => { area.style.display = 'none'; }, 8000);
+
+      if (isError) {
+        area.style.background = '#ffcccc';
+      } else {
+        area.style.background = '#ffe0e0';
+      }
+
+      setTimeout(() => {
+        area.style.display = 'none';
+      }, 8000);
     }
+
     console.log(msg);
   }
 
   debug('shared.js started');
 
-  let supabaseClient = null;
+  // ================= SUPABASE =================
+
+  let sb = null;
   let currentUser = null;
 
-  // Initialize Supabase using the global supabase object (from CDN)
   try {
-    if (window.CONFIG && window.CONFIG.SUPABASE_URL && window.supabase) {
-      supabaseClient = window.supabase.createClient(
+
+    // Check CONFIG
+    if (!window.CONFIG) {
+      debug('ERROR: config.js not loaded', true);
+    }
+
+    // Check CDN
+    else if (!window.supabase) {
+      debug('ERROR: Supabase CDN not loaded', true);
+    }
+
+    // Check keys
+    else if (
+      !window.CONFIG.SUPABASE_URL ||
+      !window.CONFIG.SUPABASE_ANON_KEY
+    ) {
+      debug('ERROR: Missing Supabase URL or ANON KEY', true);
+    }
+
+    // Create client
+    else {
+
+      sb = window.supabase.createClient(
         window.CONFIG.SUPABASE_URL,
         window.CONFIG.SUPABASE_ANON_KEY
       );
-      debug('Supabase client created');
-    } else if (!window.supabase) {
-      debug('ERROR: Supabase CDN not loaded', true);
-    } else if (!window.CONFIG) {
-      debug('ERROR: config.js not loaded or missing CONFIG', true);
-    } else {
-      debug('Supabase not configured (guest mode)');
+
+      window.sb = sb;
+
+      debug('Supabase client created successfully');
+
     }
+
   } catch (e) {
     debug('Supabase init error: ' + e.message, true);
   }
 
-  window.supabase = supabaseClient;
   window.currentUser = currentUser;
 
-  // Toast function (unchanged)
-  window.showToast = function(msg, type = 'info') {
+  // ================= TOAST =================
+
+  window.showToast = function (msg, type = 'info') {
+
     let container = document.getElementById('toastContainer');
+
     if (!container) {
       container = document.createElement('div');
       container.id = 'toastContainer';
       container.className = 'toast-container';
       document.body.appendChild(container);
     }
+
     const toast = document.createElement('div');
+
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i> ${msg}`;
+
+    toast.innerHTML = `
+      <i class="fa-solid ${
+        type === 'success'
+          ? 'fa-circle-check'
+          : 'fa-circle-info'
+      }"></i>
+      ${msg}
+    `;
+
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
   };
 
-  window.initAuth = async function() {
-    if (window.supabase) {
-      const { data: { session } } = await window.supabase.auth.getSession();
+  // ================= INIT AUTH =================
+
+  window.initAuth = async function () {
+
+    if (window.sb) {
+
+      const {
+        data: { session }
+      } = await window.sb.auth.getSession();
+
       window.currentUser = session?.user || null;
       currentUser = window.currentUser;
     }
+
     return window.currentUser;
   };
 
-  // ========== GOOGLE SIGN-IN (now always defined) ==========
-  window.signInWithGoogle = async function() {
+  // ================= GOOGLE SIGN IN =================
+
+  window.signInWithGoogle = async function () {
+
     debug('signInWithGoogle called');
-    if (!window.supabase) {
-      const msg = 'Supabase not ready. Check config.js and internet connection.';
+
+    if (!window.sb) {
+
+      const msg =
+        'Supabase not ready. Check CDN, config.js and internet connection.';
+
       debug(msg, true);
       window.showToast(msg, 'danger');
+
       return;
     }
+
     try {
-      const { error } = await window.supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin + '/plan.html' }
-      });
+
+      const redirectUrl =
+        window.location.origin + '/plan.html';
+
+      debug('Redirect URL: ' + redirectUrl);
+
+      const { data, error } =
+        await window.sb.auth.signInWithOAuth({
+
+          provider: 'google',
+
+          options: {
+            redirectTo: redirectUrl
+          }
+
+        });
+
       if (error) {
+
         debug('Google login error: ' + error.message, true);
         window.showToast(error.message, 'danger');
+
       } else {
-        debug('Google OAuth started – redirecting');
+
+        debug('Google OAuth started');
+        console.log(data);
+
       }
+
     } catch (err) {
+
       debug('Unexpected error: ' + err.message, true);
       window.showToast(err.message, 'danger');
+
     }
+
   };
 
-  // Email signup / login
-  window.signUpWithEmail = async function(email, password, fullName) {
-    if (!window.supabase) { window.showToast('Demo mode – signup disabled', 'warning'); return; }
-    const { error } = await window.supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
-    if (error) window.showToast(error.message, 'danger');
-    else window.showToast('Check email to confirm', 'success');
-  };
+  // ================= EMAIL SIGNUP =================
 
-  window.signInWithEmail = async function(email, password) {
-    if (!window.supabase) { window.showToast('Demo mode – login disabled', 'warning'); return; }
-    const { error } = await window.supabase.auth.signInWithPassword({ email, password });
-    if (error) window.showToast(error.message, 'danger');
-    else window.location.href = 'plan.html';
-  };
+  window.signUpWithEmail = async function (
+    email,
+    password,
+    fullName
+  ) {
 
-  window.signOut = async function() {
-    if (window.supabase) await window.supabase.auth.signOut();
-    window.location.href = 'index.html';
-  };
+    if (!window.sb) {
+      window.showToast(
+        'Demo mode – signup disabled',
+        'warning'
+      );
+      return;
+    }
 
-  // Auth state change listener
-  if (window.supabase) {
-    window.supabase.auth.onAuthStateChange((event, session) => {
-      window.currentUser = session?.user || null;
-      currentUser = window.currentUser;
-      if (event === 'SIGNED_IN' && window.location.pathname.includes('index.html')) {
-        window.location.href = 'plan.html';
+    const { error } = await window.sb.auth.signUp({
+
+      email,
+      password,
+
+      options: {
+        data: {
+          full_name: fullName
+        }
       }
+
     });
+
+    if (error) {
+
+      window.showToast(error.message, 'danger');
+
+    } else {
+
+      window.showToast(
+        'Check your email to confirm',
+        'success'
+      );
+
+    }
+
+  };
+
+  // ================= EMAIL LOGIN =================
+
+  window.signInWithEmail = async function (
+    email,
+    password
+  ) {
+
+    if (!window.sb) {
+
+      window.showToast(
+        'Demo mode – login disabled',
+        'warning'
+      );
+
+      return;
+    }
+
+    const { error } =
+      await window.sb.auth.signInWithPassword({
+
+        email,
+        password
+
+      });
+
+    if (error) {
+
+      window.showToast(error.message, 'danger');
+
+    } else {
+
+      window.location.href = 'plan.html';
+
+    }
+
+  };
+
+  // ================= SIGN OUT =================
+
+  window.signOut = async function () {
+
+    if (window.sb) {
+      await window.sb.auth.signOut();
+    }
+
+    window.location.href = 'index.html';
+
+  };
+
+  // ================= AUTH STATE =================
+
+  if (window.sb) {
+
+    window.sb.auth.onAuthStateChange(
+
+      (event, session) => {
+
+        window.currentUser = session?.user || null;
+        currentUser = window.currentUser;
+
+        console.log('Auth Event:', event);
+
+        // Redirect after login
+        if (
+          event === 'SIGNED_IN' &&
+          (
+            window.location.pathname.includes('index.html') ||
+            window.location.pathname === '/'
+          )
+        ) {
+
+          window.location.href = 'plan.html';
+
+        }
+
+      }
+
+    );
+
   }
 
-  // Trip helpers (unchanged, keep them)
-  function rowToTrip(row) { /* same as before */ }
-  window.saveTripToSupabase = async function(tripData) { /* same */ };
-  window.getTripsFromSupabase = async function() { /* same */ };
-  window.requestNotificationPermission = function() { /* same */ };
+  // ================= PLACEHOLDERS =================
 
-  debug('shared.js finished – signInWithGoogle is now ' + (typeof window.signInWithGoogle));
+  function rowToTrip(row) {
+    return row;
+  }
+
+  window.saveTripToSupabase = async function (
+    tripData
+  ) {
+
+    if (!window.sb) return null;
+
+    return tripData;
+  };
+
+  window.getTripsFromSupabase = async function () {
+
+    if (!window.sb) return [];
+
+    return [];
+
+  };
+
+  window.requestNotificationPermission = function () {
+
+    if ('Notification' in window) {
+
+      Notification.requestPermission()
+        .then(permission => {
+
+          debug(
+            'Notification permission: ' + permission
+          );
+
+        });
+
+    }
+
+  };
+
+  // ================= FINAL =================
+
+  debug(
+    'shared.js finished – signInWithGoogle type: ' +
+    typeof window.signInWithGoogle
+  );
+
 })();
