@@ -7,6 +7,12 @@
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
 </head>
 <body>
 <div class="app-wrapper">
@@ -16,15 +22,39 @@
     <div class="nav-item" onclick="window.location.href='trips.html'"><i class="fa-solid fa-folder-open"></i><span>Trips</span></div>
     <div class="nav-item active" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
+
   <div class="card" style="text-align: center;">
     <div class="avatar-circle" id="avatar">👤</div>
-    <h3 id="userName">Guest</h3>
-    <p id="userEmail"></p>
+    
+    <!-- For logged-in users: name display + edit button -->
+    <div id="displayNameSection">
+      <h3 id="userName">Guest</h3>
+      <p id="userEmail"></p>
+    </div>
+    
+    <!-- Edit name inline form (hidden initially) -->
+    <div id="editNameSection" style="display: none; margin-bottom: 16px;">
+      <input type="text" id="editNameInput" class="input-field" style="margin-bottom: 8px;">
+      <div style="display: flex; gap: 8px;">
+        <button id="saveNameBtn" class="btn btn-primary btn-sm">Save</button>
+        <button id="cancelEditBtn" class="btn btn-outline btn-sm">Cancel</button>
+      </div>
+    </div>
+    
+    <button id="editNameBtn" class="btn btn-outline btn-full" style="margin-bottom: 8px;">✏️ Edit Name</button>
     <button id="logoutBtn" class="btn btn-outline btn-full">Logout</button>
   </div>
+
   <div class="card">
-    <div class="settings-row"><span><i class="fa-solid fa-moon"></i> Dark Mode</span><label class="toggle-switch"><input type="checkbox" id="darkModeToggle"><span class="toggle-slider"></span></label></div>
+    <div class="settings-row">
+      <span><i class="fa-solid fa-moon"></i> Dark Mode</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
   </div>
+
   <div class="card">
     <button class="btn btn-outline btn-full" id="exportBtn">Export All Data</button>
     <button class="btn btn-danger btn-full" id="deleteAccountBtn" style="margin-top:12px;">Delete Local Data</button>
