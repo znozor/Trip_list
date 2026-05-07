@@ -757,9 +757,3 @@ body {
   max-width: 100%;
   overflow-x: hidden;
 }
-body {
-  visibility: hidden;
-}
-body.app-ready {
-  visibility: visible;
-}
