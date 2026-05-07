@@ -8,14 +8,34 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
   <script>
-  (function() {
-    const theme = localStorage.getItem('theme');
-    if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
-  })();
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    })();
+  </script>
+  <!-- Force viewport scale for mobile devices -->
+  <script>
+    (function() {
+      // Ensure the viewport meta is correctly set
+      function setViewport() {
+        const meta = document.querySelector('meta[name="viewport"]');
+        if (meta) {
+          meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover');
+        }
+        // Force body width to device width (prevents desktop layout)
+        document.body.style.width = '100%';
+        document.body.style.overflowX = 'hidden';
+      }
+      // Run immediately and after load
+      setViewport();
+      window.addEventListener('load', setViewport);
+      // Also after a short delay (for any dynamic changes)
+      setTimeout(setViewport, 100);
+    })();
   </script>
 </head>
 <body>
