@@ -8,15 +8,7 @@
   <link rel="stylesheet" href="shared.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script>
-    (function() {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
-  </script>
-  <!-- Supabase CDN (UMD) – creates window.supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <!-- config.js must be present and define window.CONFIG -->
   <script src="config.js"></script>
 </head>
 <body>
@@ -41,9 +33,8 @@
     <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
   </div>
 </div>
-
 <script>
-  // ------------- Debug Helper -------------
+  // ------ Debug helper ------
   const debugDiv = document.getElementById('debugArea');
   const debugSpan = document.getElementById('debugMsg');
   function debug(msg, isError = false) {
@@ -51,39 +42,34 @@
       debugSpan.innerText = msg;
       debugDiv.style.display = 'block';
       debugDiv.style.background = isError ? '#ffcccc' : '#ffe0e0';
-      setTimeout(() => { debugDiv.style.display = 'none'; }, 8000);
+      setTimeout(() => { debugDiv.style.display = 'none'; }, 6000);
     }
     console.log(msg);
   }
 
-  // ------------- Initialization -------------
+  // ------ Init Supabase ------
   let supabase = null;
-
-  // Check config.js
   if (typeof CONFIG === 'undefined') {
     debug('ERROR: config.js not loaded', true);
   } else if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
-    debug('ERROR: SUPABASE_URL or ANON_KEY missing in config.js', true);
+    debug('ERROR: SUPABASE_URL or ANON_KEY missing', true);
+  } else if (typeof window.supabase === 'undefined') {
+    debug('ERROR: Supabase CDN not loaded', true);
   } else {
-    // Check if Supabase CDN is loaded
-    if (typeof window.supabase === 'undefined') {
-      debug('ERROR: Supabase CDN not loaded (window.supabase missing)', true);
-    } else {
-      try {
-        supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-        debug('Supabase client created successfully');
-      } catch (e) {
-        debug('Supabase createClient error: ' + e.message, true);
-      }
+    try {
+      supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      debug('Supabase ready');
+    } catch(e) {
+      debug('Supabase init error: ' + e.message, true);
     }
   }
 
-  // ------------- Google Sign-In -------------
+  // ------ Google Sign-In ------
   window.signInWithGoogle = async function() {
-    debug('signInWithGoogle called');
+    debug('Google button clicked');
     if (!supabase) {
-      debug('Supabase not initialized – cannot start Google login', true);
-      alert('Supabase not ready. Please check your internet connection and refresh the page.');
+      debug('Supabase not ready – cannot login', true);
+      alert('Supabase not ready. Please refresh the page.');
       return;
     }
     try {
@@ -92,25 +78,23 @@
         options: { redirectTo: window.location.origin + '/plan.html' }
       });
       if (error) {
-        debug('Google login error: ' + error.message, true);
+        debug('Google error: ' + error.message, true);
         alert('Google login error: ' + error.message);
       } else {
-        debug('Google OAuth started – redirecting');
+        debug('Redirecting to Google...');
       }
-    } catch (err) {
+    } catch(err) {
       debug('Unexpected error: ' + err.message, true);
-      alert('Unexpected error: ' + err.message);
+      alert('Error: ' + err.message);
     }
   };
 
-  // ------------- UI Button Setup -------------
+  // ------ Enable Google button after Supabase is ready ------
   const googleBtn = document.getElementById('googleBtn');
   if (googleBtn) {
-    // Initially disable button until Supabase is ready
     googleBtn.disabled = true;
     googleBtn.style.opacity = '0.6';
 
-    // Wait up to 5 seconds for supabase to be ready
     let attempts = 0;
     const interval = setInterval(() => {
       attempts++;
@@ -118,27 +102,21 @@
         clearInterval(interval);
         googleBtn.disabled = false;
         googleBtn.style.opacity = '1';
-        googleBtn.onclick = () => { window.signInWithGoogle(); };
+        googleBtn.onclick = () => window.signInWithGoogle();
         debug('Google button enabled');
-      } else if (attempts > 25) {
+      } else if (attempts > 20) {
         clearInterval(interval);
-        debug('Timeout: Supabase never became ready', true);
-        googleBtn.disabled = true;
-        googleBtn.title = 'Supabase not ready – refresh page';
+        debug('Timeout – Supabase never ready', true);
       }
-    }, 200);
+    }, 250);
   } else {
-    debug('ERROR: Google button not found in DOM', true);
+    debug('Google button not found', true);
   }
 
-  // Email signup redirect
-  const signupRedirectBtn = document.getElementById('signupRedirectBtn');
-  if (signupRedirectBtn) {
-    signupRedirectBtn.onclick = () => {
-      window.location.href = 'signup.html';
-    };
-  } else {
-    debug('ERROR: Signup button not found', true);
+  // ------ Email signup redirect ------
+  const signupBtn = document.getElementById('signupRedirectBtn');
+  if (signupBtn) {
+    signupBtn.onclick = () => { window.location.href = 'signup.html'; };
   }
 </script>
 </body>
