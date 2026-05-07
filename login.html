@@ -48,7 +48,7 @@
     googleBtn.onclick = async () => {
       googleBtn.disabled = true;
       googleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
-      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/plan.html' } });
+      const { error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/plan.html?mobile=1' } });
       if (error) { alert(error.message); googleBtn.disabled = false; googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google'; }
     };
   }
