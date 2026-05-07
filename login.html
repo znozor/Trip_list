@@ -39,21 +39,57 @@
     </div>
   </div>
 </div>
+
 <script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
+
 <script>
-  document.getElementById('loginSubmitBtn').onclick = () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    if (!email || !password) {
-      showToast('Please enter email and password', 'warning');
-      return;
+  let supabaseClient = null;
+  // Wait for shared.js to create window.sb
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (window.sb) {
+      clearInterval(interval);
+      supabaseClient = window.sb;
+      enableButtons();
+    } else if (attempts > 25) {
+      clearInterval(interval);
+      console.warn('Supabase client not ready');
     }
-    signInWithEmail(email, password);
-  };
-  document.getElementById('googleLoginBtn').onclick = () => {
-    signInWithGoogle();
-  };
+  }, 200);
+
+  function enableButtons() {
+    const loginBtn = document.getElementById('loginSubmitBtn');
+    const googleBtn = document.getElementById('googleLoginBtn');
+
+    loginBtn.onclick = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) {
+        alert('Please enter email and password');
+        return;
+      }
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+      else window.location.href = 'plan.html';
+    };
+
+    googleBtn.onclick = async () => {
+      googleBtn.disabled = true;
+      googleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/plan.html' }
+      });
+      if (error) {
+        alert(error.message);
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google';
+      }
+    };
+  }
 </script>
 </body>
 </html>
