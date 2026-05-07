@@ -1,3 +1,7 @@
+window.addEventListener("error", function (e) {
+  console.log("JS Error caught:", e.message);
+});
+
 // shared.js – direct Google redirect (no intermediate page) with session sync
 (function() {
   let sb = null;
