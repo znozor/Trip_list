@@ -131,5 +131,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
 <script src="plan.js"></script>
+  <script>
+if (window.location.search.includes('mobile=1')) {
+  const viewport = document.querySelector('meta[name="viewport"]');
+
+  if (viewport) {
+    viewport.setAttribute(
+      'content',
+      'width=device-width, initial-scale=1.0, viewport-fit=cover'
+    );
+  }
+
+  document.body.style.display = 'none';
+  document.body.offsetHeight;
+  document.body.style.display = '';
+}
+</script>
 </body>
 </html>
