@@ -37,7 +37,8 @@ body {
   padding-bottom: 80px;
 }
 .app-wrapper {
-  max-width: 800px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px 16px;
 }
@@ -740,6 +741,8 @@ html, body {
   overflow-x: hidden;
 }
 html {
+  width: 100%;
+  overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
 }
 
