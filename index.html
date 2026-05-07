@@ -30,72 +30,63 @@
       <span>Already have an account? <a href="login.html" class="guest-link">Login →</a></span>
     </div>
     <a href="plan.html" class="guest-link">Continue as guest →</a>
-    <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
     <div id="debugArea" style="background: #ffe0e0; border-radius: 12px; padding: 8px; margin-top: 12px; font-size: 12px; display: none;">
-  <strong>Debug:</strong> <span id="debugMsg">No message</span>
+      <strong>Debug:</strong> <span id="debugMsg">No message</span>
     </div>
+    <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
   </div>
 </div>
 <script src="config.js"></script>
 <script src="shared.js"></script>
-<<script>
-  const debugDiv = document.getElementById('debugArea');
-  const debugMsg = document.getElementById('debugMsg');
-  function showDebug(msg) {
-    debugDiv.style.display = 'block';
-    debugMsg.innerText = msg;
-    setTimeout(() => { debugDiv.style.display = 'none'; }, 8000);
-  }
-
-  // Check config.js
-  if (typeof CONFIG === 'undefined') showDebug('ERROR: config.js not loaded');
-  else if (!CONFIG.SUPABASE_URL) showDebug('ERROR: CONFIG.SUPABASE_URL missing');
-  else showDebug('Config OK');
-
-  // Check window.supabase
-  setTimeout(() => {
-    if (!window.supabase) showDebug('ERROR: Supabase not initialized');
-    else showDebug('Supabase OK');
-  }, 500);
-
-  // Google button
+<script>
+  // Wait for shared.js to fully load and expose the function
+  let checkInterval;
   const googleBtn = document.getElementById('googleBtn');
-  if (!googleBtn) showDebug('ERROR: Google button not found');
-  else {
-    googleBtn.onclick = () => {
-      showDebug('Google button clicked!');
-      if (typeof signInWithGoogle === 'function') {
-        showDebug('Calling signInWithGoogle...');
-        signInWithGoogle();
-      } else {
-        showDebug('ERROR: signInWithGoogle is not a function');
+
+  function enableGoogleButton() {
+    if (typeof window.signInWithGoogle === 'function') {
+      clearInterval(checkInterval);
+      googleBtn.disabled = false;
+      googleBtn.style.opacity = '1';
+      const debugDiv = document.getElementById('debugArea');
+      if (debugDiv) {
+        debugDiv.style.display = 'none';
       }
-    };
+      googleBtn.onclick = () => {
+        window.signInWithGoogle();
+      };
+    }
   }
 
-  // Other buttons (signup, etc.)
-  const signupBtn = document.getElementById('emailSignupBtn');
-  const showLoginLink = document.getElementById('showLoginLink');
-  const emailForm = document.getElementById('emailLoginForm');
-  signupBtn.onclick = () => {
-    const email = prompt('Enter email:');
-    if (!email) return;
-    const password = prompt('Enter password (min 6 chars):');
-    if (!password) return;
-    const fullName = prompt('Your full name:');
-    signUpWithEmail(email, password, fullName);
+  // Check every 200ms for up to 5 seconds
+  let attempts = 0;
+  checkInterval = setInterval(() => {
+    attempts++;
+    if (typeof window.signInWithGoogle === 'function') {
+      clearInterval(checkInterval);
+      googleBtn.disabled = false;
+      googleBtn.style.opacity = '1';
+      googleBtn.onclick = () => { window.signInWithGoogle(); };
+      const debugDiv = document.getElementById('debugArea');
+      if (debugDiv) debugDiv.style.display = 'none';
+    } else if (attempts > 25) { // 5 seconds total
+      clearInterval(checkInterval);
+      const debugDiv = document.getElementById('debugArea');
+      if (debugDiv) {
+        debugDiv.style.display = 'block';
+        document.getElementById('debugMsg').innerText = 'ERROR: signInWithGoogle not available. Check shared.js.';
+      }
+    }
+  }, 200);
+
+  // Initially disable button until ready
+  googleBtn.disabled = true;
+  googleBtn.style.opacity = '0.6';
+
+  // Email signup redirect
+  document.getElementById('signupRedirectBtn').onclick = () => {
+    window.location.href = 'signup.html';
   };
-  showLoginLink.onclick = (e) => {
-    e.preventDefault();
-    emailForm.style.display = emailForm.style.display === 'none' ? 'block' : 'none';
-  };
-  document.getElementById('doLoginBtn').onclick = () => {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    if (email && password) signInWithEmail(email, password);
-    else showToast('Enter email and password', 'warning');
-  };
-  initAuth();
 </script>
 </body>
 </html>
