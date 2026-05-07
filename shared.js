@@ -113,11 +113,16 @@
   if (sb) {
     sb.auth.onAuthStateChange(async (event, session) => {
   window.currentUser = session?.user || null;
-  if (event === 'SIGNED_IN') {
 
-    // OAuth redirect lands with #access_token in URL — do a clean
-    // same-origin reload to fix the Android Chrome viewport bug
-    if (window.location.hash && window.location.hash.includes('access_token')) {
+  if (event === 'SIGNED_IN') {
+    // OAuth redirect — do a clean same-origin reload to fix Android viewport
+    if (sessionStorage.getItem('_oauth')) {
+      sessionStorage.removeItem('_oauth');
+      const name = window.currentUser.user_metadata?.full_name ||
+                   window.currentUser.user_metadata?.name ||
+                   window.currentUser.email?.split('@')[0] ||
+                   'Traveler';
+      sessionStorage.setItem('_welcome', name); // show popup after clean load
       window.location.replace(window.location.pathname);
       return;
     }
@@ -131,6 +136,13 @@
     if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
       window.location.href = 'plan.html';
     }
+  }
+
+  // Show welcome popup after the clean reload
+  if (event === 'INITIAL_SESSION' && session && sessionStorage.getItem('_welcome')) {
+    const name = sessionStorage.getItem('_welcome');
+    sessionStorage.removeItem('_welcome');
+    window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
   }
 });
   }
