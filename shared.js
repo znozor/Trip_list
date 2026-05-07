@@ -1,4 +1,10 @@
-// Visual debug helper (if the debug area exists)
+// shared.js – fixed syntax
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+let supabase = null;
+let currentUser = null;
+
+// Debug helper (optional, uses debugArea if available)
 function showGlobalDebug(msg) {
   const div = document.getElementById('debugMsg');
   if (div) {
@@ -10,18 +16,18 @@ function showGlobalDebug(msg) {
 }
 showGlobalDebug('shared.js loaded');
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-let supabase = null;
-let currentUser = null;
-
 try {
   if (window.CONFIG && window.CONFIG.SUPABASE_URL) {
     supabase = createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
+    showGlobalDebug('Supabase client created');
   } else {
     console.warn('Supabase not configured – guest mode only');
+    showGlobalDebug('Supabase not configured (guest mode)');
   }
-} catch(e) { console.warn('Supabase init error:', e); }
+} catch(e) {
+  console.warn('Supabase init error:', e);
+  showGlobalDebug('Supabase init error: ' + e.message);
+}
 
 window.supabase = supabase;
 window.currentUser = currentUser;
@@ -50,11 +56,13 @@ window.initAuth = async function() {
   return window.currentUser;
 };
 
-// … keep everything above the same, but replace signInWithGoogle
+// ========== FIXED Google Sign‑in ==========
 window.signInWithGoogle = async function() {
+  showGlobalDebug('signInWithGoogle called');
   if (!window.supabase) {
-    alert('Supabase not initialized. Check config.js and console.');
-    window.showToast('Supabase not initialized', 'danger');
+    const msg = 'Supabase not initialized. Check config.js.';
+    showGlobalDebug(msg);
+    window.showToast(msg, 'danger');
     return;
   }
   try {
@@ -63,18 +71,15 @@ window.signInWithGoogle = async function() {
       options: { redirectTo: window.location.origin + '/plan.html' }
     });
     if (error) {
-      alert('Google login error: ' + error.message);
+      showGlobalDebug('Google login error: ' + error.message);
       window.showToast(error.message, 'danger');
+    } else {
+      showGlobalDebug('Google OAuth started – redirecting');
     }
   } catch (err) {
-    alert('Unexpected error: ' + err.message);
+    showGlobalDebug('Unexpected error: ' + err.message);
+    window.showToast(err.message, 'danger');
   }
-  showGlobalDebug('signInWithGoogle called');
-if (!window.supabase) {
-  showGlobalDebug('ERROR: window.supabase is null');
-  alert('Supabase not initialized');
-  return;
-}
 };
 
 window.signUpWithEmail = async function(email, password, fullName) {
@@ -106,7 +111,7 @@ if (window.supabase) {
   });
 }
 
-// Helper to reconstruct trip object from Supabase row
+// Helper to reconstruct trip from Supabase row
 function rowToTrip(row) {
   return {
     id: row.id,
