@@ -89,6 +89,14 @@ window.addEventListener("load", () => {
 
   setTimeout(stabilizeLayout, 200);
 });
+
+    window.addEventListener("load", () => {
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.body.classList.add("app-ready");
+    }, 50);
+  });
+});
 </script>
 </head>
 
