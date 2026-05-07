@@ -7,6 +7,12 @@
   <link rel="stylesheet" href="shared.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
 </head>
 <body>
 <div class="app-wrapper">
@@ -17,15 +23,12 @@
   </div>
   <div class="welcome-body">
     <div class="auth-buttons">
-      <button class="btn btn-outline" id="googleBtn"><i class="fa-brands fa-google"></i> Google Login</button>
-      <button class="btn btn-primary" id="emailSignupBtn"><i class="fa-solid fa-envelope"></i> Sign Up</button>
+      <button class="btn btn-outline" id="googleBtn"><i class="fa-brands fa-google"></i> Continue with Google</button>
+      <button class="btn btn-primary" id="signupRedirectBtn"><i class="fa-solid fa-envelope"></i> Sign Up with Email</button>
     </div>
-    <div id="emailLoginForm" style="display:none; margin-top:20px;">
-      <input type="email" id="loginEmail" placeholder="Email" class="input-field" style="margin-bottom:10px;">
-      <input type="password" id="loginPassword" placeholder="Password" class="input-field">
-      <button class="btn btn-primary btn-full" id="doLoginBtn">Login</button>
+    <div style="text-align: center; margin: 16px 0;">
+      <span>Already have an account? <a href="login.html" class="guest-link">Login →</a></span>
     </div>
-    <a href="#" id="showLoginLink" class="guest-link">Already have an account? Login →</a>
     <a href="plan.html" class="guest-link">Continue as guest →</a>
     <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
   </div>
@@ -33,29 +36,10 @@
 <script src="config.js"></script>
 <script src="shared.js"></script>
 <script>
-  document.getElementById('googleBtn').onclick = signInWithGoogle;
-  const signupBtn = document.getElementById('emailSignupBtn');
-  const showLoginLink = document.getElementById('showLoginLink');
-  const emailForm = document.getElementById('emailLoginForm');
-  signupBtn.onclick = () => {
-    const email = prompt('Enter email:');
-    if (!email) return;
-    const password = prompt('Enter password (min 6 chars):');
-    if (!password) return;
-    const fullName = prompt('Your full name:');
-    signUpWithEmail(email, password, fullName);
+  document.getElementById('googleBtn').onclick = () => signInWithGoogle();
+  document.getElementById('signupRedirectBtn').onclick = () => {
+    window.location.href = 'signup.html';
   };
-  showLoginLink.onclick = (e) => {
-    e.preventDefault();
-    emailForm.style.display = emailForm.style.display === 'none' ? 'block' : 'none';
-  };
-  document.getElementById('doLoginBtn').onclick = () => {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    if (email && password) signInWithEmail(email, password);
-    else showToast('Enter email and password', 'warning');
-  };
-  initAuth();
 </script>
 </body>
 </html>
