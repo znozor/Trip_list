@@ -16,9 +16,12 @@
 
   <script>
   (function () {
-    const theme = localStorage.getItem('theme');
-    if (theme === 'dark') {
+    if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    // Flag OAuth redirect BEFORE Supabase clears the hash
+    if (location.hash.includes('access_token') || location.search.includes('code=')) {
+      sessionStorage.setItem('_oauth', '1');
     }
   })();
 </script>
