@@ -6,7 +6,6 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
 }
 
-// Convert a Supabase row to the same object structure used by guest mode
 function rowToTrip(row) {
     return {
         id: row.id,
@@ -15,23 +14,35 @@ function rowToTrip(row) {
         destinations: row.preferences_json?.destinations || { main: { country: '', cities: [] } },
         preferences: row.preferences_json || {},
         weather: row.weather_json || {},
-        packingList: row.packing_list_json || [],
+        packingList: [],
         createdAt: row.created_at,
         savedAt: row.updated_at
     };
 }
 
 async function loadTrips() {
-    // If logged in and Supabase client is ready, fetch from cloud
     if (window.currentUser && window.sb) {
         try {
             const { data, error } = await window.sb
                 .from('trips')
-                .select('*')
+                .select(`
+                    *,
+                    trip_packing_items (
+                        id, status,
+                        packing_items ( name, category )
+                    )
+                `)
                 .eq('user_id', window.currentUser.id)
                 .order('created_at', { ascending: false });
             if (error) throw error;
-            trips = data.map(rowToTrip);
+            trips = data.map(row => ({
+                ...rowToTrip(row),
+                packingList: (row.trip_packing_items || []).map(tpi => ({
+                    name: tpi.packing_items?.name || '',
+                    category: tpi.packing_items?.category || '',
+                    checked: tpi.status === 'packed'
+                }))
+            }));
             console.log('Loaded trips from Supabase:', trips.length);
         } catch (err) {
             console.error('Supabase error:', err);
@@ -39,7 +50,6 @@ async function loadTrips() {
             trips = [];
         }
     } else {
-        // Guest mode: load from localStorage
         const stored = localStorage.getItem('userTrips');
         trips = stored ? JSON.parse(stored) : [];
         console.log('Loaded trips from localStorage:', trips.length);
@@ -55,14 +65,13 @@ function renderTrips() {
         return;
     }
     container.innerHTML = trips.map(trip => `
-        <div class="trip-card" data-id="${trip.id}">
+        <div class="trip-card" data-id="${escapeHtml(String(trip.id))}">
             <div><strong>${escapeHtml(trip.name)}</strong><br>
             <small>${trip.dates?.start || '?'} → ${trip.dates?.end || '?'}</small></div>
             <button class="btn btn-sm btn-outline view-trip" style="margin-top: 8px;">View List</button>
         </div>
     `).join('');
 
-    // Attach view events
     document.querySelectorAll('.view-trip').forEach((btn, idx) => {
         btn.onclick = () => {
             const trip = trips[idx];
@@ -72,14 +81,21 @@ function renderTrips() {
     });
 }
 
-// Wait for session to be ready (currentUser may not be set immediately when script loads)
 async function init() {
-    // Poll until window.currentUser is defined (shared.js sets it)
+    // Wait for sb to be ready
     let attempts = 0;
-    while (window.currentUser === undefined && attempts < 30) {
+    while (!window.sb && attempts < 30) {
         await new Promise(r => setTimeout(r, 100));
         attempts++;
     }
+
+    // Get session directly — don't rely on window.currentUser timing
+    if (window.sb) {
+        const { data: { session } } = await window.sb.auth.getSession();
+        window.currentUser = session?.user || null;
+        console.log('trips.js session:', window.currentUser?.email || 'guest');
+    }
+
     await loadTrips();
     renderTrips();
 }
