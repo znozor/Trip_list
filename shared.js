@@ -155,10 +155,13 @@
 
       // Show welcome popup once after OAuth clean reload
       if (event === 'INITIAL_SESSION' && session && sessionStorage.getItem('_welcome')) {
-        const name = sessionStorage.getItem('_welcome');
-        sessionStorage.removeItem('_welcome');
-        window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
-      }
+  const name = sessionStorage.getItem('_welcome');
+  sessionStorage.removeItem('_welcome');
+  // Delay until viewport has stabilized after OAuth redirect
+  setTimeout(() => {
+    window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
+  }, 800);
+}
     });
   }
 
