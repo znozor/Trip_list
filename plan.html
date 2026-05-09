@@ -19,10 +19,31 @@
     if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
-    // Flag OAuth redirect BEFORE Supabase clears the hash
     if (location.hash.includes('access_token') || location.search.includes('code=')) {
       sessionStorage.setItem('_oauth', '1');
     }
+
+    // Force viewport before first paint
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      meta.content = '';
+      meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover';
+    }
+
+    // Hide body until viewport is stable
+    document.documentElement.style.visibility = 'hidden';
+
+    window.addEventListener('load', function () {
+      // Force layout recalculation
+      document.body.style.width = window.innerWidth + 'px';
+      document.body.offsetHeight; // trigger reflow
+      document.body.style.width = '';
+
+      // Small delay then show — viewport is stable by now
+      setTimeout(function () {
+        document.documentElement.style.visibility = 'visible';
+      }, 150);
+    });
   })();
 </script>
 </head>
