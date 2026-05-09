@@ -22,35 +22,33 @@
     <div class="hero-title">WanderPack</div>
     <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
   </div>
+
   <div class="welcome-body">
     <div class="auth-buttons">
-      <button class="btn btn-outline" id="googleBtn"><i class="fa-brands fa-google"></i> Continue with Google</button>
-      <button class="btn btn-primary" id="signupRedirectBtn"><i class="fa-solid fa-envelope"></i> Sign Up with Email</button>
+      <button class="btn btn-outline btn-full" id="googleBtn">
+        <i class="fa-brands fa-google"></i> Continue with Google
+      </button>
     </div>
-    <div style="text-align: center; margin: 16px 0;">
-      <span>Already have an account? <a href="login.html" class="guest-link">Login →</a></span>
-    </div>
+
     <a href="plan.html" class="guest-link">Continue as guest →</a>
-    <div class="disclaimer">Weather predictions are estimates. Use common sense when packing.</div>
+
+    <div class="disclaimer">
+      Weather predictions are estimates. Use common sense when packing.
+    </div>
   </div>
 </div>
 
-<!-- CONFIG -->
 <script src="config.js"></script>
-<!-- SUPABASE CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- SHARED -->
 <script src="shared.js"></script>
 
 <script>
   const googleBtn = document.getElementById('googleBtn');
-  const signupBtn = document.getElementById('signupRedirectBtn');
 
-  // Disable Google button until shared.js is ready
+  // Disable until shared.js is ready
   googleBtn.disabled = true;
   googleBtn.style.opacity = '0.6';
 
-  // Wait for shared.js to define signInWithGoogle
   let attempts = 0;
   const interval = setInterval(() => {
     attempts++;
@@ -62,7 +60,7 @@
         googleBtn.disabled = true;
         googleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
         await window.signInWithGoogle();
-        // If redirect doesn't happen (e.g., error), restore button after a few seconds
+        // Restore button if redirect doesn't happen
         setTimeout(() => {
           googleBtn.disabled = false;
           googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google';
@@ -73,10 +71,6 @@
       console.warn('signInWithGoogle not available');
     }
   }, 200);
-
-  signupBtn.onclick = () => {
-    window.location.href = 'signup.html';
-  };
 </script>
 </body>
 </html>
