@@ -193,9 +193,10 @@ async function saveTrip() {
     console.log('💾 saveTrip called');
     
     // 🔥 CRITICAL FIX: refresh the user session before checking login status
-    if (window.refreshSession) {
-        await window.refreshSession();
-        console.log('After refreshSession, window.currentUser:', window.currentUser);
+    if (window.sb) {
+        const { data: { session } } = await window.sb.auth.getSession();
+        window.currentUser = session?.user || null;
+        console.log('Session check:', window.currentUser?.email || 'not logged in');
     }
     
     if (!currentTrip) {
@@ -206,9 +207,8 @@ async function saveTrip() {
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
-    const isLoggedIn = !!(window.currentUser && window.sb && window.saveTripToSupabase);
-    console.log('isLoggedIn:', isLoggedIn);
-
+    const isLoggedIn = !!(window.currentUser && window.sb && typeof window.saveTripToSupabase === 'function');
+    console.log('isLoggedIn:', isLoggedIn, '| user:', window.currentUser?.email);
     if (isLoggedIn) {
         // Save to Supabase cloud
         const tripData = {
