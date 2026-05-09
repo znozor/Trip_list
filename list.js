@@ -188,9 +188,16 @@ function addCustomItem() {
     showCustomPopup(`"${name}" added!`, 'success');
 }
 
-// ========== UPDATED saveTrip function for logged-in users ==========
+// ========== UPDATED saveTrip with session refresh ==========
 async function saveTrip() {
     console.log('💾 saveTrip called');
+    
+    // 🔥 CRITICAL FIX: refresh the user session before checking login status
+    if (window.refreshSession) {
+        await window.refreshSession();
+        console.log('After refreshSession, window.currentUser:', window.currentUser);
+    }
+    
     if (!currentTrip) {
         showCustomPopup('No trip data to save. Please generate a list first.', 'error');
         return;
@@ -199,8 +206,8 @@ async function saveTrip() {
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
-    // Check if user is logged in (Supabase client and currentUser present)
     const isLoggedIn = !!(window.currentUser && window.sb && window.saveTripToSupabase);
+    console.log('isLoggedIn:', isLoggedIn);
 
     if (isLoggedIn) {
         // Save to Supabase cloud
