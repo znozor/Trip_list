@@ -159,44 +159,89 @@
 
   // ================= TRIP HELPERS (Supabase storage) =================
   window.saveTripToSupabase = async function(tripData) {
-    if (!sb || !window.currentUser) {
-      console.warn('Cannot save: not logged in');
-      return null;
-    }
-    const { title, startDate, endDate, reason, style, travelersCount, luggage, packingList, preferences, weather } = tripData;
-    const { data, error } = await sb.from('trips').insert({
-      user_id: window.currentUser.id,
-      title: title,
-      start_date: startDate,
-      end_date: endDate,
-      travel_reason: reason,
-      travel_style: style,
-      travelers_count: travelersCount || 1,
-      luggage_type: luggage,
-      packing_list_json: packingList,
-      preferences_json: preferences,
-      weather_json: weather
-    }).select().single();
-    if (error) {
-      window.showToast(error.message, 'danger');
-      return null;
-    }
-    return rowToTrip(data);
-  };
+  if (!sb || !window.currentUser) {
+    console.warn('Cannot save: not logged in');
+    return null;
+  }
 
-  window.getTripsFromSupabase = async function() {
-    if (!sb || !window.currentUser) return [];
-    const { data, error } = await sb
-      .from('trips')
-      .select('*')
-      .eq('user_id', window.currentUser.id)
-      .order('created_at', { ascending: false });
-    if (error) {
-      window.showToast(error.message, 'danger');
-      return [];
+  // 1. Save the trip row
+  const { data: trip, error: tripError } = await sb.from('trips').insert({
+    user_id: window.currentUser.id,
+    title: tripData.title,
+    start_date: tripData.startDate,
+    end_date: tripData.endDate,
+    travel_reason: tripData.reason,
+    travel_style: tripData.style,
+    travelers_count: tripData.travelersCount || 1,
+    luggage_type: tripData.luggage,
+    preferences_json: tripData.preferences,
+    weather_json: tripData.weather
+  }).select().single();
+
+  if (tripError) {
+    window.showToast(tripError.message, 'danger');
+    return null;
+  }
+
+  // 2. For each packing item — upsert into packing_items, then link to trip
+  for (const item of tripData.packingList) {
+    // Upsert into packing_items (name is UNIQUE)
+    const { data: packingItem, error: itemError } = await sb
+      .from('packing_items')
+      .upsert({ name: item.name, category: item.category }, { onConflict: 'name' })
+      .select()
+      .single();
+
+    if (itemError) {
+      console.warn('packing_items upsert error:', itemError.message);
+      continue;
     }
-    return data.map(rowToTrip);
-  };
+
+    // Insert into trip_packing_items
+    const { error: linkError } = await sb.from('trip_packing_items').insert({
+      trip_id: trip.id,
+      packing_item_id: packingItem.id,
+      status: item.checked ? 'packed' : 'pending'
+    });
+
+    if (linkError) {
+      console.warn('trip_packing_items insert error:', linkError.message);
+    }
+  }
+
+  return rowToTrip(trip);
+};
+  
+  window.getTripsFromSupabase = async function() {
+  if (!sb || !window.currentUser) return [];
+
+  const { data, error } = await sb
+    .from('trips')
+    .select(`
+      *,
+      trip_packing_items (
+        id,
+        status,
+        packing_items ( name, category )
+      )
+    `)
+    .eq('user_id', window.currentUser.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    window.showToast(error.message, 'danger');
+    return [];
+  }
+
+  return data.map(row => ({
+    ...rowToTrip(row),
+    packingList: (row.trip_packing_items || []).map(tpi => ({
+      name: tpi.packing_items?.name || '',
+      category: tpi.packing_items?.category || '',
+      checked: tpi.status === 'packed'
+    }))
+  }));
+};
 
   window.requestNotificationPermission = function() {
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
