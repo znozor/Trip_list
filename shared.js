@@ -130,40 +130,38 @@
 
   // ================= AUTH STATE LISTENER =================
   if (sb) {
-    sb.auth.onAuthStateChange(async (event, session) => {
-      window.currentUser = session?.user || null;
+  sb.auth.onAuthStateChange(async (event, session) => {
+    window.currentUser = session?.user || null;
 
-      if (event === 'SIGNED_IN') {
-        // OAuth flow — set flag and reload for clean viewport
-        if (sessionStorage.getItem('_oauth')) {
-          sessionStorage.removeItem('_oauth');
-          const name = window.currentUser.user_metadata?.full_name ||
-                       window.currentUser.user_metadata?.name ||
-                       window.currentUser.email?.split('@')[0] ||
-                       'Traveler';
-          sessionStorage.setItem('_welcome', name);
-          window.location.replace(window.location.pathname);
-          return;
-        }
-        // Email login — only redirect if still on auth pages
-        // Welcome popup is handled inside signInWithEmail directly
-        const path = window.location.pathname;
-        if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
-          window.location.href = 'plan.html';
-        }
+    if (event === 'SIGNED_IN') {
+      // OAuth first landing — reload for clean viewport
+      if (sessionStorage.getItem('_oauth')) {
+        sessionStorage.removeItem('_oauth');
+        const name = window.currentUser.user_metadata?.full_name ||
+                     window.currentUser.user_metadata?.name ||
+                     window.currentUser.email?.split('@')[0] ||
+                     'Traveler';
+        sessionStorage.setItem('_welcome', name);
+        window.location.replace(window.location.pathname);
+        return;
       }
+      // Email login redirect
+      const path = window.location.pathname;
+      if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
+        window.location.href = 'plan.html';
+      }
+    }
 
-      // Show welcome popup once after OAuth clean reload
-      if (event === 'INITIAL_SESSION' && session && sessionStorage.getItem('_welcome')) {
-  const name = sessionStorage.getItem('_welcome');
-  sessionStorage.removeItem('_welcome');
-  // Delay until viewport has stabilized after OAuth redirect
-  setTimeout(() => {
-    window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
-  }, 800);
+    // Check _welcome on ANY event — catches both INITIAL_SESSION and SIGNED_IN
+    if (session && sessionStorage.getItem('_welcome')) {
+      const name = sessionStorage.getItem('_welcome');
+      sessionStorage.removeItem('_welcome');
+      setTimeout(() => {
+        window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
+      }, 800);
+    }
+  });
 }
-    });
-  }
 
   // ================= TRIP HELPERS =================
   window.saveTripToSupabase = async function(tripData) {
