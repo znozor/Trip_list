@@ -191,26 +191,34 @@ function addCustomItem() {
 // ========== UPDATED saveTrip with session refresh ==========
 async function saveTrip() {
     console.log('💾 saveTrip called');
-    
-    // 🔥 CRITICAL FIX: refresh the user session before checking login status
+
+    // Disable button immediately to prevent multiple saves
+    const saveBtn = document.getElementById('saveTripBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+    }
+
     if (window.sb) {
         const { data: { session } } = await window.sb.auth.getSession();
         window.currentUser = session?.user || null;
         console.log('Session check:', window.currentUser?.email || 'not logged in');
     }
-    
+
     if (!currentTrip) {
         showCustomPopup('No trip data to save. Please generate a list first.', 'error');
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save Trip'; }
         return;
     }
+
     if (!currentTrip.id) currentTrip.id = Date.now();
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
     const isLoggedIn = !!(window.currentUser && window.sb && typeof window.saveTripToSupabase === 'function');
     console.log('isLoggedIn:', isLoggedIn, '| user:', window.currentUser?.email);
+
     if (isLoggedIn) {
-        // Save to Supabase cloud
         const tripData = {
             title: currentTrip.name,
             startDate: currentTrip.dates?.start,
@@ -223,21 +231,15 @@ async function saveTrip() {
             preferences: { ...currentTrip.preferences, destinations: currentTrip.destinations },
             weather: currentTrip.weather
         };
-        try {
-            const result = await window.saveTripToSupabase(tripData);
-            if (result) {
-                showCustomPopup('✅ Trip saved to cloud!', 'success');
-                console.log('Saved to Supabase', result);
-            } else {
-                throw new Error('No data returned from Supabase');
-            }
-        } catch (err) {
-            console.error('Supabase save error:', err);
-            showCustomPopup('Failed to save to cloud. Check console.', 'error');
-            return;
+
+        const result = await window.saveTripToSupabase(tripData);
+        if (result) {
+            showCustomPopup('✅ Trip saved to cloud!', 'success');
+            console.log('Saved to Supabase', result);
+        } else {
+            showCustomPopup('⚠️ Trip saved but items may be incomplete.', 'success');
         }
     } else {
-        // Guest mode: save to localStorage
         let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
         const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
         if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
@@ -246,17 +248,15 @@ async function saveTrip() {
         showCustomPopup('✅ Trip saved locally (guest)', 'success');
     }
 
-    // Clear current list and trip so page becomes empty
+    // Clear and redirect
     currentTrip = null;
     currentList = [];
     renderPackingList();
 
-    // Redirect to trips page after a short delay
     setTimeout(() => {
         window.location.href = 'trips.html';
     }, 1500);
 }
-
 function loadData() {
     const pending = sessionStorage.getItem('pendingTrip');
     const viewed = sessionStorage.getItem('viewTrip');
