@@ -188,7 +188,8 @@ function addCustomItem() {
     showCustomPopup(`"${name}" added!`, 'success');
 }
 
-function saveTrip() {
+// ========== UPDATED saveTrip function for logged-in users ==========
+async function saveTrip() {
     console.log('💾 saveTrip called');
     if (!currentTrip) {
         showCustomPopup('No trip data to save. Please generate a list first.', 'error');
@@ -198,17 +199,52 @@ function saveTrip() {
     currentTrip.packingList = currentList;
     currentTrip.savedAt = new Date().toISOString();
 
-    let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
-    const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
-    if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
-    else savedTrips.unshift(currentTrip);
-    localStorage.setItem('userTrips', JSON.stringify(savedTrips));
-    
+    // Check if user is logged in (Supabase client and currentUser present)
+    const isLoggedIn = !!(window.currentUser && window.sb && window.saveTripToSupabase);
+
+    if (isLoggedIn) {
+        // Save to Supabase cloud
+        const tripData = {
+            title: currentTrip.name,
+            startDate: currentTrip.dates?.start,
+            endDate: currentTrip.dates?.end,
+            reason: currentTrip.preferences?.reason,
+            style: currentTrip.preferences?.style,
+            travelersCount: currentTrip.preferences?.travelersCount || 1,
+            luggage: currentTrip.preferences?.luggage,
+            packingList: currentList,
+            preferences: currentTrip.preferences,
+            weather: currentTrip.weather
+        };
+        try {
+            const result = await window.saveTripToSupabase(tripData);
+            if (result) {
+                showCustomPopup('✅ Trip saved to cloud!', 'success');
+                console.log('Saved to Supabase', result);
+            } else {
+                throw new Error('No data returned from Supabase');
+            }
+        } catch (err) {
+            console.error('Supabase save error:', err);
+            showCustomPopup('Failed to save to cloud. Check console.', 'error');
+            return;
+        }
+    } else {
+        // Guest mode: save to localStorage
+        let savedTrips = JSON.parse(localStorage.getItem('userTrips') || '[]');
+        const existingIndex = savedTrips.findIndex(t => t.id === currentTrip.id);
+        if (existingIndex !== -1) savedTrips[existingIndex] = currentTrip;
+        else savedTrips.unshift(currentTrip);
+        localStorage.setItem('userTrips', JSON.stringify(savedTrips));
+        showCustomPopup('✅ Trip saved locally (guest)', 'success');
+    }
+
+    // Clear current list and trip so page becomes empty
     currentTrip = null;
     currentList = [];
     renderPackingList();
-    
-    showCustomPopup('✅ Trip saved! Redirecting to Trips page.', 'success');
+
+    // Redirect to trips page after a short delay
     setTimeout(() => {
         window.location.href = 'trips.html';
     }, 1500);
