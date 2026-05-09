@@ -220,7 +220,7 @@ async function saveTrip() {
             travelersCount: currentTrip.preferences?.travelersCount || 1,
             luggage: currentTrip.preferences?.luggage,
             packingList: currentList,
-            preferences: currentTrip.preferences,
+            preferences: { ...currentTrip.preferences, destinations: currentTrip.destinations },
             weather: currentTrip.weather
         };
         try {
