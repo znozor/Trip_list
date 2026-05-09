@@ -12,7 +12,7 @@
       destinations: row.preferences_json?.destinations || { main: { country: '', cities: [] } },
       preferences: row.preferences_json || {},
       weather: row.weather_json || {},
-      packingList: row.packing_list_json || [],
+      packingList: [],
       createdAt: row.created_at,
       savedAt: row.updated_at
     };
@@ -112,7 +112,15 @@
       }
       return;
     }
-    window.location.href = 'plan.html';
+    // Show welcome for email login before redirect
+    const { data: { session } } = await sb.auth.getSession();
+    const user = session?.user;
+    const name = user?.user_metadata?.full_name ||
+                 user?.user_metadata?.name ||
+                 user?.email?.split('@')[0] ||
+                 'Traveler';
+    window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
+    setTimeout(() => { window.location.href = 'plan.html'; }, 1500);
   };
 
   window.signOut = async function() {
@@ -120,13 +128,13 @@
     window.location.href = 'index.html';
   };
 
-  // ================= AUTH STATE LISTENER (with OAuth reload fix) =================
+  // ================= AUTH STATE LISTENER =================
   if (sb) {
     sb.auth.onAuthStateChange(async (event, session) => {
       window.currentUser = session?.user || null;
 
       if (event === 'SIGNED_IN') {
-        // Clear OAuth flag and reload to fix viewport
+        // OAuth flow — set flag and reload for clean viewport
         if (sessionStorage.getItem('_oauth')) {
           sessionStorage.removeItem('_oauth');
           const name = window.currentUser.user_metadata?.full_name ||
@@ -137,18 +145,15 @@
           window.location.replace(window.location.pathname);
           return;
         }
-
-        const name = window.currentUser.user_metadata?.full_name ||
-                     window.currentUser.user_metadata?.name ||
-                     window.currentUser.email?.split('@')[0] ||
-                     'Traveler';
-        window.showCustomPopup(`Welcome, ${name}! 🎒`, 'success');
+        // Email login — only redirect if still on auth pages
+        // Welcome popup is handled inside signInWithEmail directly
         const path = window.location.pathname;
         if (path.includes('index.html') || path === '/' || path.includes('login.html')) {
           window.location.href = 'plan.html';
         }
       }
 
+      // Show welcome popup once after OAuth clean reload
       if (event === 'INITIAL_SESSION' && session && sessionStorage.getItem('_welcome')) {
         const name = sessionStorage.getItem('_welcome');
         sessionStorage.removeItem('_welcome');
@@ -157,91 +162,86 @@
     });
   }
 
-  // ================= TRIP HELPERS (Supabase storage) =================
+  // ================= TRIP HELPERS =================
   window.saveTripToSupabase = async function(tripData) {
-  if (!sb || !window.currentUser) {
-    console.warn('Cannot save: not logged in');
-    return null;
-  }
+    if (!sb || !window.currentUser) {
+      console.warn('Cannot save: not logged in');
+      return null;
+    }
 
-  // 1. Save the trip row
-  const { data: trip, error: tripError } = await sb.from('trips').insert({
-    user_id: window.currentUser.id,
-    title: tripData.title,
-    start_date: tripData.startDate,
-    end_date: tripData.endDate,
-    travel_reason: tripData.reason,
-    travel_style: tripData.style,
-    travelers_count: tripData.travelersCount || 1,
-    luggage_type: tripData.luggage,
-    preferences_json: tripData.preferences,
-    weather_json: tripData.weather
-  }).select().single();
+    // 1. Save trip row
+    const { data: trip, error: tripError } = await sb.from('trips').insert({
+      user_id: window.currentUser.id,
+      title: tripData.title,
+      start_date: tripData.startDate,
+      end_date: tripData.endDate,
+      travel_reason: tripData.reason,
+      travel_style: tripData.style,
+      travelers_count: tripData.travelersCount || 1,
+      luggage_type: tripData.luggage,
+      preferences_json: tripData.preferences,
+      weather_json: tripData.weather
+    }).select().single();
 
-  if (tripError) {
-    window.showToast(tripError.message, 'danger');
-    return null;
-  }
+    if (tripError) { window.showToast(tripError.message, 'danger'); return null; }
 
-  // 2. For each packing item — upsert into packing_items, then link to trip
-  for (const item of tripData.packingList) {
-    // Upsert into packing_items (name is UNIQUE)
-    const { data: packingItem, error: itemError } = await sb
+    // 2. Batch upsert all packing_items at once
+    const { data: packingItems, error: itemsError } = await sb
       .from('packing_items')
-      .upsert({ name: item.name, category: item.category }, { onConflict: 'name' })
-      .select()
-      .single();
-
-    if (itemError) {
-      console.warn('packing_items upsert error:', itemError.message);
-      continue;
-    }
-
-    // Insert into trip_packing_items
-    const { error: linkError } = await sb.from('trip_packing_items').insert({
-      trip_id: trip.id,
-      packing_item_id: packingItem.id,
-      status: item.checked ? 'packed' : 'pending'
-    });
-
-    if (linkError) {
-      console.warn('trip_packing_items insert error:', linkError.message);
-    }
-  }
-
-  return rowToTrip(trip);
-};
-  
-  window.getTripsFromSupabase = async function() {
-  if (!sb || !window.currentUser) return [];
-
-  const { data, error } = await sb
-    .from('trips')
-    .select(`
-      *,
-      trip_packing_items (
-        id,
-        status,
-        packing_items ( name, category )
+      .upsert(
+        tripData.packingList.map(item => ({ name: item.name, category: item.category })),
+        { onConflict: 'name' }
       )
-    `)
-    .eq('user_id', window.currentUser.id)
-    .order('created_at', { ascending: false });
+      .select();
 
-  if (error) {
-    window.showToast(error.message, 'danger');
-    return [];
-  }
+    if (itemsError) {
+      console.warn('packing_items error:', itemsError.message);
+      return rowToTrip(trip);
+    }
 
-  return data.map(row => ({
-    ...rowToTrip(row),
-    packingList: (row.trip_packing_items || []).map(tpi => ({
-      name: tpi.packing_items?.name || '',
-      category: tpi.packing_items?.category || '',
-      checked: tpi.status === 'packed'
-    }))
-  }));
-};
+    // 3. Batch insert all trip_packing_items at once
+    const links = packingItems.map(pi => ({
+      trip_id: trip.id,
+      packing_item_id: pi.id,
+      status: tripData.packingList.find(i => i.name === pi.name)?.checked ? 'packed' : 'pending'
+    }));
+
+    const { error: linkError } = await sb.from('trip_packing_items').insert(links);
+    if (linkError) console.warn('trip_packing_items error:', linkError.message);
+
+    return rowToTrip(trip);
+  };
+
+  window.getTripsFromSupabase = async function() {
+    if (!sb || !window.currentUser) return [];
+
+    const { data, error } = await sb
+      .from('trips')
+      .select(`
+        *,
+        trip_packing_items (
+          id,
+          status,
+          packing_items ( name, category )
+        )
+      `)
+      .eq('user_id', window.currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      window.showToast(error.message, 'danger');
+      return [];
+    }
+
+    return data.map(row => ({
+      ...rowToTrip(row),
+      packingList: (row.trip_packing_items || []).map(tpi => ({
+        name: tpi.packing_items?.name || '',
+        category: tpi.packing_items?.category || '',
+        checked: tpi.status === 'packed'
+      }))
+    }));
+  };
 
   window.requestNotificationPermission = function() {
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
