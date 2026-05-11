@@ -281,12 +281,13 @@
 }
 
 .delete-modal-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
 .delete-modal-actions button {
-  flex: 1 1 0;        /* forces equal width regardless of text length */
+  width: 100%;
   padding: 12px;
   border-radius: 30px;
   font-weight: 600;
@@ -294,8 +295,11 @@
   cursor: pointer;
   border: none;
   transition: opacity 0.2s, transform 0.1s;
-  text-align: center; /* ensure text stays centered */
-  white-space: nowrap; /* prevent text wrapping */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 .delete-modal-actions button:active {
   transform: scale(0.97);
