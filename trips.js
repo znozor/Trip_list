@@ -87,17 +87,16 @@ function renderTrips() {
   }
 
   container.innerHTML = trips.map((trip, idx) => {
-    const totalItems   = trip.packingList?.length || 0;
-    const packedItems  = trip.packingList?.filter(i => i.checked).length || 0;
-    const progressPct  = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0;
-    const country      = trip.destinations?.main?.country || '';
-    const cities       = trip.destinations?.main?.cities || [];
-    const weatherCond  = trip.weather?.condition || '';
-    const style        = trip.preferences?.style || trip.preferences?.travel_style || '';
-    const startDate    = trip.dates?.start || '';
-    const endDate      = trip.dates?.end   || '';
+    const totalItems  = trip.packingList?.length || 0;
+    const packedItems = trip.packingList?.filter(i => i.checked).length || 0;
+    const progressPct = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0;
+    const country     = trip.destinations?.main?.country || '';
+    const cities      = trip.destinations?.main?.cities || [];
+    const weatherCond = trip.weather?.condition || '';
+    const style       = trip.preferences?.style || trip.preferences?.travel_style || '';
+    const startDate   = trip.dates?.start || '';
+    const endDate     = trip.dates?.end   || '';
 
-    // Format dates nicely
     const fmt = d => d ? new Date(d).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '?';
 
     return `
@@ -151,55 +150,57 @@ function renderTrips() {
     });
   });
 
-  // Delete button — reset modal state BEFORE showing it
+  // Delete button — only set the trip reference and update the label span
   document.querySelectorAll('.delete-trip').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx  = parseInt(btn.dataset.idx);
-      tripToDelete = trips[idx];
+      tripToDelete = trips[parseInt(btn.dataset.idx)];
+
       const nameEl = document.getElementById('deleteModalText');
       if (nameEl) {
-        let shortName = tripToDelete.name;
+        let shortName = tripToDelete.name || 'This trip';
         if (shortName.length > 35) shortName = shortName.substring(0, 32) + '...';
         nameEl.textContent = `"${shortName}" will be permanently removed.`;
       }
-      // ── FIX: always reset the button before opening so stale styles never show ──
-      resetDeleteBtn();
+
+      // Reset label and enabled state — never touch button.innerHTML or button.style
+      setDeleteBtnState('idle');
       document.getElementById('deleteOverlay').style.display = 'flex';
     });
   });
 }
 
-// ── Delete modal ───────────────────────────────────────────────────────────
+// ── Delete button state ────────────────────────────────────────────────────
+// Only the <span> label and disabled flag change — the button element is untouched.
+function setDeleteBtnState(state) {
+  const btn   = document.getElementById('confirmDeleteBtn');
+  const label = document.getElementById('confirmDeleteLabel');
+  if (!btn || !label) return;
 
-// Helper: fully reset the confirm button to its default state
-function resetDeleteBtn() {
-  const btn = document.getElementById('confirmDeleteBtn');
-  if (!btn) return;
-  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-  btn.disabled = false;
-  // Clear any inline styles that may have been applied
-  btn.style.opacity    = '';
-  btn.style.transform  = '';   // reset scale/translate stuck from :active
-  btn.style.boxShadow  = '';   // reset any active/focus shadow
-  // Release browser focus & active pseudo-state
+  if (state === 'loading') {
+    label.textContent = 'Deleting…';
+    btn.disabled = true;
+  } else {
+    // 'idle' or reset
+    label.textContent = 'Delete';
+    btn.disabled = false;
+  }
   btn.blur();
 }
 
+// ── Delete modal ───────────────────────────────────────────────────────────
 window.closeDeleteModal = function () {
   document.getElementById('deleteOverlay').style.display = 'none';
   tripToDelete = null;
-  resetDeleteBtn(); // always reset on close regardless of how modal was dismissed
+  setDeleteBtnState('idle');
 };
 
-document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
+// Called via onclick="confirmDelete()" on the button in HTML
+window.confirmDelete = async function () {
   if (!tripToDelete) return;
 
-  const btn = document.getElementById('confirmDeleteBtn');
-  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Deleting…';
-  btn.disabled = true;
+  setDeleteBtnState('loading');
 
   if (window.currentUser && window.sb) {
-    // Delete from Supabase (cascade deletes trip_packing_items automatically)
     const { error } = await window.sb
       .from('trips')
       .delete()
@@ -208,27 +209,22 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () 
 
     if (error) {
       if (window.showToast) window.showToast('Failed to delete trip', 'danger');
-      // Reset button so the user can try again
-      resetDeleteBtn();
+      setDeleteBtnState('idle'); // let user try again
       return;
     }
   } else {
-    // Delete from localStorage
     let saved = JSON.parse(localStorage.getItem('userTrips') || '[]');
     saved = saved.filter(t => t.id !== tripToDelete.id);
     localStorage.setItem('userTrips', JSON.stringify(saved));
   }
 
-  // Remove from local array
   trips = trips.filter(t => t.id !== tripToDelete.id);
-
-  // Reset button BEFORE closing so it's clean for the next delete
-  resetDeleteBtn();
+  setDeleteBtnState('idle');
   closeDeleteModal();
   renderTrips();
 
   if (window.showToast) window.showToast('Trip deleted', 'success');
-});
+};
 
 // Close modal on overlay click
 document.getElementById('deleteOverlay')?.addEventListener('click', function (e) {
