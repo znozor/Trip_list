@@ -286,7 +286,7 @@
 }
 
 .delete-modal-actions button {
-  flex: 1;
+  flex: 1 1 0;        /* forces equal width regardless of text length */
   padding: 12px;
   border-radius: 30px;
   font-weight: 600;
@@ -294,8 +294,9 @@
   cursor: pointer;
   border: none;
   transition: opacity 0.2s, transform 0.1s;
+  text-align: center; /* ensure text stays centered */
+  white-space: nowrap; /* prevent text wrapping */
 }
-
 .delete-modal-actions button:active {
   transform: scale(0.97);
 }
