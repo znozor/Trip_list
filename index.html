@@ -25,7 +25,7 @@
 
     body {
       background: #059669;
-      padding-bottom: 0 !important;  /* remove bottom-nav padding */
+      padding-bottom: 0 !important;
     }
 
     /* Hide the bottom navigation completely */
@@ -55,16 +55,16 @@
       flex-direction: column;
       justify-content: space-between;
       margin: 0 !important;
-      padding: 0 24px calc(30px + env(safe-area-inset-bottom, 30px)) 24px !important;
+      padding: 0 24px calc(20px + env(safe-area-inset-bottom, 20px)) 24px !important;
       background: none !important;
       border: none !important;
       box-shadow: none !important;
     }
 
-    /* Balanced top spacer – content just below cloud */
+    /* Smaller top spacer – content is still below cloud but leaves room for disclaimer */
     .top-spacer {
-      flex: 0.45;
-      min-height: 10vh;
+      flex: 0.25;
+      min-height: 6vh;
     }
 
     .main-content {
@@ -83,7 +83,7 @@
       text-shadow: 0 6px 18px rgba(0,0,0,0.18);
       text-align: center;
       padding: 0 24px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
     .hero-subtitle {
@@ -92,7 +92,7 @@
       font-weight: 500;
       text-align: center;
       padding: 0 16px;
-      margin-bottom: 36px;
+      margin-bottom: 28px;
     }
 
     /* Google button */
@@ -134,7 +134,7 @@
 
     /* Guest button */
     .guest-link {
-      margin-top: 16px;
+      margin-top: 14px;
       width: 280px;
       max-width: 90%;
       border-radius: 40px;
@@ -159,14 +159,14 @@
       transform: scale(0.97);
     }
 
-    /* Disclaimer – forced visible with enough bottom space */
+    /* Disclaimer – now with less top margin, will be fully visible */
     .disclaimer {
       width: 100%;
       max-width: 360px;
-      margin: 12px auto 0 auto;
+      margin: 8px auto 0 auto;
       background: rgba(255,255,255,0.08);
       border-radius: 28px;
-      padding: 12px 18px;
+      padding: 10px 16px;
       backdrop-filter: blur(10px);
       color: white;
       font-size: 12px;
@@ -177,19 +177,20 @@
     /* Mobile */
     @media (max-width: 480px) {
       .welcome-card {
-        padding: 0 16px calc(25px + env(safe-area-inset-bottom, 25px)) 16px !important;
+        padding: 0 16px calc(16px + env(safe-area-inset-bottom, 16px)) 16px !important;
       }
       .top-spacer {
-        flex: 0.4;
-        min-height: 8vh;
+        flex: 0.2;
+        min-height: 4vh;
       }
       .hero-title {
         font-size: clamp(28px, 7vw, 44px);
         padding: 0 16px;
+        margin-bottom: 6px;
       }
       .hero-subtitle {
         font-size: clamp(13px, 3.8vw, 16px);
-        margin-bottom: 28px;
+        margin-bottom: 24px;
       }
       .gsi-material-button-content-wrapper {
         padding: 10px 16px;
@@ -200,25 +201,33 @@
       .guest-link {
         font-size: 15px;
         padding: 10px 16px;
+        margin-top: 12px;
       }
       .disclaimer {
         font-size: 11px;
-        padding: 10px 14px;
-        margin-top: 8px;
+        padding: 8px 12px;
+        margin-top: 6px;
       }
     }
 
-    /* Short screens */
+    /* Short screens – reduce everything further */
     @media (max-height: 640px) {
       .hero-subtitle {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
       }
       .top-spacer {
-        min-height: 6vh;
+        min-height: 3vh;
+      }
+      .gsi-material-button-content-wrapper {
+        padding: 8px 16px;
+      }
+      .guest-link {
+        padding: 8px 16px;
+        margin-top: 10px;
       }
       .disclaimer {
-        margin-top: 8px;
-        padding: 8px 12px;
+        margin-top: 4px;
+        padding: 6px 12px;
       }
     }
   </style>
