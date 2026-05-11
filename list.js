@@ -173,10 +173,11 @@ function showCustomPopup(message, type = 'success') {
     }, 2500);
 }
 
-function addCustomItem() {
-    const name = prompt('Enter custom item name:');
+async function addCustomItem() {
+    const name = await showPrompt('Enter custom item name:');
     if (!name) return;
-    const category = prompt('Category (e.g., Accessories):') || 'Other';
+    const category = await showPrompt('Category (e.g., Accessories):', 'Other');
+    if (!category) return;
     currentList.push({ 
         name, 
         category, 
