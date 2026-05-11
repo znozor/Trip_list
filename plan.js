@@ -715,10 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const packingList = generatePackingList(weather, prefs);
 
-      const tripName = cities.length === 1
-        ? `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`
-        : `${cities[0]}, ${country} +${cities.length - 1} more (${new Date(start).toLocaleDateString()})`;
-
+      const tripName = `${cities.join(' & ')}, ${country} (${new Date(start).toLocaleDateString()})`;
       const tripData = {
         id: Date.now(),
         name: tripName,
