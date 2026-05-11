@@ -25,7 +25,7 @@
 
     body {
       background: #059669;
-      padding-bottom: 0 !important;  /* remove bottom-nav padding */
+      padding-bottom: 0 !important;
     }
 
     .app-wrapper {
@@ -56,10 +56,10 @@
       box-shadow: none !important;
     }
 
-    /* ----- large top spacer – pushes everything below the cloud/suitcase ----- */
+    /* SMALLER top spacer – content moves UP (just below cloud) */
     .top-spacer {
-      flex: 1.4;
-      min-height: 20vh;
+      flex: 0.3;
+      min-height: 8vh;
     }
 
     .main-content {
@@ -169,14 +169,14 @@
       text-align: center;
     }
 
-    /* Mobile fine‑tuning */
+    /* Mobile fine‑tuning – keep content up */
     @media (max-width: 480px) {
       .welcome-card {
         padding: 0 16px calc(8px + env(safe-area-inset-bottom, 10px)) 16px !important;
       }
       .top-spacer {
-        flex: 1.6;
-        min-height: 18vh;
+        flex: 0.2;
+        min-height: 6vh;
       }
       .hero-title {
         font-size: clamp(28px, 7vw, 44px);
@@ -202,10 +202,13 @@
       }
     }
 
-    /* For very tall screens – keep content from floating too high */
-    @media (min-height: 800px) {
+    /* For very short screens – ensure no clipping */
+    @media (max-height: 600px) {
       .top-spacer {
-        flex: 1.8;
+        min-height: 4vh;
+      }
+      .hero-subtitle {
+        margin-bottom: 20px;
       }
     }
   </style>
