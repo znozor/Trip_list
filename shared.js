@@ -1,3 +1,138 @@
+// ========== CUSTOM CONFIRM & PROMPT MODALS ==========
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]);
+}
+
+/**
+ * Custom confirm dialog (OK / Cancel)
+ * @param {string} message - The question to display
+ * @returns {Promise<boolean>} - true if OK, false if Cancel
+ */
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    // Remove any existing overlay
+    const existing = document.querySelector('.custom-confirm-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-confirm-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100010;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 300px;
+      max-width: calc(100vw - 40px);
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+      box-sizing: border-box;
+    `;
+
+    modal.innerHTML = `
+      <i class="fa-solid fa-circle-question" style="font-size: 44px; color: #06A77D; margin-bottom: 12px; display: block;"></i>
+      <h3 style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 8px; color: #1e2b2c;">Confirm</h3>
+      <p style="font-size: 13px; color: #6B7B8D; margin-bottom: 20px; line-height: 1.5;">${escapeHtml(message)}</p>
+      <div style="display: flex; gap: 12px;">
+        <button class="confirm-cancel-btn" style="flex:1; padding:12px 0; border-radius:30px; font-weight:600; background:#eef2f0; border:none; cursor:pointer;">Cancel</button>
+        <button class="confirm-ok-btn" style="flex:1; padding:12px 0; border-radius:30px; font-weight:600; background:#06A77D; color:white; border:none; cursor:pointer;">OK</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const cancelBtn = modal.querySelector('.confirm-cancel-btn');
+    const okBtn = modal.querySelector('.confirm-ok-btn');
+    const closeModal = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    cancelBtn.onclick = () => closeModal(false);
+    okBtn.onclick = () => closeModal(true);
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(false); };
+  });
+}
+
+/**
+ * Custom prompt dialog with text input
+ * @param {string} message - Label text
+ * @param {string} defaultValue - Optional default value
+ * @returns {Promise<string|null>} - entered string or null if cancelled
+ */
+function showPrompt(message, defaultValue = '') {
+  return new Promise((resolve) => {
+    const existing = document.querySelector('.custom-prompt-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-prompt-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100010;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 300px;
+      max-width: calc(100vw - 40px);
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+      box-sizing: border-box;
+    `;
+
+    modal.innerHTML = `
+      <i class="fa-solid fa-pen-to-square" style="font-size: 44px; color: #06A77D; margin-bottom: 12px; display: block;"></i>
+      <p style="font-size: 14px; font-weight: 500; margin-bottom: 16px; color: #1e2b2c;">${escapeHtml(message)}</p>
+      <input type="text" id="customPromptInput" class="input-field" style="width:100%; padding:12px; border-radius:16px; border:1px solid #ddd; margin-bottom:20px; font-size:14px; box-sizing:border-box;" value="${escapeHtml(defaultValue)}">
+      <div style="display: flex; gap: 12px;">
+        <button class="prompt-cancel-btn" style="flex:1; padding:12px 0; border-radius:30px; font-weight:600; background:#eef2f0; border:none; cursor:pointer;">Cancel</button>
+        <button class="prompt-ok-btn" style="flex:1; padding:12px 0; border-radius:30px; font-weight:600; background:#06A77D; color:white; border:none; cursor:pointer;">OK</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const input = modal.querySelector('#customPromptInput');
+    input.focus();
+
+    const cancelBtn = modal.querySelector('.prompt-cancel-btn');
+    const okBtn = modal.querySelector('.prompt-ok-btn');
+    const closeModal = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    cancelBtn.onclick = () => closeModal(null);
+    okBtn.onclick = () => closeModal(input.value);
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(null); };
+    input.onkeypress = (e) => { if (e.key === 'Enter') closeModal(input.value); };
+  });
+}
+
+
 // shared.js – complete working version with Supabase trip storage
 (function() {
   let sb = null;
