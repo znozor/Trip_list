@@ -26,11 +26,11 @@
       background: #059669;
     }
 
-    /* Fullscreen background with overlay */
+    /* Use dvh for dynamic viewport (mobile address bar friendly) */
     .app-wrapper {
       position: relative;
       width: 100%;
-      height: 100vh;
+      height: 100dvh;
       background: linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.2)),
                   url('./assets/welcome-bg.png');
       background-size: cover;
@@ -41,21 +41,18 @@
       flex-direction: column;
     }
 
-    /* Main container – pushes disclaimer to bottom */
     .welcome-card {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 0 24px 28px 24px;  /* bottom padding for safe area */
+      padding: 0 24px calc(8px + env(safe-area-inset-bottom, 12px)) 24px; /* extra bottom safe area */
     }
 
-    /* Top spacer – pushes main content down */
     .top-spacer {
       flex: 1;
     }
 
-    /* Main content group (title + buttons) */
     .main-content {
       display: flex;
       flex-direction: column;
@@ -66,12 +63,12 @@
     .hero-title {
       font-family: 'Syne', sans-serif;
       font-weight: 900;
-      font-size: clamp(32px, 8vw, 52px);  /* smaller than before */
+      font-size: clamp(32px, 8vw, 52px);
       letter-spacing: -0.02em;
       color: white;
       text-shadow: 0 6px 18px rgba(0,0,0,0.18);
       text-align: center;
-      padding: 0 24px;           /* increased side padding */
+      padding: 0 24px;
       margin-bottom: 12px;
     }
 
@@ -84,7 +81,6 @@
       margin-bottom: 40px;
     }
 
-    /* Google button (rounded, SVG) */
     .gsi-material-button {
       width: 280px;
       max-width: 90%;
@@ -121,7 +117,6 @@
       transform: none;
     }
 
-    /* Guest button – simple person icon */
     .guest-link {
       margin-top: 16px;
       width: 280px;
@@ -148,11 +143,10 @@
       transform: scale(0.97);
     }
 
-    /* Disclaimer – pinned at bottom */
     .disclaimer {
       width: 100%;
       max-width: 360px;
-      margin: 20px auto 0 auto;
+      margin: 12px auto 0 auto;
       background: rgba(255,255,255,0.08);
       border-radius: 28px;
       padding: 12px 18px;
@@ -163,10 +157,9 @@
       text-align: center;
     }
 
-    /* Mobile fine‑tuning */
     @media (max-width: 480px) {
       .welcome-card {
-        padding: 0 16px 20px 16px;
+        padding: 0 16px calc(6px + env(safe-area-inset-bottom, 10px)) 16px;
       }
       .hero-title {
         font-size: clamp(28px, 7vw, 44px);
@@ -193,7 +186,6 @@
       }
     }
 
-    /* For taller screens – keep disclaimer visible */
     @media (min-height: 700px) {
       .top-spacer {
         flex: 1.2;
@@ -215,7 +207,6 @@
       <div class="hero-title">WeatherTrip</div>
       <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
 
-      <!-- Google Sign-In button (rounded, official SVG) -->
       <button class="gsi-material-button" id="googleBtn">
         <div class="gsi-material-button-content-wrapper">
           <div class="gsi-material-button-icon">
@@ -231,7 +222,6 @@
         </div>
       </button>
 
-      <!-- Guest button with simple person icon (fa-user) -->
       <a href="plan.html" class="guest-link">
         <i class="fa-regular fa-user"></i> Continue as guest →
       </a>
