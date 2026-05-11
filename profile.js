@@ -41,7 +41,6 @@ async function loadProfile() {
 
 function attachEventListeners() {
   // Edit name, save, cancel, logout, dark mode, export, delete – same as before
-  // (keep your existing attachEventListeners function – it’s fine)
   const editNameBtn = document.getElementById('editNameBtn');
   const displaySection = document.getElementById('displayNameSection');
   const editSection = document.getElementById('editNameSection');
@@ -65,19 +64,19 @@ function attachEventListeners() {
   if (saveBtn) {
     saveBtn.onclick = async () => {
       const newName = editInput.value.trim();
-      if (!newName) { window.showToast('Name cannot be empty', 'warning'); return; }
-      if (!window.sb) { window.showToast('Not connected', 'danger'); return; }
+      if (!newName) { if (window.showToast) window.showToast('Name cannot be empty', 'warning'); return; }
+      if (!window.sb) { if (window.showToast) window.showToast('Not connected', 'danger'); return; }
       try {
         const { error } = await window.sb.auth.updateUser({
           data: { full_name: newName, name: newName }
         });
         if (error) throw error;
-        window.showToast('Name updated!', 'success');
+        if (window.showToast) window.showToast('Name updated!', 'success');
         await loadProfile(); // refresh
         displaySection.style.display = 'block';
         editSection.style.display = 'none';
       } catch (err) {
-        window.showToast(err.message, 'danger');
+        if (window.showToast) window.showToast(err.message, 'danger');
       }
     };
   }
@@ -115,15 +114,18 @@ function attachEventListeners() {
       const blob = new Blob([dataStr], {type:'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'wanderpack-data.json'; a.click(); URL.revokeObjectURL(url);
-      window.showToast('Data exported', 'success');
+      if (window.showToast) window.showToast('Data exported', 'success');
     };
   }
 
+  // ========== UPDATED: Replace browser confirm with custom showConfirm ==========
   if (deleteBtn) {
-    deleteBtn.onclick = () => {
-      if (confirm('Delete all local trips? (Cloud trips remain)')) {
+    deleteBtn.onclick = async () => {
+      // ✅ Now uses custom HTML modal instead of native confirm
+      const confirmed = await showConfirm('Delete all local trips? (Cloud trips remain)');
+      if (confirmed) {
         localStorage.removeItem('userTrips');
-        window.showToast('Local data cleared', 'success');
+        if (window.showToast) window.showToast('Local data cleared', 'success');
       }
     };
   }
