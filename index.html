@@ -4,28 +4,215 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
   <meta name="vercel:toolbar" content="disable">
-  <title>WanderPack – Welcome</title>
+  <title>Weather Trip – Pack Smarter, Travel Happier</title>
   <link rel="stylesheet" href="shared.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script>
-    (function() {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
-  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a1a1f;
+      overflow-x: hidden;
+    }
+
+    /* Video background */
+    .video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+      z-index: -1;
+    }
+
+    .app-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .welcome-card {
+      max-width: 500px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-radius: 48px;
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease;
+      animation: fadeInUp 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #06A77D, #0284a1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: #2c3e44;
+      font-weight: 500;
+      margin-bottom: 32px;
+    }
+
+    .auth-buttons {
+      margin: 32px 0 20px;
+    }
+
+    .btn-google {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 60px;
+      padding: 14px 24px;
+      width: 100%;
+      font-weight: 600;
+      font-size: 16px;
+      color: #1e2b2c;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .btn-google i {
+      font-size: 20px;
+      color: #4285F4;
+    }
+
+    .btn-google:hover {
+      background: #f8fafc;
+      transform: scale(0.98);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .guest-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #1e5e6b;
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px dashed #86b3b3;
+      transition: color 0.2s;
+    }
+
+    .guest-link:hover {
+      color: #0a3b44;
+    }
+
+    .disclaimer {
+      font-size: 11px;
+      color: #5a7c85;
+      margin-top: 32px;
+      border-top: 1px solid #dce9ec;
+      padding-top: 20px;
+    }
+
+    /* Dark mode support (optional) */
+    @media (prefers-color-scheme: dark) {
+      .welcome-card {
+        background: rgba(20, 30, 32, 0.92);
+        backdrop-filter: blur(12px);
+      }
+      .hero-subtitle {
+        color: #cbd5e1;
+      }
+      .btn-google {
+        background: #1e2a2c;
+        border-color: #3b4e52;
+        color: #e2e8f0;
+      }
+      .btn-google:hover {
+        background: #2a3a3e;
+      }
+      .disclaimer {
+        color: #8aaeb6;
+        border-top-color: #2d474c;
+      }
+      .guest-link {
+        color: #6fc2b0;
+      }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 480px) {
+      .welcome-card {
+        padding: 32px 24px;
+      }
+      .hero-title {
+        font-size: 32px;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="app-wrapper">
-  <div class="welcome-hero">
-    <span class="hero-illustration">🧳✈️</span>
-    <div class="hero-title">WanderPack</div>
-    <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
-  </div>
 
-  <div class="welcome-body">
+<!-- Video background – free stock travel video (Pexels) -->
+<video class="video-bg" autoplay muted loop playsinline poster="https://images.pexels.com/photos/2166711/pexels-photo-2166711.jpeg">
+  <source src="https://cdn.pixabay.com/video/2023/07/12/171099-845080011_large.mp4" type="video/mp4">
+  <!-- Fallback image if video fails -->
+  Your browser does not support the video tag.
+</video>
+<div class="bg-overlay"></div>
+
+<div class="app-wrapper">
+  <div class="welcome-card">
+    <div class="hero-icon">
+      <i class="fa-solid fa-cloud-sun" style="color: #06A77D;"></i>
+    </div>
+    <div class="hero-title">Weather Trip</div>
+    <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
+
     <div class="auth-buttons">
-      <button class="btn btn-outline btn-full" id="googleBtn">
+      <button class="btn-google" id="googleBtn">
         <i class="fa-brands fa-google"></i> Continue with Google
       </button>
     </div>
@@ -33,7 +220,7 @@
     <a href="plan.html" class="guest-link">Continue as guest →</a>
 
     <div class="disclaimer">
-      Weather predictions are estimates. Use common sense when packing.
+      🌦️ Weather predictions are estimates. Use common sense when packing.
     </div>
   </div>
 </div>
@@ -62,13 +249,18 @@
         await window.signInWithGoogle();
         // Restore button if redirect doesn't happen
         setTimeout(() => {
-          googleBtn.disabled = false;
-          googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google';
+          if (googleBtn) {
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google';
+          }
         }, 5000);
       };
     } else if (attempts > 25) {
       clearInterval(interval);
       console.warn('signInWithGoogle not available');
+      googleBtn.disabled = false;
+      googleBtn.style.opacity = '1';
+      googleBtn.innerText = 'Sign in (reload if stuck)';
     }
   }, 200);
 </script>
