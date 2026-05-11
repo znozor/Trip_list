@@ -164,16 +164,26 @@ function renderTrips() {
 }
 
 // ── Delete modal ───────────────────────────────────────────────────────────
+
+// Helper: reset the confirm button back to its default state
+function resetDeleteBtn() {
+  const btn = document.getElementById('confirmDeleteBtn');
+  if (!btn) return;
+  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+  btn.disabled = false;
+}
+
 window.closeDeleteModal = function () {
   document.getElementById('deleteOverlay').style.display = 'none';
   tripToDelete = null;
+  resetDeleteBtn(); // always reset when closing, regardless of how the modal is dismissed
 };
 
 document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
   if (!tripToDelete) return;
 
   const btn = document.getElementById('confirmDeleteBtn');
-  btn.textContent = 'Deleting…';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
   btn.disabled = true;
 
   if (window.currentUser && window.sb) {
@@ -186,8 +196,8 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () 
 
     if (error) {
       if (window.showToast) window.showToast('Failed to delete trip', 'danger');
-      btn.textContent = 'Delete';
-      btn.disabled = false;
+      // Reset button so the user can try again
+      resetDeleteBtn();
       return;
     }
   } else {
@@ -199,6 +209,9 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () 
 
   // Remove from local array and re-render
   trips = trips.filter(t => t.id !== tripToDelete.id);
+
+  // Reset button BEFORE closing so it's clean for the next delete
+  resetDeleteBtn();
   closeDeleteModal();
   renderTrips();
 
