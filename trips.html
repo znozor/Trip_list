@@ -88,9 +88,7 @@
       background: var(--primary);
       border-radius: 4px 0 0 4px;
     }
-    .trip-card:active {
-      transform: scale(0.98);
-    }
+    .trip-card:active { transform: scale(0.98); }
 
     .trip-card-top {
       display: flex;
@@ -187,9 +185,7 @@
     .btn-delete:hover { background: rgba(231,76,60,0.2); }
 
     /* ── Progress bar ── */
-    .trip-progress {
-      margin-top: 10px;
-    }
+    .trip-progress { margin-top: 10px; }
     .progress-bar-wrap {
       background: var(--border);
       border-radius: 10px;
@@ -236,7 +232,7 @@
     .delete-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0,0,0,0.6);
       z-index: 10000;
       display: flex;
       align-items: center;
@@ -258,7 +254,7 @@
       box-sizing: border-box;
     }
 
-    .delete-modal i {
+    .delete-modal > i {
       font-size: 44px;
       color: #e74c3c;
       margin-bottom: 12px;
@@ -287,11 +283,15 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      align-items: center;
     }
 
-    /* ── FIX: explicit base state so transform never inherits from popIn ── */
-    .delete-modal-actions button {
+    /*
+      Both buttons share IDENTICAL rules.
+      JS never sets innerHTML / style on the button element itself —
+      only the inner <span> text changes, so sizing is always CSS-controlled.
+    */
+    .btn-cancel-del,
+    .btn-confirm-del {
       width: 100%;
       padding: 12px 0;
       border-radius: 30px;
@@ -304,38 +304,21 @@
       justify-content: center;
       gap: 6px;
       white-space: nowrap;
-      min-width: 0;
-      transform: scale(1);          /* ← explicit base: prevents inheriting popIn scale */
-      transition: transform 0.1s, opacity 0.1s;
-      -webkit-appearance: none;     /* ← prevents iOS from applying native sizing */
+      box-sizing: border-box;
+      -webkit-appearance: none;
       appearance: none;
     }
 
-    .delete-modal-actions button:active {
-      transform: scale(0.97);
-    }
+    .btn-cancel-del { background: #eef2f0; color: #1e2b2c; }
+    .btn-confirm-del { background: #e74c3c; color: #ffffff; }
 
-    /* ── FIX: prevent focus ring from inflating button size on mobile ── */
-    .delete-modal-actions button:focus {
-      outline: none;
-      box-shadow: none;
-    }
+    .btn-cancel-del:active,
+    .btn-confirm-del:active { opacity: 0.82; }
 
-    .btn-cancel-del {
-      background: #eef2f0;
-      color: #1e2b2c;
-    }
+    .btn-cancel-del:focus,
+    .btn-confirm-del:focus  { outline: none; box-shadow: none; }
 
-    .btn-confirm-del {
-      background: #e74c3c;
-      color: #ffffff;
-    }
-
-    .btn-confirm-del:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-      transform: scale(1);          /* ← stay at normal size when disabled */
-    }
+    .btn-confirm-del:disabled { opacity: 0.6; cursor: not-allowed; }
 
     @keyframes popIn {
       from { opacity: 0; transform: scale(0.88); }
@@ -408,10 +391,15 @@
     <h3>Delete Trip?</h3>
     <p id="deleteModalText">This will permanently remove this trip and its packing list.</p>
     <div class="delete-modal-actions">
+      <!-- Cancel: pure HTML, zero JS involvement -->
       <button class="btn-cancel-del" onclick="closeDeleteModal()">Cancel</button>
-      <!-- FIX: icon included in HTML so it's always present from first render -->
-      <button class="btn-confirm-del" id="confirmDeleteBtn">
-        <i class="fa-solid fa-trash"></i> Delete
+      <!--
+        Delete: icon is static HTML, JS only ever changes the <span> text.
+        The button element itself is never touched by JS — same as Cancel.
+      -->
+      <button class="btn-confirm-del" id="confirmDeleteBtn" onclick="confirmDelete()">
+        <i class="fa-solid fa-trash"></i>
+        <span id="confirmDeleteLabel">Delete</span>
       </button>
     </div>
   </div>
