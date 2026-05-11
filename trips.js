@@ -151,18 +151,19 @@ function renderTrips() {
     });
   });
 
-  // Delete button
+  // Delete button — reset modal state BEFORE showing it
   document.querySelectorAll('.delete-trip').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx  = parseInt(btn.dataset.idx);
       tripToDelete = trips[idx];
       const nameEl = document.getElementById('deleteModalText');
-if (nameEl) {
-  let shortName = tripToDelete.name;
-  // Force consistent length – max 35 characters
-  if (shortName.length > 35) shortName = shortName.substring(0, 32) + '...';
-  nameEl.textContent = `"${shortName}" will be permanently removed.`;
-}
+      if (nameEl) {
+        let shortName = tripToDelete.name;
+        if (shortName.length > 35) shortName = shortName.substring(0, 32) + '...';
+        nameEl.textContent = `"${shortName}" will be permanently removed.`;
+      }
+      // ── FIX: always reset the button before opening so stale styles never show ──
+      resetDeleteBtn();
       document.getElementById('deleteOverlay').style.display = 'flex';
     });
   });
@@ -170,28 +171,31 @@ if (nameEl) {
 
 // ── Delete modal ───────────────────────────────────────────────────────────
 
-// Helper: reset the confirm button back to its default state
+// Helper: fully reset the confirm button to its default state
 function resetDeleteBtn() {
   const btn = document.getElementById('confirmDeleteBtn');
   if (!btn) return;
-  // Use identical structure every time – same icon + same text
   btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
   btn.disabled = false;
-  // Remove any temporary styles that might have been applied
-  btn.style.opacity = '';
+  // Clear any inline styles that may have been applied
+  btn.style.opacity    = '';
+  btn.style.transform  = '';   // reset scale/translate stuck from :active
+  btn.style.boxShadow  = '';   // reset any active/focus shadow
+  // Release browser focus & active pseudo-state
+  btn.blur();
 }
 
 window.closeDeleteModal = function () {
   document.getElementById('deleteOverlay').style.display = 'none';
   tripToDelete = null;
-  resetDeleteBtn(); // always reset when closing, regardless of how the modal is dismissed
+  resetDeleteBtn(); // always reset on close regardless of how modal was dismissed
 };
 
 document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
   if (!tripToDelete) return;
 
   const btn = document.getElementById('confirmDeleteBtn');
-  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Deleting…';
   btn.disabled = true;
 
   if (window.currentUser && window.sb) {
@@ -215,7 +219,7 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () 
     localStorage.setItem('userTrips', JSON.stringify(saved));
   }
 
-  // Remove from local array and re-render
+  // Remove from local array
   trips = trips.filter(t => t.id !== tripToDelete.id);
 
   // Reset button BEFORE closing so it's clean for the next delete
