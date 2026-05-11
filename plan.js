@@ -1,565 +1,723 @@
-// plan.js – multi‑city, multi‑day forecast with collapsible sections
-// Enhanced packing list generator with reasons, quantities, essential/optional badges, and medicine
-// Removed simulate‑trip toggle, added country to trip name, removed tip section, added loading overlay
+// plan.js – improved UI, smarter weather-aware packing list generation
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------- DOM Elements (unchanged, except removed timeTravelToggle) ----------
-    const countryInput = document.getElementById('countryInput');
-    const cityInput = document.getElementById('cityInput0');
-    const addCityBtn = document.querySelector('.btn-ghost.btn-sm');
-    const cityFieldsContainer = document.getElementById('cityFields');
-    const startDateInput = document.getElementById('startDate');
-    const endDateInput = document.getElementById('endDate');
-    const nextBtn = document.getElementById('nextBtn');
-    const prevBtn = document.getElementById('prevBtn');
-    const steps = document.querySelectorAll('.form-step');
-    const stepDots = document.querySelectorAll('.step-dot');
-    const stepLines = document.querySelectorAll('.step-line');
-    const weatherPreviewDiv = document.getElementById('weatherPreview');
-    // timeTravelToggle removed
 
-    // ---------- Global state (unchanged) ----------
-    let countriesList = [];
-    let citiesCache = new Map();
-    let mainCityInputs = [cityInput];
-    let activeCountry = '';
-    let weatherForecasts = [];
-    let selectedReason = 'Leisure';
-    let selectedStyle = 'Standard';
-    let selectedWho = 'Solo';
-    let selectedActivities = ['Hiking', 'City Tours'];
-    let selectedLuggage = 'Checked';
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const countryInput       = document.getElementById('countryInput');
+  const cityInput          = document.getElementById('cityInput0');
+  const cityFieldsContainer= document.getElementById('cityFields');
+  const startDateInput     = document.getElementById('startDate');
+  const endDateInput       = document.getElementById('endDate');
+  const nextBtn            = document.getElementById('nextBtn');
+  const prevBtn            = document.getElementById('prevBtn');
+  const steps              = document.querySelectorAll('.form-step');
+  const stepDots           = document.querySelectorAll('.step-dot');
+  const stepLines          = document.querySelectorAll('.step-line');
+  const stepLabelItems     = document.querySelectorAll('.step-label-item');
+  const weatherPreviewDiv  = document.getElementById('weatherPreview');
+  const durationBadge      = document.getElementById('durationBadge');
 
-    // ---------- Helper: Fetch Countries (unchanged) ----------
-    async function fetchCountries() {
-        try {
-            const res = await fetch('https://restcountries.com/v3.1/all?fields=name');
-            if (!res.ok) throw new Error();
-            const data = await res.json();
-            countriesList = data.map(c => c.name.common).sort();
-        } catch {
-            countriesList = ["Japan", "France", "Italy", "Thailand", "USA", "Spain", "UK", "Germany", "Canada", "Australia"];
+  // ── State ─────────────────────────────────────────────────────────────────
+  let countriesList    = [];
+  let citiesCache      = new Map();
+  let mainCityInputs   = [cityInput];
+  let weatherForecasts = [];
+  let selectedReason     = 'Leisure';
+  let selectedStyle      = 'Standard';
+  let selectedWho        = 'Solo';
+  let selectedActivities = ['Hiking', 'City Tours'];
+  let selectedLuggage    = 'Checked';
+
+  // ── Countries ─────────────────────────────────────────────────────────────
+  async function fetchCountries() {
+    try {
+      const res  = await fetch('https://restcountries.com/v3.1/all?fields=name');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      countriesList = data.map(c => c.name.common).sort();
+    } catch {
+      countriesList = ['Japan','France','Italy','Thailand','USA','Spain','UK','Germany','Canada','Australia','India','Brazil','Mexico','Portugal','Greece','Turkey','Indonesia','Vietnam','Morocco','New Zealand'];
+    }
+  }
+
+  // ── Cities ────────────────────────────────────────────────────────────────
+  async function fetchCities(countryName) {
+    if (!countryName) return [];
+    if (citiesCache.has(countryName)) return citiesCache.get(countryName);
+    try {
+      const res  = await fetch('https://countriesnow.space/api/v0.1/countries/cities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country: countryName })
+      });
+      const data = await res.json();
+      const cities = data.data?.length ? data.data : ['Unknown City'];
+      citiesCache.set(countryName, cities);
+      return cities;
+    } catch {
+      const fallback = ['Tokyo','Paris','Rome','Bangkok','New York','Madrid','London','Berlin','Sydney','Mumbai'];
+      citiesCache.set(countryName, fallback);
+      return fallback;
+    }
+  }
+
+  // ── Autocomplete ──────────────────────────────────────────────────────────
+  class Autocomplete {
+    constructor(input, fetchFn, onSelect) {
+      this.input   = input;
+      this.fetchFn = fetchFn;
+      this.onSelect= onSelect;
+
+      this.wrap = document.createElement('div');
+      this.wrap.className = 'autocomplete-container';
+      this.drop = document.createElement('div');
+      this.drop.className = 'autocomplete-suggestions';
+      this.wrap.appendChild(this.drop);
+      input.parentNode.insertBefore(this.wrap, input.nextSibling);
+
+      input.addEventListener('input',  () => this.update());
+      input.addEventListener('focus',  () => this.update());
+      document.addEventListener('click', e => {
+        if (!this.wrap.contains(e.target) && e.target !== input) this.hide();
+      });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && this.drop.children.length) {
+          e.preventDefault();
+          this.selectItem(this.drop.children[0]);
         }
-        return countriesList;
+      });
+    }
+    async update() {
+      const q = this.input.value.trim();
+      if (!q) { this.hide(); return; }
+      const list = await this.fetchFn(q);
+      if (!list.length) { this.hide(); return; }
+      this.drop.innerHTML = '';
+      list.slice(0, 8).forEach(s => {
+        const d = document.createElement('div');
+        d.textContent = s;
+        d.addEventListener('click', () => this.selectItem(d));
+        this.drop.appendChild(d);
+      });
+      this.show();
+    }
+    selectItem(d) {
+      this.input.value = d.textContent;
+      if (this.onSelect) this.onSelect(this.input.value);
+      this.hide();
+    }
+    show() { this.drop.style.display = 'block'; }
+    hide() { this.drop.style.display = 'none'; }
+  }
+
+  async function initAutocompletes() {
+    await fetchCountries();
+    new Autocomplete(countryInput, async q =>
+      countriesList.filter(c => c.toLowerCase().includes(q.toLowerCase())),
+      val => { fetchCities(val); }
+    );
+    new Autocomplete(cityInput, async q => {
+      const country = countryInput.value;
+      if (!country) return [];
+      const cities = await fetchCities(country);
+      return cities.filter(c => c.toLowerCase().includes(q.toLowerCase()));
+    }, null);
+  }
+
+  window.addCityField = function () {
+    const idx = mainCityInputs.length;
+    const wrap = document.createElement('div');
+    wrap.className = 'city-row';
+    wrap.style.marginTop = '8px';
+    const label = document.createElement('label');
+    label.className = 'input-label';
+    label.textContent = `City ${idx + 1}`;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'input-field';
+    input.placeholder = 'Type or select city';
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    cityFieldsContainer.appendChild(wrap);
+    mainCityInputs.push(input);
+    new Autocomplete(input, async q => {
+      const country = countryInput.value;
+      if (!country) return [];
+      const cities = await fetchCities(country);
+      return cities.filter(c => c.toLowerCase().includes(q.toLowerCase()));
+    }, null);
+  };
+
+  // ── Trip duration helper ──────────────────────────────────────────────────
+  function getTripDays() {
+    if (!startDateInput.value || !endDateInput.value) return 0;
+    const diff = (new Date(endDateInput.value) - new Date(startDateInput.value)) / 86400000;
+    return Math.max(1, Math.round(diff) + 1);
+  }
+
+  function updateDurationBadge() {
+    if (!durationBadge) return;
+    const days = getTripDays();
+    if (days > 0) {
+      const label = days === 1 ? 'day' : 'days';
+      durationBadge.innerHTML = `
+        <span class="duration-badge">
+          <i class="fa-solid fa-calendar-check"></i>
+          ${days} ${label} · ${days <= 3 ? 'Short trip' : days <= 7 ? 'Week trip' : days <= 14 ? 'Two-week trip' : 'Extended trip'}
+        </span>`;
+    } else {
+      durationBadge.innerHTML = '';
+    }
+  }
+
+  // ── Weather ───────────────────────────────────────────────────────────────
+  async function fetchDailyForecast(city, country, startDate, endDate) {
+    try {
+      const geoRes  = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+      const geoData = await geoRes.json();
+      if (!geoData.results?.length) return null;
+      const { latitude, longitude, name } = geoData.results[0];
+
+      const days = endDate
+        ? Math.min(Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000) + 1, 7)
+        : 3;
+
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&forecast_days=${days}`;
+      const wRes  = await fetch(url);
+      const wData = await wRes.json();
+      if (!wData.daily) return null;
+
+      const daily = wData.daily.time.map((date, i) => {
+        const code   = wData.daily.weathercode[i];
+        const max    = wData.daily.temperature_2m_max[i];
+        const min    = wData.daily.temperature_2m_min[i];
+        const precip = wData.daily.precipitation_sum[i];
+        let icon = '☀️', condition = 'Sunny';
+        if (code >= 1  && code <= 3)  { icon = '⛅'; condition = 'Cloudy'; }
+        if (code >= 51 && code <= 67) { icon = '🌧️'; condition = 'Rainy'; }
+        if (code >= 71 && code <= 77) { icon = '❄️'; condition = 'Snowy'; }
+        if (code >= 80 && code <= 82) { icon = '🌦️'; condition = 'Showers'; }
+        if (code >= 95 && code <= 99) { icon = '⛈️'; condition = 'Stormy'; }
+        return { date, max, min, precip, code, icon, condition };
+      });
+      return { city: name, daily };
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
+
+  async function updateWeatherPreview() {
+    const country = countryInput.value;
+    const cities  = mainCityInputs.map(i => i.value).filter(Boolean);
+    const start   = startDateInput.value;
+    const end     = endDateInput.value;
+
+    if (!country || !cities.length || !start) {
+      weatherPreviewDiv.innerHTML = `
+        <div class="weather-placeholder">
+          <i class="fa-solid fa-cloud-moon"></i>
+          <span>Fill in destination & start date to see your forecast.</span>
+        </div>`;
+      return;
     }
 
-    // ---------- Fetch Cities for a Country (unchanged) ----------
-    async function fetchCities(countryName) {
-        if (!countryName) return [];
-        if (citiesCache.has(countryName)) return citiesCache.get(countryName);
-        try {
-            const res = await fetch('https://countriesnow.space/api/v0.1/countries/cities', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ country: countryName })
-            });
-            const data = await res.json();
-            let cities = data.data || [];
-            if (!cities.length) cities = ["Unknown City"];
-            citiesCache.set(countryName, cities);
-            return cities;
-        } catch {
-            const fallback = ["Tokyo", "Paris", "Rome", "Bangkok", "New York", "Madrid", "London"];
-            citiesCache.set(countryName, fallback);
-            return fallback;
-        }
+    weatherPreviewDiv.innerHTML = `
+      <div class="weather-loading">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span>Fetching live forecast…</span>
+      </div>`;
+
+    const forecasts = [];
+    for (const city of cities) {
+      const f = await fetchDailyForecast(city, country, start, end);
+      if (f) forecasts.push(f);
     }
 
-    // ---------- Custom Autocomplete (unchanged) ----------
-    class Autocomplete {
-        constructor(inputElement, fetchSuggestions, onSelect) {
-            this.input = inputElement;
-            this.fetchSuggestions = fetchSuggestions;
-            this.onSelect = onSelect;
-            this.container = document.createElement('div');
-            this.container.className = 'autocomplete-container';
-            this.suggestionsDiv = document.createElement('div');
-            this.suggestionsDiv.className = 'autocomplete-suggestions';
-            this.container.appendChild(this.suggestionsDiv);
-            this.input.parentNode.insertBefore(this.container, this.input.nextSibling);
-            this.input.addEventListener('input', () => this.update());
-            this.input.addEventListener('focus', () => this.update());
-            document.addEventListener('click', (e) => {
-                if (!this.container.contains(e.target) && e.target !== this.input) this.hide();
-            });
-            this.input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (this.suggestionsDiv.children.length) {
-                        this.selectItem(this.suggestionsDiv.children[0]);
-                    }
-                }
-            });
-        }
-        async update() {
-            const query = this.input.value.trim();
-            if (!query) { this.hide(); return; }
-            const suggestions = await this.fetchSuggestions(query);
-            if (suggestions.length === 0) { this.hide(); return; }
-            this.suggestionsDiv.innerHTML = '';
-            suggestions.slice(0, 8).forEach(s => {
-                const div = document.createElement('div');
-                div.textContent = s;
-                div.addEventListener('click', () => this.selectItem(div));
-                this.suggestionsDiv.appendChild(div);
-            });
-            this.show();
-        }
-        selectItem(div) {
-            this.input.value = div.textContent;
-            if (this.onSelect) this.onSelect(this.input.value);
-            this.hide();
-        }
-        show() { this.suggestionsDiv.style.display = 'block'; }
-        hide() { this.suggestionsDiv.style.display = 'none'; }
+    if (!forecasts.length) {
+      weatherPreviewDiv.innerHTML = `
+        <div class="weather-error">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Could not fetch weather. Check city names and try again.</span>
+        </div>`;
+      return;
     }
 
-    function setupCountryAutocomplete(input, onSelect) {
-        new Autocomplete(input, async (query) => {
-            if (!countriesList.length) await fetchCountries();
-            return countriesList.filter(c => c.toLowerCase().includes(query.toLowerCase()));
-        }, onSelect);
+    weatherForecasts = forecasts;
+
+    let html = '';
+    forecasts.forEach((f, i) => {
+      const collapsed = i > 0 ? 'collapsed' : '';
+      html += `
+        <div class="weather-city-card ${collapsed}">
+          <div class="weather-city-header">
+            <span><i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:6px"></i>${f.city}</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="weather-days">
+            ${f.daily.map(d => `
+              <div class="weather-day">
+                <span class="date">${d.date.slice(5)}</span>
+                <span class="icon">${d.icon}</span>
+                <span class="temp">${Math.round(d.min)}°–${Math.round(d.max)}°C</span>
+                ${d.precip > 0 ? `<span class="rain">💧${d.precip}mm</span>` : ''}
+              </div>`).join('')}
+          </div>
+        </div>`;
+    });
+
+    html += `
+      <div class="weather-note">
+        <i class="fa-regular fa-lightbulb"></i>
+        Your packing list will be tailored to the most extreme weather across all your cities.
+      </div>`;
+
+    weatherPreviewDiv.innerHTML = html;
+
+    document.querySelectorAll('.weather-city-header').forEach(h => {
+      h.addEventListener('click', () => {
+        h.closest('.weather-city-card').classList.toggle('collapsed');
+      });
+    });
+  }
+
+  // ── Weather combiner ──────────────────────────────────────────────────────
+  function combineWeather(forecasts) {
+    let tempSum = 0, count = 0;
+    const w = { avgTemp: 20, condition: 'Mild', rainy: false, snowy: false, stormy: false, hot: false, cold: false, humid: false };
+    for (const f of forecasts) {
+      for (const d of f.daily) {
+        const avg = (d.max + d.min) / 2;
+        tempSum += avg; count++;
+        if (d.condition === 'Rainy' || d.condition === 'Showers') w.rainy = true;
+        if (d.condition === 'Snowy')  w.snowy   = true;
+        if (d.condition === 'Stormy') w.stormy  = true;
+        if (avg > 28) w.hot  = true;
+        if (avg < 8)  w.cold = true;
+        if (d.precip > 5) w.humid = true;
+      }
+    }
+    w.avgTemp = count ? tempSum / count : 20;
+    if (w.snowy)        w.condition = 'Snowy';
+    else if (w.stormy)  w.condition = 'Stormy';
+    else if (w.rainy)   w.condition = 'Rainy';
+    else if (w.hot)     w.condition = 'Hot';
+    else if (w.cold)    w.condition = 'Cold';
+    else                w.condition = 'Mild';
+    return w;
+  }
+
+  // ── Smart packing list generator ──────────────────────────────────────────
+  function generatePackingList(weather, prefs) {
+    const { condition, rainy, snowy, stormy, hot, cold, avgTemp } = weather;
+    const { reason, style, who, activities, luggage } = prefs;
+    const days = getTripDays() || 5;
+    const items = [];
+    const isBackpacker = style === 'Backpacker';
+    const isLuxury     = style === 'Luxury';
+    const isBusiness   = reason === 'Business';
+    const isHoneymoon  = reason === 'Honeymoon';
+    const isFamily     = who === 'Family';
+    const isCouple     = who === 'Couple' || isHoneymoon;
+    const carryOnly    = luggage === 'Carry-on';
+
+    // Clothing quantities based on trip length
+    const shirts  = carryOnly ? 3 : Math.min(Math.ceil(days * 0.7), 7);
+    const bottoms = carryOnly ? 2 : Math.min(Math.ceil(days * 0.4), 5);
+    const socks   = carryOnly ? 3 : Math.min(days, 7);
+
+    function add(name, category, reason, essential = true) {
+      items.push({ name, category, reason, essential, checked: false });
     }
 
-    function setupCityAutocomplete(input, countryGetter, onSelect) {
-        let currentCities = [];
-        new Autocomplete(input, async (query) => {
-            const country = countryGetter();
-            if (!country) return [];
-            if (!currentCities.length) currentCities = await fetchCities(country);
-            return currentCities.filter(c => c.toLowerCase().includes(query.toLowerCase()));
-        }, onSelect);
+    // ── CLOTHING ─────────────────────────────────────────────────────────
+    if (hot) {
+      add(`Lightweight t-shirts (×${shirts})`, 'Clothing', 'Hot weather – breathable fabrics essential', true);
+      add(`Shorts or linen trousers (×${bottoms})`, 'Clothing', `${Math.round(avgTemp)}°C average – stay cool`, true);
+      if (!isBusiness) add('Sandals or breathable shoes', 'Footwear', 'Hot pavement and comfort', true);
+      if (isLuxury) add('Resort-wear / light linen shirt', 'Clothing', 'Smart-casual for upscale venues', false);
+      if (activities.includes('Beach')) add('Swimwear (×2)', 'Clothing', 'Beach time', true);
+    } else if (cold) {
+      add(`Thermal base layers (×2)`, 'Clothing', `${Math.round(avgTemp)}°C – insulation essential`, true);
+      add(`Warm sweaters / fleece (×${Math.min(bottoms + 1, 4)})`, 'Clothing', 'Mid-layer warmth', true);
+      add('Heavy insulated jacket', 'Clothing', 'Cold temperatures – outer shell', true);
+      add(`Jeans / thick trousers (×${bottoms})`, 'Clothing', 'Warmth and comfort', true);
+      add('Thermal socks (×' + socks + ')', 'Clothing', 'Keep feet warm', true);
+      add('Gloves, scarf & beanie set', 'Accessories', 'Prevent heat loss from extremities', true);
+      add('Lip balm', 'Toiletries', 'Cold air causes chapping', false);
+    } else {
+      // Mild
+      add(`T-shirts (×${shirts})`, 'Clothing', 'Mild weather, versatile layering', true);
+      add(`Jeans / trousers (×${bottoms})`, 'Clothing', 'Everyday wear', true);
+      add('Light jacket or cardigan', 'Clothing', 'Cool evenings and air-con', true);
+      add(`Socks (×${socks})`, 'Clothing', 'Daily essentials', true);
     }
 
-    async function initAutocompletes() {
-        await fetchCountries();
-        setupCountryAutocomplete(countryInput, (val) => {
-            activeCountry = val;
-            refreshMainCitySuggestions();
-        });
-        function getMainCountry() { return countryInput.value; }
-        setupCityAutocomplete(cityInput, getMainCountry, null);
+    if (snowy) {
+      add('Waterproof snow boots', 'Footwear', 'Snow and slush – essential', true);
+      add('Waterproof / insulated gloves', 'Accessories', 'Grip and warmth in snow', true);
+    }
+    if (rainy || stormy) {
+      add('Waterproof rain jacket', 'Gear', 'Rain forecast – keep dry', true);
+      add('Compact travel umbrella', 'Gear', 'Sudden showers', true);
+      if (!hot) add('Waterproof shoes or overshoes', 'Footwear', 'Wet streets', false);
     }
 
-    async function refreshMainCitySuggestions() {
-        const country = countryInput.value;
-        if (!country) return;
-        await fetchCities(country);
+    // Smart underwear quantity
+    add(`Underwear (×${carryOnly ? 4 : Math.min(days, 8)})`, 'Clothing', 'Daily essentials', true);
+
+    // ── FOOTWEAR ─────────────────────────────────────────────────────────
+    if (!hot && !cold && !snowy) {
+      add('Comfortable walking shoes / sneakers', 'Footwear', 'All-day city walking', true);
+    }
+    if (isLuxury || isBusiness || isHoneymoon) {
+      add('Dress shoes / smart sandals', 'Footwear', 'Fine dining and formal occasions', false);
     }
 
-    window.addCityField = function() {
-        const idx = mainCityInputs.length;
-        const newDiv = document.createElement('div');
-        newDiv.className = 'city-row';
-        newDiv.style.marginTop = '12px';
-        const label = document.createElement('label');
-        label.className = 'input-label';
-        label.textContent = `City ${idx + 1}`;
-        const newInput = document.createElement('input');
-        newInput.type = 'text';
-        newInput.className = 'input-field';
-        newInput.placeholder = 'Type or select city';
-        newDiv.appendChild(label);
-        newDiv.appendChild(newInput);
-        cityFieldsContainer.appendChild(newDiv);
-        mainCityInputs.push(newInput);
-        setupCityAutocomplete(newInput, () => countryInput.value, null);
-    };
-
-    // ---------- Fetch daily forecast for a city (unchanged) ----------
-    async function fetchDailyForecast(city, country, startDate, endDate) {
-        try {
-            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
-            const geoData = await geoRes.json();
-            if (!geoData.results || !geoData.results.length) return null;
-            const { latitude, longitude, name } = geoData.results[0];
-            let days = 3;
-            if (endDate) {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                const diff = Math.ceil((end - start) / (1000 * 3600 * 24)) + 1;
-                days = Math.min(diff, 7);
-            }
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto&forecast_days=${days}`;
-            const weatherRes = await fetch(weatherUrl);
-            const weatherData = await weatherRes.json();
-            if (!weatherData.daily) return null;
-            const daily = [];
-            for (let i = 0; i < weatherData.daily.time.length; i++) {
-                const date = weatherData.daily.time[i];
-                const max = weatherData.daily.temperature_2m_max[i];
-                const min = weatherData.daily.temperature_2m_min[i];
-                const precip = weatherData.daily.precipitation_sum[i];
-                const code = weatherData.daily.weathercode[i];
-                let icon = '☀️', condition = 'Sunny';
-                if (code >= 51 && code <= 67) { icon = '🌧️'; condition = 'Rainy'; }
-                else if (code >= 71 && code <= 77) { icon = '❄️'; condition = 'Snowy'; }
-                else if (code >= 80 && code <= 99) { icon = '⛈️'; condition = 'Stormy'; }
-                daily.push({ date, max, min, precip, code, icon, condition });
-            }
-            return { city: name, daily };
-        } catch (err) {
-            console.error(err);
-            return null;
-        }
+    // ── BUSINESS ─────────────────────────────────────────────────────────
+    if (isBusiness) {
+      add(`Formal shirts / blouses (×${Math.min(Math.ceil(days / 2), 4)})`, 'Business', 'Professional meetings', true);
+      add('Suit jacket or blazer', 'Business', 'Key meetings and presentations', true);
+      add('Dress trousers / formal skirt', 'Business', 'Professional attire', true);
+      add('Laptop + charger', 'Electronics', 'Work essential', true);
+      add('Business cards', 'Documents', 'Networking', false);
+      add('Portable WiFi or SIM card', 'Electronics', 'Stay connected for work', false);
+      add('Notebook & pens', 'Business', 'Meeting notes', false);
     }
 
-    // ---------- Weather Preview (unchanged) ----------
-    async function updateWeatherPreview() {
-        const country = countryInput.value;
-        const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
-        const startDate = startDateInput.value;
-        const endDate = endDateInput.value;
-        if (!country || cities.length === 0 || !startDate) {
-            weatherPreviewDiv.innerHTML = '<div class="weather-placeholder"><i class="fa-solid fa-cloud-moon"></i> Fill destination & start date to see forecast.</div>';
-            return;
-        }
-        weatherPreviewDiv.innerHTML = '<div class="weather-loading"><i class="fa-solid fa-spinner fa-pulse"></i> Fetching daily forecasts for all cities...</div>';
-        let forecasts = [];
-        for (const city of cities) {
-            const dailyData = await fetchDailyForecast(city, country, startDate, endDate);
-            if (dailyData) forecasts.push(dailyData);
-        }
-        if (forecasts.length === 0) {
-            weatherPreviewDiv.innerHTML = '<div class="weather-error">❌ Could not fetch weather. Try again.</div>';
-            return;
-        }
-        weatherForecasts = forecasts;
-        let html = `<div class="weather-multi">`;
-        for (let i = 0; i < forecasts.length; i++) {
-            const f = forecasts[i];
-            const isFirst = i === 0;
-            const collapsedClass = isFirst ? '' : 'collapsed';
-            html += `
-                <div class="weather-city-card ${collapsedClass}" data-city-index="${i}">
-                    <div class="weather-city-header">
-                        <span><i class="fa-solid fa-location-dot"></i> ${f.city}</span>
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </div>
-                    <div class="weather-days">
-                        ${f.daily.map(day => `
-                            <div class="weather-day">
-                                <span class="date">${day.date.slice(5)}</span>
-                                <span class="icon">${day.icon}</span>
-                                <span class="temp">${Math.round(day.min)}°–${Math.round(day.max)}°</span>
-                                <span class="rain">${day.precip > 0 ? '💧' + day.precip + 'mm' : ''}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-        html += `<div class="weather-note"><i class="fa-regular fa-lightbulb"></i> Your packing list will be tailored to the most extreme weather among your cities.</div></div>`;
-        weatherPreviewDiv.innerHTML = html;
-
-        document.querySelectorAll('.weather-city-header').forEach(header => {
-            header.addEventListener('click', () => {
-                const card = header.closest('.weather-city-card');
-                card.classList.toggle('collapsed');
-            });
-        });
+    // ── LUXURY ───────────────────────────────────────────────────────────
+    if (isLuxury) {
+      add('Smart casual evening outfits', 'Clothing', 'Upscale restaurants and venues', false);
+      add('Jewelry / accessories set', 'Accessories', 'Complete your look', false);
+      add('Silk sleep mask & earplugs', 'Comfort', 'Long-haul and hotel sleep quality', false);
+      add('Portable steamer or wrinkle spray', 'Gear', 'Keep clothes pristine', false);
     }
 
-    // ---------- Combine weather across cities (unchanged) ----------
-    function combineWeather(forecasts) {
-        let combined = { avgTemp: 0, condition: 'Mild', rainy: false, snowy: false, hot: false, cold: false };
-        let tempSum = 0;
-        let count = 0;
-        for (const f of forecasts) {
-            for (const day of f.daily) {
-                const avgDay = (day.max + day.min) / 2;
-                tempSum += avgDay;
-                count++;
-                if (day.condition === 'Rainy') combined.rainy = true;
-                if (day.condition === 'Snowy') combined.snowy = true;
-                if (avgDay > 25) combined.hot = true;
-                if (avgDay < 10) combined.cold = true;
-            }
-        }
-        combined.avgTemp = count ? tempSum / count : 20;
-        if (combined.snowy) combined.condition = 'Snowy';
-        else if (combined.rainy) combined.condition = 'Rainy';
-        else if (combined.hot) combined.condition = 'Hot';
-        else if (combined.cold) combined.condition = 'Cold';
-        else combined.condition = 'Mild';
-        return combined;
+    // ── HONEYMOON ────────────────────────────────────────────────────────
+    if (isHoneymoon) {
+      add('Romantic evening outfit', 'Clothing', 'Special dinners and celebrations', true);
+      add('Swimwear (×2 each)', 'Clothing', 'Pool / beach time together', false);
     }
 
-    // ---------- ENHANCED: Generate packing list with reasons, quantities, essential/optional, medicine (tip removed) ----------
-    function generatePackingListFromWeather(weather, preferences, forecastType = 'climate') {
-        const { condition, rainy, snowy, avgTemp } = weather;
-        const activities = preferences.activities;
-        const style = preferences.style;
-        const who = preferences.who;
-        const luggage = preferences.luggage;
-        const items = [];
-
-        function addItem(name, category, reason, quantity = null, essential = true) {
-            items.push({
-                name: quantity ? `${name} (${quantity})` : name,
-                category,
-                reason,
-                essential,
-                checked: false
-            });
-        }
-
-        // ----- Weather based -----
-        if (condition === 'Hot') {
-            addItem('T-shirts', 'Clothing', 'Hot weather – breathable fabrics', '3-4', true);
-            addItem('Shorts', 'Clothing', 'High temperatures expected', '2-3', true);
-            addItem('Light dresses / skirts', 'Clothing', 'Stay cool', '1-2', false);
-            if (activities.includes('Beach')) 
-                addItem('Swimwear', 'Clothing', 'Beach activity', '1-2', true);
-            addItem('Sunscreen SPF 30+', 'Health', 'Intense sun – prevent burns', '1 bottle', true);
-            addItem('Sun hat & sunglasses', 'Accessories', 'UV protection', '1 set', true);
-            addItem('Insect repellent', 'Health', 'Mosquitoes common in hot regions', '1 small', false);
-        } 
-        else if (condition === 'Cold') {
-            addItem('Thermal base layers', 'Clothing', 'Cold weather insulation', '2-3', true);
-            addItem('Sweaters / fleece', 'Clothing', 'Mid layer warmth', '2-3', true);
-            addItem('Heavy jacket / coat', 'Clothing', 'Outer protection', '1', true);
-            addItem('Gloves, scarf, beanie', 'Accessories', 'Prevent heat loss', '1 set', true);
-            addItem('Lip balm', 'Health', 'Prevents chapping in cold', '1', false);
-            addItem('Hand warmers', 'Accessories', 'Extra warmth', '2 pairs', false);
-        } 
-        else {
-            addItem('Long-sleeve shirts', 'Clothing', 'Mild & variable weather', '2-3', true);
-            addItem('T-shirts', 'Clothing', 'Mild days', '2-3', true);
-            addItem('Jeans / trousers', 'Clothing', 'Everyday wear', '2', true);
-            addItem('Light jacket or cardigan', 'Clothing', 'Cool evenings', '1', true);
-        }
-
-        if (rainy) {
-            addItem('Rain jacket', 'Gear', 'Rain forecast', '1', true);
-            addItem('Compact umbrella', 'Gear', 'Sudden showers', '1', true);
-            addItem('Waterproof shoes', 'Footwear', 'Keep feet dry', '1 pair', false);
-        }
-        if (snowy) {
-            addItem('Waterproof boots', 'Footwear', 'Snow and slush', '1 pair', true);
-            addItem('Snow gloves', 'Accessories', 'Warmth and grip', '1 pair', true);
-        }
-
-        // ----- Activity based -----
-        if (activities.includes('Hiking')) {
-            addItem('Hiking boots', 'Footwear', 'Trail support', '1 pair', true);
-            addItem('Day backpack', 'Gear', 'Carry water & snacks', '1', true);
-            addItem('Water bottle', 'Gear', 'Stay hydrated', '1', true);
-            addItem('Energy bars', 'Food', 'Quick fuel', '3-4', false);
-        }
-        if (activities.includes('Beach')) {
-            addItem('Beach towel', 'Accessories', 'Sand & sun', '1', true);
-            addItem('Flip flops', 'Footwear', 'Beach walks', '1 pair', true);
-            addItem('Dry bag', 'Gear', 'Protect electronics', '1', false);
-        }
-        if (activities.includes('City Tours')) {
-            addItem('Comfortable walking shoes', 'Footwear', 'All‑day walking', '1 pair', true);
-            addItem('Portable charger', 'Electronics', 'Phone battery for maps', '1', true);
-            addItem('City map or offline app', 'Documents', 'Navigation', '1', false);
-        }
-        if (style === 'Luxury' || activities.includes('Shopping')) {
-            addItem('Dress shoes / sandals', 'Footwear', 'Evenings & dining', '1 pair', false);
-            addItem('Smart casual outfit', 'Clothing', 'Restaurants or events', '1 set', false);
-        }
-        if (who === 'Family') {
-            addItem('First-aid kit', 'Health', 'Kids’ minor injuries', '1', true);
-            addItem('Snacks', 'Food', 'For children', 'some', false);
-            addItem('Entertainment (tablet, books)', 'Electronics', 'Keep kids occupied', '1', false);
-        }
-
-        // ----- Medicine & health variety -----
-        addItem('Pain relievers (ibuprofen/paracetamol)', 'Health', 'Headaches, minor pain', 'small pack', true);
-        addItem('Antihistamines', 'Health', 'Allergies or insect bites', '1 strip', false);
-        addItem('Motion sickness pills', 'Health', 'Car/boat/plane travel', '6 tablets', false);
-        addItem('Oral rehydration salts', 'Health', 'Dehydration from heat or illness', '2-3 sachets', false);
-        addItem('Bandages & antiseptic wipes', 'Health', 'Minor cuts', 'small kit', true);
-        addItem('Prescription medications', 'Health', 'Medical necessity', 'full supply', true);
-        addItem('Hand sanitizer', 'Health', 'Hygiene on the go', 'small bottle', true);
-        addItem('Face masks', 'Health', 'Crowded transport', '3-4', false);
-
-        // ----- Standard essentials -----
-        addItem('Toothbrush & toothpaste', 'Toiletries', 'Oral hygiene', '1 set', true);
-        addItem('Shampoo & soap', 'Toiletries', 'Personal care', 'travel size', true);
-        addItem('Deodorant', 'Toiletries', 'Freshness', '1', true);
-        addItem('Passport / ID', 'Documents', 'Required for travel', '1', true);
-        addItem('Wallet / cash / cards', 'Documents', 'Money access', '1', true);
-        addItem('Phone + charger', 'Electronics', 'Communication & maps', '1', true);
-        addItem('Power bank', 'Electronics', 'Backup battery', '1', false);
-        addItem('Travel adapter', 'Electronics', 'Plug compatibility', '1', false);
-        addItem('Copy of documents (digital backup)', 'Documents', 'Emergency', '1', false);
-        addItem('Travel insurance card', 'Documents', 'Medical coverage', '1', true);
-
-        // ----- Luggage limit (Tip removed) -----
-        let finalItems = items;
-        if (luggage === 'Carry-on') {
-            finalItems = items.slice(0, 16);
-            // Removed the "Pack light! Aim for 7kg" tip
-        }
-
-        return finalItems;
+    // ── BACKPACKER ───────────────────────────────────────────────────────
+    if (isBackpacker) {
+      add('Microfibre travel towel', 'Gear', 'Compact and quick-drying', true);
+      add('Padlock for hostel lockers', 'Security', 'Secure your valuables', true);
+      add('Sleeping bag liner', 'Gear', 'Hostels and guesthouses', false);
+      add('Duct tape (small roll)', 'Gear', 'Emergency repairs', false);
     }
 
-    async function generateList() {
-    // Create loading overlay with cloud icon and dots (no text)
+    // ── FAMILY ───────────────────────────────────────────────────────────
+    if (isFamily) {
+      add('Children\'s clothing (per child)', 'Family', 'Extra changes for kids', true);
+      add('Children\'s sunscreen SPF 50+', 'Health', 'Kids\' sensitive skin', true);
+      add('Portable first-aid kit', 'Health', 'Kids\' minor cuts and bruises', true);
+      add('Snacks & lunchbox', 'Food', 'Hungry kids on the go', true);
+      add('Tablet or entertainment device', 'Electronics', 'Long journeys and downtime', false);
+      add('Baby wipes (×3 packs)', 'Toiletries', 'Versatile and essential with kids', true);
+      add('Stroller or baby carrier', 'Gear', 'City and site navigation with young children', false);
+    }
+
+    // ── ACTIVITIES ────────────────────────────────────────────────────────
+    if (activities.includes('Hiking')) {
+      add('Hiking boots (broken in)', 'Footwear', 'Ankle support on trails', true);
+      add('Day backpack (20–30L)', 'Gear', 'Carry water, snacks, and layers', true);
+      add('Reusable water bottle (1L)', 'Gear', 'Hydration on trails', true);
+      add('Trekking poles (collapsible)', 'Gear', 'Knee support on descents', false);
+      add('Energy bars / trail mix', 'Food', 'Quick fuel on the trail', false);
+      add('Blister plasters', 'Health', 'Prevent and treat hotspots', true);
+      if (cold || snowy) add('Gaiters', 'Gear', 'Keep boots dry in snow', false);
+    }
+    if (activities.includes('Beach')) {
+      add('Sunscreen SPF 50+ (×2)', 'Health', 'Intense UV at the beach', true);
+      add('Beach towel (large)', 'Accessories', 'Sand and sun sessions', true);
+      add('Flip flops', 'Footwear', 'Hot sand and poolside', true);
+      add('Dry bag / waterproof pouch', 'Gear', 'Protect phone and valuables', true);
+      add('After-sun lotion', 'Health', 'Soothe skin after exposure', false);
+      if (activities.includes('Water Sports')) {
+        add('Rash guard / wetsuit top', 'Clothing', 'UV and abrasion protection', false);
+        add('Waterproof watch', 'Accessories', 'Water activities', false);
+      }
+    }
+    if (activities.includes('City Tours')) {
+      add('Comfortable walking shoes (×2 pairs)', 'Footwear', 'All-day sightseeing', true);
+      add('Day bag / cross-body bag', 'Accessories', 'Hands-free exploration', true);
+      add('Portable charger (10,000mAh+)', 'Electronics', 'Maps and photos all day', true);
+      add('Offline maps downloaded', 'Apps', 'Navigation without data', true);
+      add('Reusable water bottle', 'Gear', 'Stay hydrated between sights', false);
+    }
+    if (activities.includes('Nightlife')) {
+      add('Smart casual / going-out outfits', 'Clothing', 'Bars and clubs', true);
+      add('Dressy shoes', 'Footwear', 'Venue dress codes', false);
+      add('Portable battery pack', 'Electronics', 'Long nights out', false);
+    }
+    if (activities.includes('Museums')) {
+      add('Comfortable flat shoes', 'Footwear', 'Long periods of standing', true);
+      add('Light layer / cardigan', 'Clothing', 'Museum air-conditioning', false);
+      add('Reusable tote bag', 'Accessories', 'Guidebooks and shop purchases', false);
+    }
+    if (activities.includes('Shopping')) {
+      add('Foldable extra bag', 'Accessories', 'Carry purchases home', true);
+      add('Copies of card / payment info', 'Documents', 'Backup if card is lost', false);
+    }
+    if (activities.includes('Dining')) {
+      if (isLuxury || isHoneymoon) add('Smart outfit for fine dining', 'Clothing', 'Restaurant dress codes', false);
+    }
+
+    // ── SUN & HEAT ────────────────────────────────────────────────────────
+    if (hot || activities.includes('Beach') || activities.includes('Hiking')) {
+      if (!items.find(i => i.name.includes('Sunscreen'))) {
+        add('Sunscreen SPF 30+', 'Health', 'UV protection', true);
+      }
+      add('Sun hat & sunglasses', 'Accessories', 'UV protection for face and eyes', true);
+      add('Insect repellent', 'Health', 'Mosquitoes in warm regions', false);
+    }
+
+    // ── HEALTH & MEDICINE ─────────────────────────────────────────────────
+    add('Prescription medications (full supply)', 'Health', 'Never run out abroad', true);
+    add('Pain relievers (ibuprofen / paracetamol)', 'Health', 'Headaches, fever, aches', true);
+    add('Antihistamines', 'Health', 'Allergies, insect bites, rashes', false);
+    add('Stomach upset tablets (Imodium etc)', 'Health', 'Food changes and travel belly', true);
+    add('Throat lozenges', 'Health', 'Air-con and dry air on flights', false);
+    if (days > 7) {
+      add('Vitamin supplements', 'Health', 'Immune support on longer trips', false);
+    }
+    if (rainy || cold) {
+      add('Cold & flu tablets', 'Health', 'Cold weather and wet conditions', false);
+    }
+    add('Bandages & antiseptic wipes', 'Health', 'Minor cuts and scrapes', true);
+    add('Motion sickness tablets', 'Health', 'Car, boat, or winding roads', false);
+    add('Hand sanitiser (60ml+)', 'Health', 'Hygiene when soap unavailable', true);
+    add('Face masks (×5)', 'Health', 'Crowded transport and flights', false);
+
+    // ── TOILETRIES ────────────────────────────────────────────────────────
+    add('Toothbrush & toothpaste', 'Toiletries', 'Oral hygiene', true);
+    add('Shampoo & conditioner (travel size)', 'Toiletries', 'Hair care', true);
+    add('Body wash / soap', 'Toiletries', 'Personal care', true);
+    add('Deodorant', 'Toiletries', 'Freshness throughout the day', true);
+    add('Moisturiser / face cream', 'Toiletries', 'Skin care, especially in AC or cold', false);
+    if (isLuxury || isHoneymoon) {
+      add('Perfume / cologne (travel size)', 'Toiletries', 'Personal scent', false);
+    }
+    if (isFamily) {
+      add('Children\'s toothbrush & toothpaste', 'Toiletries', 'Kids\' dental care', true);
+    }
+    add('Razor & shaving cream', 'Toiletries', 'Grooming', false);
+    add('Hair ties / brush / comb', 'Toiletries', 'Hair care', false);
+    add('Cotton buds & nail clippers', 'Toiletries', 'Grooming essentials', false);
+
+    // ── DOCUMENTS ────────────────────────────────────────────────────────
+    add('Passport / national ID', 'Documents', 'Required at borders and hotels', true);
+    add('Visa documentation (if required)', 'Documents', 'Check requirements for your destination', true);
+    add('Flight & hotel booking confirmations', 'Documents', 'Check-in and proof of stay', true);
+    add('Travel insurance documents', 'Documents', 'Medical and trip coverage', true);
+    add('Emergency contacts list', 'Documents', 'Offline backup of key numbers', true);
+    add('Copies of passport (digital + physical)', 'Documents', 'Emergency replacement', true);
+    add('Vaccination certificate (if required)', 'Documents', 'Some destinations require proof', false);
+    if (isBusiness) {
+      add('Work contracts / presentation files', 'Documents', 'Professional meetings', false);
+    }
+
+    // ── ELECTRONICS ──────────────────────────────────────────────────────
+    add('Smartphone + cable', 'Electronics', 'Communication, maps, photos', true);
+    add('Universal travel adapter', 'Electronics', 'Different plug types abroad', true);
+    add('Portable charger / power bank', 'Electronics', 'Backup battery on the go', days > 3 ? true : false);
+    if (!isBusiness) {
+      add('Camera or GoPro', 'Electronics', 'Capture memories', false);
+    }
+    add('Headphones / earbuds', 'Electronics', 'Flights and commutes', false);
+    add('E-reader or books', 'Entertainment', 'Downtime and flights', false);
+
+    // ── MONEY & SECURITY ──────────────────────────────────────────────────
+    add('Wallet with foreign currency', 'Money', 'Cash for markets and tips', true);
+    add('Credit / debit cards (×2)', 'Money', 'Backup payment method', true);
+    add('Money belt or hidden pouch', 'Security', 'Pickpocket prevention', isBackpacker ? true : false);
+    add('Padlock (TSA-approved)', 'Security', 'Luggage security', false);
+
+    // ── CARRY-ON EXTRAS ───────────────────────────────────────────────────
+    add('Neck pillow', 'Comfort', 'Long-haul flights and trains', false);
+    add('Eye mask & earplugs', 'Comfort', 'Sleep on planes and in hostels', false);
+    add('Reusable shopping bag', 'Accessories', 'Markets, picnics, eco-friendly', false);
+    if (days > 10) {
+      add('Laundry detergent pods (×5)', 'Gear', 'Wash clothes on long trips', false);
+    }
+
+    // ── LIMIT FOR CARRY-ON ────────────────────────────────────────────────
+    if (carryOnly) {
+      // Keep all essentials + top optionals, cap at 28
+      const essentials = items.filter(i => i.essential);
+      const optionals  = items.filter(i => !i.essential);
+      return [...essentials, ...optionals].slice(0, 28);
+    }
+
+    return items;
+  }
+
+  // ── Generate and navigate to list ─────────────────────────────────────────
+  async function generateList() {
     const overlay = document.createElement('div');
     overlay.className = 'loading-overlay';
     overlay.innerHTML = `
-        <div class="loading-cloud">
-            <i class="fa-solid fa-cloud"></i>
-            <div class="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    `;
+      <div class="loading-cloud">
+        <i class="fa-solid fa-cloud"></i>
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+      </div>`;
     document.body.appendChild(overlay);
-    
-    // Minimum loading time (0.8 seconds) to avoid flashing
-    const minLoadTime = new Promise(resolve => setTimeout(resolve, 800));
-    
+
+    const minLoad = new Promise(r => setTimeout(r, 900));
+
     try {
-        const country = countryInput.value;
-        const cities = mainCityInputs.map(inp => inp.value).filter(c => c);
-        const start = startDateInput.value;
-        const end = endDateInput.value;
-        if (!country || cities.length === 0 || !start || !end) {
-            alert('Please complete all steps.');
-            overlay.remove();
-            return false;
-        }
-        let forecasts = weatherForecasts;
-        if (!forecasts || forecasts.length === 0) {
-            forecasts = [];
-            for (const city of cities) {
-                const dailyData = await fetchDailyForecast(city, country, start, end);
-                if (dailyData) forecasts.push(dailyData);
-            }
-        }
-        const combinedWeather = combineWeather(forecasts);
-        const daysToTrip = Math.ceil((new Date(start) - new Date()) / (1000 * 3600 * 24));
-        const forecastType = daysToTrip <= 14 ? 'real' : 'climate';
-        const preferences = { reason: selectedReason, style: selectedStyle, who: selectedWho, activities: selectedActivities, luggage: selectedLuggage, travelersCount: 1 };
-        const packingList = generatePackingListFromWeather(combinedWeather, preferences, forecastType);
-        
-        let tripName;
-        if (cities.length === 1) {
-            tripName = `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`;
-        } else {
-            tripName = `${cities[0]}, ${country} & ${cities.length-1} more (${new Date(start).toLocaleDateString()})`;
-        }
-        
-        const tripData = {
-            id: Date.now(),
-            name: tripName,
-            destinations: { main: { country, cities } },
-            dates: { start, end },
-            preferences: preferences,
-            weather: { ...combinedWeather, forecastType },
-            packingList: packingList,
-            createdAt: new Date().toISOString()
-        };
-        sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
-        
-        // Wait for minimum loading time before redirect
-        await minLoadTime;
-        window.location.href = 'list.html';
-    } catch (err) {
-        console.error(err);
-        alert('Something went wrong. Please try again.');
+      const country = countryInput.value.trim();
+      const cities  = mainCityInputs.map(i => i.value.trim()).filter(Boolean);
+      const start   = startDateInput.value;
+      const end     = endDateInput.value;
+
+      if (!country || !cities.length || !start || !end) {
+        alert('Please complete all fields before generating your list.');
         overlay.remove();
-        return false;
-    }
-    return true;
-                }
+        return;
+      }
 
-    // ---------- Step Navigation (unchanged) ----------
-    let currentStep = 0;
-    function updateStepUI() {
-        steps.forEach((s, idx) => s.classList.toggle('active', idx === currentStep));
-        stepDots.forEach((dot, idx) => {
-            dot.classList.toggle('active', idx <= currentStep);
-            if (idx < stepLines.length) stepLines[idx].classList.toggle('active', idx < currentStep);
-        });
-        prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-flex';
-        nextBtn.innerHTML = currentStep === steps.length - 1 ? 'Generate List' : 'Next →';
-        if (currentStep === steps.length - 1) updateWeatherPreview();
-    }
-    async function goNext() {
-        if (currentStep === 0) {
-            if (!countryInput.value || !mainCityInputs[0].value) {
-                alert('Please select country and at least one city.');
-                return;
-            }
+      let forecasts = weatherForecasts;
+      if (!forecasts.length) {
+        for (const city of cities) {
+          const f = await fetchDailyForecast(city, country, start, end);
+          if (f) forecasts.push(f);
         }
-        if (currentStep === 1) {
-            if (!startDateInput.value) { alert('Start date required'); return; }
-            if (endDateInput.value && new Date(endDateInput.value) < new Date(startDateInput.value)) {
-                alert('End date cannot be before start date');
-                return;
-            }
-        }
-        if (currentStep === steps.length - 1) {
-            await generateList();
-            return;
-        }
-        currentStep++;
-        updateStepUI();
-    }
-    function goPrev() { if (currentStep > 0) { currentStep--; updateStepUI(); } }
-    nextBtn.addEventListener('click', goNext);
-    prevBtn.addEventListener('click', goPrev);
+      }
 
-    // ---------- Chips Handling (unchanged) ----------
-    function initChips() {
-        const reasonChips = document.querySelectorAll('#chips-reason .chip');
-        const styleChips = document.querySelectorAll('#chips-style .chip');
-        const whoChips = document.querySelectorAll('#chips-who .chip');
-        const activityChips = document.querySelectorAll('#chips-activities .chip');
-        const luggageChips = document.querySelectorAll('#chips-luggage .chip');
-        function chipHandler(group, singleSelect, callback) {
-            return (e) => {
-                const chip = e.currentTarget;
-                if (singleSelect) {
-                    group.forEach(c => c.classList.remove('selected'));
-                    chip.classList.add('selected');
-                } else {
-                    chip.classList.toggle('selected');
-                }
-                callback();
-            };
-        }
-        reasonChips.forEach(chip => chip.addEventListener('click', chipHandler(reasonChips, true, () => {
-            selectedReason = document.querySelector('#chips-reason .chip.selected').dataset.val;
-        })));
-        styleChips.forEach(chip => chip.addEventListener('click', chipHandler(styleChips, true, () => {
-            selectedStyle = document.querySelector('#chips-style .chip.selected').dataset.val;
-        })));
-        whoChips.forEach(chip => chip.addEventListener('click', chipHandler(whoChips, true, () => {
-            selectedWho = document.querySelector('#chips-who .chip.selected').dataset.val;
-        })));
-        luggageChips.forEach(chip => chip.addEventListener('click', chipHandler(luggageChips, true, () => {
-            selectedLuggage = document.querySelector('#chips-luggage .chip.selected').dataset.val;
-        })));
-        activityChips.forEach(chip => chip.addEventListener('click', chipHandler(activityChips, false, () => {
-            selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
-        })));
-        selectedReason = document.querySelector('#chips-reason .chip.selected').dataset.val;
-        selectedStyle = document.querySelector('#chips-style .chip.selected').dataset.val;
-        selectedWho = document.querySelector('#chips-who .chip.selected').dataset.val;
-        selectedLuggage = document.querySelector('#chips-luggage .chip.selected').dataset.val;
-        selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
-    }
+      const weather     = combineWeather(forecasts);
+      const days        = getTripDays();
+      const daysToTrip  = Math.ceil((new Date(start) - new Date()) / 86400000);
+      const forecastType= daysToTrip <= 14 ? 'real' : 'climate';
 
-    // ---------- Additional listeners (timeTravelToggle removed) ----------
-    if (addCityBtn) {
-        addCityBtn.removeAttribute('onclick');
-        addCityBtn.addEventListener('click', window.addCityField);
-    }
-    startDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
-    endDateInput.addEventListener('change', () => { if (currentStep === steps.length-1) updateWeatherPreview(); });
+      const prefs = {
+        reason: selectedReason, style: selectedStyle,
+        who: selectedWho, activities: selectedActivities,
+        luggage: selectedLuggage, travelersCount: 1
+      };
 
-    // ---------- Initialize (unchanged) ----------
-    initAutocompletes();
-    initChips();
+      const packingList = generatePackingList(weather, prefs);
+
+      const tripName = cities.length === 1
+        ? `${cities[0]}, ${country} (${new Date(start).toLocaleDateString()})`
+        : `${cities[0]}, ${country} +${cities.length - 1} more (${new Date(start).toLocaleDateString()})`;
+
+      const tripData = {
+        id: Date.now(),
+        name: tripName,
+        destinations: { main: { country, cities } },
+        dates: { start, end },
+        preferences: prefs,
+        weather: { ...weather, forecastType },
+        packingList,
+        createdAt: new Date().toISOString()
+      };
+
+      sessionStorage.setItem('pendingTrip', JSON.stringify(tripData));
+      await minLoad;
+      window.location.href = 'list.html';
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong. Please try again.');
+      overlay.remove();
+    }
+  }
+
+  // ── Step navigation ───────────────────────────────────────────────────────
+  let currentStep = 0;
+
+  function updateStepUI() {
+    steps.forEach((s, i) => s.classList.toggle('active', i === currentStep));
+    stepDots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentStep);
+      dot.classList.toggle('done',   i <  currentStep);
+    });
+    stepLines.forEach((line, i) => line.classList.toggle('done', i < currentStep));
+    stepLabelItems.forEach((lbl, i) => lbl.classList.toggle('active', i === currentStep));
+    prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-flex';
+    nextBtn.innerHTML = currentStep === steps.length - 1
+      ? '<i class="fa-solid fa-magic-wand-sparkles"></i> Generate List'
+      : 'Next →';
+    if (currentStep === steps.length - 1) updateWeatherPreview();
+    if (currentStep === 1) updateDurationBadge();
+  }
+
+  async function goNext() {
+    if (currentStep === 0) {
+      if (!countryInput.value.trim() || !mainCityInputs[0].value.trim()) {
+        alert('Please enter a country and at least one city.');
+        return;
+      }
+    }
+    if (currentStep === 1) {
+      if (!startDateInput.value) { alert('Please enter a start date.'); return; }
+      if (!endDateInput.value)   { alert('Please enter an end date.'); return; }
+      if (new Date(endDateInput.value) < new Date(startDateInput.value)) {
+        alert('End date must be after start date.');
+        return;
+      }
+    }
+    if (currentStep === steps.length - 1) {
+      await generateList();
+      return;
+    }
+    currentStep++;
     updateStepUI();
+  }
+
+  function goPrev() {
+    if (currentStep > 0) { currentStep--; updateStepUI(); }
+  }
+
+  nextBtn.addEventListener('click', goNext);
+  prevBtn.addEventListener('click', goPrev);
+
+  // ── Chips ─────────────────────────────────────────────────────────────────
+  function initChips() {
+    function bindChips(groupId, multiSelect, onChange) {
+      const chips = document.querySelectorAll(`#${groupId} .chip`);
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          if (multiSelect) {
+            chip.classList.toggle('selected');
+          } else {
+            chips.forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+          }
+          onChange();
+        });
+      });
+    }
+
+    bindChips('chips-reason', false, () => {
+      selectedReason = document.querySelector('#chips-reason .chip.selected')?.dataset.val || 'Leisure';
+    });
+    bindChips('chips-style', false, () => {
+      selectedStyle = document.querySelector('#chips-style .chip.selected')?.dataset.val || 'Standard';
+    });
+    bindChips('chips-who', false, () => {
+      selectedWho = document.querySelector('#chips-who .chip.selected')?.dataset.val || 'Solo';
+    });
+    bindChips('chips-luggage', false, () => {
+      selectedLuggage = document.querySelector('#chips-luggage .chip.selected')?.dataset.val || 'Checked';
+    });
+    bindChips('chips-activities', true, () => {
+      selectedActivities = Array.from(document.querySelectorAll('#chips-activities .chip.selected')).map(c => c.dataset.val);
+    });
+  }
+
+  // ── Date listeners ────────────────────────────────────────────────────────
+  startDateInput.addEventListener('change', () => {
+    updateDurationBadge();
+    if (currentStep === steps.length - 1) updateWeatherPreview();
+  });
+  endDateInput.addEventListener('change', () => {
+    updateDurationBadge();
+    if (currentStep === steps.length - 1) updateWeatherPreview();
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────────────
+  initAutocompletes();
+  initChips();
+  updateStepUI();
 });
