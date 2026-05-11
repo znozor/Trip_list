@@ -157,7 +157,12 @@ function renderTrips() {
       const idx  = parseInt(btn.dataset.idx);
       tripToDelete = trips[idx];
       const nameEl = document.getElementById('deleteModalText');
-      if (nameEl) nameEl.textContent = `"${tripToDelete.name}" will be permanently removed.`;
+if (nameEl) {
+  let shortName = tripToDelete.name;
+  // Force consistent length – max 35 characters
+  if (shortName.length > 35) shortName = shortName.substring(0, 32) + '...';
+  nameEl.textContent = `"${shortName}" will be permanently removed.`;
+}
       document.getElementById('deleteOverlay').style.display = 'flex';
     });
   });
@@ -186,7 +191,7 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () 
   if (!tripToDelete) return;
 
   const btn = document.getElementById('confirmDeleteBtn');
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+  btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
   btn.disabled = true;
 
   if (window.currentUser && window.sb) {
