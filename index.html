@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    /* ---------- COMPLETE OVERRIDE of shared.css for this page ---------- */
     *, *::before, *::after {
       box-sizing: border-box;
     }
@@ -28,7 +27,6 @@
       padding-bottom: 0 !important;
     }
 
-    /* Hide the bottom navigation completely */
     .bottom-nav {
       display: none !important;
     }
@@ -55,16 +53,23 @@
       flex-direction: column;
       justify-content: space-between;
       margin: 0 !important;
-      padding: 0 24px calc(20px + env(safe-area-inset-bottom, 20px)) 24px !important;
+      padding: 0 24px calc(36px + env(safe-area-inset-bottom, 24px)) 24px !important;
       background: none !important;
       border: none !important;
       box-shadow: none !important;
+      /* Allow scroll on tiny screens so nothing is ever clipped */
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .welcome-card::-webkit-scrollbar {
+      display: none;
     }
 
-    /* Smaller top spacer – content is still below cloud but leaves room for disclaimer */
     .top-spacer {
       flex: 0.25;
       min-height: 6vh;
+      flex-shrink: 0;
     }
 
     .main-content {
@@ -72,6 +77,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
+      flex-shrink: 0;
     }
 
     .hero-title {
@@ -95,7 +101,7 @@
       margin-bottom: 28px;
     }
 
-    /* Google button */
+    /* ── Google button ── */
     .gsi-material-button {
       width: 280px;
       max-width: 90%;
@@ -132,7 +138,7 @@
       transform: none;
     }
 
-    /* Guest button */
+    /* ── Guest button ── */
     .guest-link {
       margin-top: 14px;
       width: 280px;
@@ -150,20 +156,16 @@
       justify-content: center;
       gap: 10px;
       padding: 12px 20px;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
-    .guest-link i {
-      font-size: 18px;
-    }
-    .guest-link:active {
-      transform: scale(0.97);
-    }
+    .guest-link i { font-size: 18px; }
+    .guest-link:active { transform: scale(0.97); }
 
-    /* Disclaimer – now with less top margin, will be fully visible */
+    /* ── Disclaimer — always fully visible ── */
     .disclaimer {
       width: 100%;
       max-width: 360px;
-      margin: 8px auto 0 auto;
+      margin: 16px auto 0 auto;
       background: rgba(255,255,255,0.08);
       border-radius: 28px;
       padding: 10px 16px;
@@ -172,63 +174,40 @@
       font-size: 12px;
       line-height: 1.4;
       text-align: center;
+      flex-shrink: 0;   /* never squish */
     }
 
-    /* Mobile */
+    /* ── Mobile ── */
     @media (max-width: 480px) {
       .welcome-card {
-        padding: 0 16px calc(16px + env(safe-area-inset-bottom, 16px)) 16px !important;
+        padding: 0 16px calc(32px + env(safe-area-inset-bottom, 20px)) 16px !important;
       }
-      .top-spacer {
-        flex: 0.2;
-        min-height: 4vh;
-      }
-      .hero-title {
-        font-size: clamp(28px, 7vw, 44px);
-        padding: 0 16px;
-        margin-bottom: 6px;
-      }
-      .hero-subtitle {
-        font-size: clamp(13px, 3.8vw, 16px);
-        margin-bottom: 24px;
-      }
-      .gsi-material-button-content-wrapper {
-        padding: 10px 16px;
-      }
-      .gsi-material-button-contents {
-        font-size: 15px;
-      }
-      .guest-link {
-        font-size: 15px;
-        padding: 10px 16px;
-        margin-top: 12px;
-      }
-      .disclaimer {
-        font-size: 11px;
-        padding: 8px 12px;
-        margin-top: 6px;
-      }
+      .top-spacer { flex: 0.2; min-height: 4vh; }
+      .hero-title { font-size: clamp(28px, 7vw, 44px); padding: 0 16px; margin-bottom: 6px; }
+      .hero-subtitle { font-size: clamp(13px, 3.8vw, 16px); margin-bottom: 24px; }
+      .gsi-material-button-content-wrapper { padding: 10px 16px; }
+      .gsi-material-button-contents { font-size: 15px; }
+      .guest-link { font-size: 15px; padding: 10px 16px; margin-top: 12px; }
+      .disclaimer { font-size: 11px; padding: 8px 12px; margin-top: 12px; }
     }
 
-    /* Short screens – reduce everything further */
-    @media (max-height: 640px) {
-      .hero-subtitle {
-        margin-bottom: 16px;
-      }
-      .top-spacer {
-        min-height: 3vh;
-      }
-      .gsi-material-button-content-wrapper {
-        padding: 8px 16px;
-      }
-      .guest-link {
-        padding: 8px 16px;
-        margin-top: 10px;
-      }
-      .disclaimer {
-        margin-top: 4px;
-        padding: 6px 12px;
-      }
+    /* ── Short screens (e.g. iPhone SE, small Android) ── */
+    @media (max-height: 700px) {
+      .top-spacer { min-height: 3vh; flex: 0.15; }
+      .hero-subtitle { margin-bottom: 18px; }
+      .gsi-material-button-content-wrapper { padding: 9px 16px; }
+      .guest-link { padding: 9px 16px; margin-top: 10px; }
+      .disclaimer { margin-top: 10px; padding: 7px 12px; font-size: 11px; }
+    }
+
+    @media (max-height: 600px) {
+      .top-spacer { min-height: 2vh; flex: 0.1; }
+      .hero-title { font-size: clamp(24px, 6vw, 36px); margin-bottom: 4px; }
+      .hero-subtitle { font-size: 13px; margin-bottom: 14px; }
+      .gsi-material-button-content-wrapper { padding: 8px 16px; }
+      .gsi-material-button-contents { font-size: 14px; }
+      .guest-link { padding: 8px 16px; margin-top: 8px; font-size: 14px; }
+      .disclaimer { margin-top: 8px; padding: 6px 12px; font-size: 10px; }
     }
   </style>
   <script>
@@ -241,7 +220,9 @@
 <body>
 <div class="app-wrapper">
   <div class="welcome-card">
+
     <div class="top-spacer"></div>
+
     <div class="main-content">
       <div class="hero-title">WeatherTrip</div>
       <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
@@ -264,9 +245,11 @@
         <i class="fa-regular fa-user"></i> Continue as guest →
       </a>
     </div>
+
     <div class="disclaimer">
       🌦️ Weather predictions are estimates.<br>Use common sense when packing.
     </div>
+
   </div>
 </div>
 
@@ -289,7 +272,11 @@
       googleBtn.onclick = async () => {
         googleBtn.disabled = true;
         const originalHTML = googleBtn.innerHTML;
-        googleBtn.innerHTML = '<div class="gsi-material-button-content-wrapper"><i class="fa-solid fa-spinner fa-spin"></i> Connecting...</div>';
+        googleBtn.innerHTML = `
+          <div class="gsi-material-button-content-wrapper">
+            <i class="fa-solid fa-spinner fa-spin" style="color:#1f2e33;font-size:18px"></i>
+            <span class="gsi-material-button-contents">Connecting…</span>
+          </div>`;
         await window.signInWithGoogle();
         setTimeout(() => {
           if (googleBtn) {
@@ -304,7 +291,7 @@
       googleBtn.disabled = false;
       googleBtn.style.opacity = '1';
       const span = googleBtn.querySelector('.gsi-material-button-contents');
-      if (span) span.innerText = 'Sign in (reload)';
+      if (span) span.innerText = 'Sign in (reload page)';
     }
   }, 200);
 </script>
