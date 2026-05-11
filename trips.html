@@ -2,37 +2,375 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>My Trips – WanderPack</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script>
-  (function() {
-    const theme = localStorage.getItem('theme');
-    if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+    })();
+  </script>
+
+  <style>
+    /* ── Page hero ── */
+    .trips-hero {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 24px;
+      padding: 22px 20px;
+      margin-bottom: 24px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
     }
-  })();
-</script>
+    .trips-hero::before {
+      content: '🗂️';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 48px;
+      opacity: 0.2;
+    }
+    .trips-hero h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .trips-hero p {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+    .trips-hero .new-btn {
+      background: white;
+      color: var(--primary);
+      border: none;
+      border-radius: 40px;
+      padding: 10px 18px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.15s;
+    }
+    .trips-hero .new-btn:active { transform: scale(0.96); }
+
+    /* ── Trip cards ── */
+    .trips-grid { display: flex; flex-direction: column; gap: 14px; }
+
+    .trip-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .trip-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--primary);
+      border-radius: 4px 0 0 4px;
+    }
+    .trip-card:active {
+      transform: scale(0.98);
+    }
+
+    .trip-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .trip-card-info { flex: 1; min-width: 0; }
+    .trip-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trip-dates {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .trip-dates i { color: var(--primary); font-size: 10px; }
+
+    .trip-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .trip-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(6,167,125,0.1);
+      color: var(--primary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .trip-badge.weather {
+      background: rgba(244,162,97,0.12);
+      color: var(--warning);
+    }
+    .trip-badge.items {
+      background: rgba(107,123,141,0.1);
+      color: var(--text-secondary);
+    }
+
+    .trip-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .btn-view {
+      flex: 1;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-view:hover { background: var(--primary-dark); }
+
+    .btn-delete {
+      background: rgba(231,76,60,0.1);
+      color: var(--danger);
+      border: none;
+      border-radius: 30px;
+      padding: 9px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.2s;
+      font-weight: 600;
+    }
+    .btn-delete:hover { background: rgba(231,76,60,0.2); }
+
+    /* ── Progress bar ── */
+    .trip-progress {
+      margin-top: 10px;
+    }
+    .progress-bar-wrap {
+      background: var(--border);
+      border-radius: 10px;
+      height: 5px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+    .progress-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-secondary);
+    }
+    .empty-state i {
+      font-size: 56px;
+      color: var(--primary);
+      opacity: 0.3;
+      display: block;
+      margin-bottom: 16px;
+    }
+    .empty-state h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .empty-state p { font-size: 13px; margin-bottom: 24px; }
+
+    /* ── Delete confirm overlay ── */
+    .delete-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .delete-modal {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      animation: popIn 0.25s cubic-bezier(0.34,1.2,0.64,1);
+    }
+    .delete-modal i {
+      font-size: 44px;
+      color: var(--danger);
+      margin-bottom: 12px;
+      display: block;
+    }
+    .delete-modal h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .delete-modal p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .delete-modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .delete-modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .btn-cancel-del {
+      background: var(--border);
+      color: var(--text);
+    }
+    .btn-confirm-del {
+      background: var(--danger);
+      color: white;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Loading skeleton ── */
+    .skeleton-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .skeleton-line {
+      background: var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0%,100% { opacity: 0.5; }
+      50%      { opacity: 1; }
+    }
+  </style>
 </head>
 <body>
 <div class="app-wrapper">
+
   <nav class="bottom-nav">
     <div class="nav-item" onclick="window.location.href='plan.html'"><i class="fa-solid fa-map"></i><span>Trip</span></div>
     <div class="nav-item" onclick="window.location.href='list.html'"><i class="fa-solid fa-list-check"></i><span>List</span></div>
     <div class="nav-item active" onclick="window.location.href='trips.html'"><i class="fa-solid fa-folder-open"></i><span>Trips</span></div>
     <div class="nav-item" onclick="window.location.href='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
-  <div class="trips-header" style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-    <h2><i class="fa-solid fa-folder-open"></i> My Saved Trips</h2>
-    <a href="plan.html" class="btn btn-primary btn-sm">+ New Trip</a>
+
+  <!-- Hero -->
+  <div class="trips-hero">
+    <div>
+      <h2>My Saved Trips</h2>
+      <p id="tripsCount">Loading your trips…</p>
+    </div>
+    <button class="new-btn" onclick="window.location.href='plan.html'">
+      <i class="fa-solid fa-plus"></i> New Trip
+    </button>
   </div>
-  <div id="tripsList" class="trips-grid"></div>
+
+  <!-- Skeleton loader -->
+  <div id="skeletonLoader">
+    <div class="skeleton-card">
+      <div class="skeleton-line" style="height:16px;width:70%"></div>
+      <div class="skeleton-line" style="height:12px;width:45%"></div>
+      <div class="skeleton-line" style="height:36px;width:100%;margin-top:12px"></div>
+    </div>
+    <div class="skeleton-card">
+      <div class="skeleton-line" style="height:16px;width:55%"></div>
+      <div class="skeleton-line" style="height:12px;width:40%"></div>
+      <div class="skeleton-line" style="height:36px;width:100%;margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="tripsList" class="trips-grid" style="display:none"></div>
+
 </div>
-<!-- Modal (required for future use, hidden) -->
-<div id="tripModal" style="display:none;"></div>
+
+<!-- Delete confirm modal -->
+<div class="delete-overlay" id="deleteOverlay" style="display:none">
+  <div class="delete-modal">
+    <i class="fa-solid fa-trash-can"></i>
+    <h3>Delete Trip?</h3>
+    <p id="deleteModalText">This will permanently remove this trip and its packing list.</p>
+    <div class="delete-modal-actions">
+      <button class="btn-cancel-del" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm-del" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
