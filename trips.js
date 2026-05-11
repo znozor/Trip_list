@@ -169,8 +169,11 @@ function renderTrips() {
 function resetDeleteBtn() {
   const btn = document.getElementById('confirmDeleteBtn');
   if (!btn) return;
+  // Use identical structure every time – same icon + same text
   btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
   btn.disabled = false;
+  // Remove any temporary styles that might have been applied
+  btn.style.opacity = '';
 }
 
 window.closeDeleteModal = function () {
