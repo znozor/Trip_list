@@ -232,100 +232,102 @@
     }
     .empty-state p { font-size: 13px; margin-bottom: 24px; }
 
-/* ── Delete confirm overlay ── */
-.delete-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  /* Removed backdrop-filter — it bleeds through the modal card on mobile browsers */
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
+    /* ── Delete confirm overlay (STABLE LAYOUT) ── */
+    .delete-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
 
-.delete-modal {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 28px 24px;
-  width: 300px;                /* fixed width – no reflow */
-  max-width: calc(100vw - 40px);
-  text-align: center;
-  animation: popIn 0.25s cubic-bezier(0.34,1.2,0.64,1);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.3);
-  position: relative;
-  z-index: 10001;
-}
+    .delete-modal {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 300px;               /* fixed width – never changes */
+      max-width: calc(100vw - 40px);
+      text-align: center;
+      animation: popIn 0.25s cubic-bezier(0.34,1.2,0.64,1);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+      position: relative;
+      z-index: 10001;
+      box-sizing: border-box;
+    }
 
-.delete-modal i {
-  font-size: 44px;
-  color: #e74c3c;
-  margin-bottom: 12px;
-  display: block;
-}
+    .delete-modal i {
+      font-size: 44px;
+      color: #e74c3c;
+      margin-bottom: 12px;
+      display: block;
+    }
 
-.delete-modal h3 {
-  font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  font-size: 17px;
-  margin-bottom: 8px;
-  color: #1e2b2c;
-}
+    .delete-modal h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 8px;
+      color: #1e2b2c;
+    }
 
-.delete-modal p {
-  font-size: 13px;
-  color: #6B7B8D;
-  margin-bottom: 20px;
-  line-height: 1.5;
-  word-break: break-word;      /* prevents long text from overflowing */
-}
+    .delete-modal p {
+      font-size: 13px;
+      color: #6B7B8D;
+      margin-bottom: 20px;
+      line-height: 1.5;
+      word-break: break-word;
+      min-height: 48px;          /* prevents height changes from text wrapping */
+    }
 
-.delete-modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+    /* Buttons side by side using flex – never wrap */
+    .delete-modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
 
-.delete-modal-actions button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 30px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.2s, transform 0.1s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-.delete-modal-actions button:active {
-  transform: scale(0.97);
-}
+    .delete-modal-actions button {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;       /* text never wraps to second line */
+    }
 
-.btn-cancel-del {
-  background: #eef2f0;
-  color: #1e2b2c;
-}
+    .delete-modal-actions button:active {
+      transform: scale(0.97);
+    }
 
-.btn-confirm-del {
-  background: #e74c3c;
-  color: #ffffff;
-}
+    .btn-cancel-del {
+      background: #eef2f0;
+      color: #1e2b2c;
+    }
 
-.btn-confirm-del:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+    .btn-confirm-del {
+      background: #e74c3c;
+      color: #ffffff;
+    }
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.88); }
-  to   { opacity: 1; transform: scale(1); }
-}
+    .btn-confirm-del:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
 
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1); }
+    }
 
     /* ── Loading skeleton ── */
     .skeleton-card {
