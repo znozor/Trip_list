@@ -121,6 +121,53 @@ document.addEventListener('DOMContentLoaded', () => {
       const cities = await fetchCities(country);
       return cities.filter(c => c.toLowerCase().includes(q.toLowerCase()));
     }, null);
+
+    // Validate primary city for duplicates on change/blur
+    cityInput.addEventListener('change', () => validateNoDuplicateCity(cityInput));
+    cityInput.addEventListener('blur',   () => validateNoDuplicateCity(cityInput));
+  }
+
+  // ── City error helpers ────────────────────────────────────────────────────
+  function showFieldError(input, message) {
+    clearFieldError(input);
+    const err = document.createElement('div');
+    err.className = 'field-error';
+    err.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${message}`;
+    // Insert after the input (or its autocomplete wrapper if present)
+    const wrapper = input.parentNode.querySelector('.autocomplete-container');
+    const anchor  = wrapper || input;
+    anchor.insertAdjacentElement('afterend', err);
+    input.classList.add('input-error');
+  }
+
+  function clearFieldError(input) {
+    // Remove any .field-error sibling after the input or its autocomplete wrapper
+    const parent = input.parentNode;
+    parent.querySelectorAll('.field-error').forEach(el => el.remove());
+    input.classList.remove('input-error');
+  }
+
+  function validateNoDuplicateCity(input) {
+    const val = input.value.trim().toLowerCase();
+    if (!val) { clearFieldError(input); return true; }
+    const others = mainCityInputs
+      .filter(i => i !== input)
+      .map(i => i.value.trim().toLowerCase())
+      .filter(Boolean);
+    if (others.includes(val)) {
+      showFieldError(input, 'This city has already been added.');
+      return false;
+    }
+    clearFieldError(input);
+    return true;
+  }
+
+  function validateAllCities() {
+    let valid = true;
+    mainCityInputs.forEach(input => {
+      if (!validateNoDuplicateCity(input)) valid = false;
+    });
+    return valid;
   }
 
   window.addCityField = function () {
@@ -145,6 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const cities = await fetchCities(country);
       return cities.filter(c => c.toLowerCase().includes(q.toLowerCase()));
     }, null);
+    // Validate for duplicates whenever user changes this field
+    input.addEventListener('change', () => validateNoDuplicateCity(input));
+    input.addEventListener('blur',   () => validateNoDuplicateCity(input));
   };
 
   // ── Trip duration helper ──────────────────────────────────────────────────
@@ -167,6 +217,73 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       durationBadge.innerHTML = '';
     }
+  }
+
+  // ── Date validation helpers ───────────────────────────────────────────────
+  function showDateError(input, message) {
+    clearDateError(input);
+    const err = document.createElement('div');
+    err.className = 'field-error';
+    err.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${message}`;
+    input.insertAdjacentElement('afterend', err);
+    input.classList.add('input-error');
+  }
+
+  function clearDateError(input) {
+    const parent = input.parentNode;
+    parent.querySelectorAll('.field-error').forEach(el => el.remove());
+    input.classList.remove('input-error');
+  }
+
+  function getTodayString() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function enforceDateConstraints() {
+    const today = getTodayString();
+
+    // Start date cannot be in the past
+    startDateInput.min = today;
+
+    // End date cannot be before start date
+    if (startDateInput.value) {
+      endDateInput.min = startDateInput.value;
+
+      // If the currently selected end date is now invalid, clear it and show error
+      if (endDateInput.value && endDateInput.value < startDateInput.value) {
+        endDateInput.value = '';
+        showDateError(endDateInput, 'End date must be on or after the start date.');
+      } else {
+        clearDateError(endDateInput);
+      }
+    } else {
+      endDateInput.min = today;
+    }
+  }
+
+  function validateDates() {
+    let valid = true;
+
+    clearDateError(startDateInput);
+    clearDateError(endDateInput);
+
+    if (!startDateInput.value) {
+      showDateError(startDateInput, 'Please enter a start date.');
+      valid = false;
+    } else if (startDateInput.value < getTodayString()) {
+      showDateError(startDateInput, 'Start date cannot be in the past.');
+      valid = false;
+    }
+
+    if (!endDateInput.value) {
+      showDateError(endDateInput, 'Please enter an end date.');
+      valid = false;
+    } else if (startDateInput.value && endDateInput.value < startDateInput.value) {
+      showDateError(endDateInput, 'End date must be on or after the start date.');
+      valid = false;
+    }
+
+    return valid;
   }
 
   // ── Weather ───────────────────────────────────────────────────────────────
@@ -644,18 +761,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function goNext() {
     if (currentStep === 0) {
-      if (!countryInput.value.trim() || !mainCityInputs[0].value.trim()) {
-        alert('Please enter a country and at least one city.');
+      if (!countryInput.value.trim()) {
+        alert('Please enter a country.');
+        return;
+      }
+      if (!mainCityInputs[0].value.trim()) {
+        alert('Please enter at least one city.');
+        return;
+      }
+      // Check for duplicate cities before advancing
+      if (!validateAllCities()) {
         return;
       }
     }
     if (currentStep === 1) {
-      if (!startDateInput.value) { alert('Please enter a start date.'); return; }
-      if (!endDateInput.value)   { alert('Please enter an end date.'); return; }
-      if (new Date(endDateInput.value) < new Date(startDateInput.value)) {
-        alert('End date must be after start date.');
-        return;
-      }
+      if (!validateDates()) return;
     }
     if (currentStep === steps.length - 1) {
       await generateList();
@@ -708,15 +828,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Date listeners ────────────────────────────────────────────────────────
   startDateInput.addEventListener('change', () => {
+    enforceDateConstraints();
     updateDurationBadge();
     if (currentStep === steps.length - 1) updateWeatherPreview();
   });
   endDateInput.addEventListener('change', () => {
+    // Re-validate end date whenever it changes
+    if (startDateInput.value && endDateInput.value < startDateInput.value) {
+      showDateError(endDateInput, 'End date must be on or after the start date.');
+    } else {
+      clearDateError(endDateInput);
+    }
     updateDurationBadge();
     if (currentStep === steps.length - 1) updateWeatherPreview();
   });
 
+  // ── CSS for inline field errors ───────────────────────────────────────────
+  const errorStyle = document.createElement('style');
+  errorStyle.textContent = `
+    .field-error {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.08);
+      color: #ef4444;
+      font-size: 0.78rem;
+      font-weight: 500;
+      animation: errorFadeIn 0.2s ease;
+    }
+    .field-error i {
+      flex-shrink: 0;
+      font-size: 0.8rem;
+    }
+    .input-error {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
+    }
+    @keyframes errorFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(errorStyle);
+
   // ── Init ─────────────────────────────────────────────────────────────────
+  // Set today as the minimum for start date on load
+  startDateInput.min = getTodayString();
+  endDateInput.min   = getTodayString();
+
   initAutocompletes();
   initChips();
   updateStepUI();
