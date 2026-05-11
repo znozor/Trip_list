@@ -274,36 +274,37 @@
     }
 
     .delete-modal p {
-      font-size: 13px;
-      color: #6B7B8D;
-      margin-bottom: 20px;
-      line-height: 1.5;
-      word-break: break-word;
-      min-height: 48px;          /* prevents height changes from text wrapping */
-    }
+  font-size: 13px;
+  color: #6B7B8D;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  word-break: break-word;
+  height: 60px;           /* exactly 3 lines worth – no height change */
+  overflow-y: auto;       /* scroll if needed, but height fixed */
+}
 
-    /* Buttons side by side using flex – never wrap */
-    .delete-modal-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
+.delete-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
 
-    .delete-modal-actions button {
-      flex: 1;
-      padding: 12px 0;
-      border-radius: 30px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.2s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;       /* text never wraps to second line */
-    }
+.delete-modal-actions button {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  min-width: 0;           /* allows buttons to shrink if needed */
+}
 
     .delete-modal-actions button:active {
       transform: scale(0.97);
