@@ -3,16 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <title>Profile – WanderPack</title>
+  <title>Profile – Weather Trip</title>
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script>
-    (function() { const theme = localStorage.getItem('theme'); if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); })();
+    (function() { 
+      const theme = localStorage.getItem('theme'); 
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); 
+    })();
   </script>
+  <style>
+    /* Additional modern touches */
+    .app-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-area h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 0;
+    }
+    .logo-area p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .avatar-circle {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .btn-full {
+      width: 100%;
+      margin-top: 12px;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+    }
+  </style>
 </head>
 <body>
 <div class="app-wrapper">
+
+  <!-- Modern header with site name -->
+  <div class="app-header">
+    <div class="logo-area">
+      <h1>⛅ Weather Trip</h1>
+      <p>Pack smart, travel light</p>
+    </div>
+    <div class="tagline-icon">
+      <i class="fa-solid fa-suitcase-rolling" style="font-size: 28px; color: var(--primary);"></i>
+    </div>
+  </div>
+
+  <!-- Bottom navigation (unchanged) -->
   <nav class="bottom-nav">
     <div class="nav-item" onclick="location='plan.html'"><i class="fa-solid fa-map"></i><span>Trip</span></div>
     <div class="nav-item" onclick="location='list.html'"><i class="fa-solid fa-list-check"></i><span>List</span></div>
@@ -20,6 +95,7 @@
     <div class="nav-item active" onclick="location='profile.html'"><i class="fa-solid fa-user"></i><span>Profile</span></div>
   </nav>
 
+  <!-- Profile card -->
   <div class="card" style="text-align: center;">
     <div class="avatar-circle" id="avatar">👤</div>
     <div id="displayNameSection">
@@ -27,24 +103,39 @@
       <p id="userEmail"></p>
     </div>
     <div id="editNameSection" style="display: none; margin-bottom: 16px;">
-      <input type="text" id="editNameInput" class="input-field">
+      <input type="text" id="editNameInput" class="input-field" placeholder="Enter your name">
       <div style="display: flex; gap: 8px;">
         <button id="saveNameBtn" class="btn btn-primary btn-sm">Save</button>
         <button id="cancelEditBtn" class="btn btn-outline btn-sm">Cancel</button>
       </div>
     </div>
-    <button id="editNameBtn" class="btn btn-outline btn-full" style="margin-bottom: 8px;">✏️ Edit Name</button>
+    <button id="editNameBtn" class="btn btn-outline btn-full">✏️ Edit Name</button>
     <button id="logoutBtn" class="btn btn-outline btn-full">Logout</button>
   </div>
 
+  <!-- Settings card -->
   <div class="card">
-    <div class="settings-row"><span><i class="fa-solid fa-moon"></i> Dark Mode</span><label class="toggle-switch"><input type="checkbox" id="darkModeToggle"><span class="slider"></span></label></div>
+    <div class="settings-row">
+      <span><i class="fa-solid fa-moon"></i> Dark Mode</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
   </div>
+
+  <!-- Data management card -->
   <div class="card">
-    <button class="btn btn-outline btn-full" id="exportBtn">Export All Data</button>
-    <button class="btn btn-danger btn-full" id="deleteAccountBtn" style="margin-top:12px;">Delete Local Data</button>
+    <button class="btn btn-outline btn-full" id="exportBtn">
+      <i class="fa-solid fa-download"></i> Export All Data
+    </button>
+    <button class="btn btn-danger btn-full" id="deleteAccountBtn">
+      <i class="fa-solid fa-trash-can"></i> Delete Local Data
+    </button>
   </div>
+
 </div>
+
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
