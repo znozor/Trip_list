@@ -8,17 +8,89 @@
   <link rel="stylesheet" href="shared.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script>
-    (function() {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    })();
-  </script>
+  <style>
+    /* Larger, bolder welcome page – no new colors, just scale */
+    .welcome-hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .hero-illustration {
+      font-size: 96px;           /* much bigger emoji */
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 48px;           /* bigger title */
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 20px;           /* larger subtitle */
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .welcome-body {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .auth-buttons {
+      margin: 36px 0 24px;
+    }
+
+    /* Use existing btn-outline class from shared.css, but ensure bigger padding */
+    .btn-outline {
+      padding: 16px 20px !important;
+      font-size: 18px !important;
+      font-weight: 600 !important;
+    }
+
+    .guest-link {
+      display: block;
+      text-align: center;
+      font-size: 16px;
+      margin-top: 16px;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .guest-link:hover {
+      text-decoration: underline;
+    }
+
+    .disclaimer {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* center the entire content vertically */
+    .app-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+  </style>
 </head>
 <body>
 <div class="app-wrapper">
   <div class="welcome-hero">
-    <span class="hero-illustration">🧳✈️</span>
+    <div class="hero-illustration">🧳✈️</div>
     <div class="hero-title">WeatherTrip</div>
     <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
   </div>
@@ -33,7 +105,7 @@
     <a href="plan.html" class="guest-link">Continue as guest →</a>
 
     <div class="disclaimer">
-      Weather predictions are estimates. Use common sense when packing.
+      🌦️ Weather predictions are estimates. Use common sense when packing.
     </div>
   </div>
 </div>
@@ -45,7 +117,6 @@
 <script>
   const googleBtn = document.getElementById('googleBtn');
 
-  // Disable until shared.js is ready
   googleBtn.disabled = true;
   googleBtn.style.opacity = '0.6';
 
@@ -60,15 +131,19 @@
         googleBtn.disabled = true;
         googleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
         await window.signInWithGoogle();
-        // Restore button if redirect doesn't happen
         setTimeout(() => {
-          googleBtn.disabled = false;
-          googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google';
+          if (googleBtn) {
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = '<i class="fa-brands fa-google"></i> Continue with Google';
+          }
         }, 5000);
       };
     } else if (attempts > 25) {
       clearInterval(interval);
       console.warn('signInWithGoogle not available');
+      googleBtn.disabled = false;
+      googleBtn.style.opacity = '1';
+      googleBtn.innerText = 'Sign in (reload if stuck)';
     }
   }, 200);
 </script>
