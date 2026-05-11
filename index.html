@@ -4,108 +4,120 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
   <meta name="vercel:toolbar" content="disable">
-  <title>WeatherTrip – Welcome</title>
+  <title>WeatherTrip – Pack Smarter, Travel Happier</title>
   <link rel="stylesheet" href="shared.css">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    /* Larger, bolder welcome page – no new colors, just scale */
-    .welcome-hero {
+    /* Same simple, card-based layout as the image */
+    body {
+      background: var(--bg);
+    }
+    .app-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .welcome-card {
+      max-width: 400px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 32px;
+      padding: 40px 28px;
       text-align: center;
-      margin-bottom: 32px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
     }
-
     .hero-illustration {
-      font-size: 96px;           /* much bigger emoji */
+      font-size: 72px;
       display: inline-block;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
-
     .hero-title {
       font-family: 'Syne', sans-serif;
-      font-size: 48px;           /* bigger title */
+      font-size: 36px;
       font-weight: 800;
-      letter-spacing: -0.02em;
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
-
     .hero-subtitle {
-      font-size: 20px;           /* larger subtitle */
+      font-size: 16px;
       color: var(--text-secondary);
-      font-weight: 500;
+      margin-bottom: 32px;
     }
-
-    .welcome-body {
-      max-width: 400px;
-      margin: 0 auto;
+    .btn-google {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 14px 20px;
+      width: 100%;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: background 0.2s;
     }
-
-    .auth-buttons {
-      margin: 36px 0 24px;
+    .btn-google i {
+      font-size: 20px;
+      color: #4285F4;
     }
-
-    /* Use existing btn-outline class from shared.css, but ensure bigger padding */
-    .btn-outline {
-      padding: 16px 20px !important;
-      font-size: 18px !important;
-      font-weight: 600 !important;
+    .btn-google:hover {
+      background: var(--border-light);
     }
-
+    .btn-google:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     .guest-link {
       display: block;
-      text-align: center;
-      font-size: 16px;
-      margin-top: 16px;
+      margin-top: 20px;
       color: var(--primary);
       text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
     }
-
     .guest-link:hover {
       text-decoration: underline;
     }
-
     .disclaimer {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
-      text-align: center;
-      margin-top: 48px;
+      margin-top: 32px;
       padding-top: 20px;
       border-top: 1px solid var(--border);
     }
-
-    /* center the entire content vertically */
-    .app-wrapper {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
-    }
   </style>
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
 </head>
 <body>
 <div class="app-wrapper">
-  <div class="welcome-hero">
+  <div class="welcome-card">
     <div class="hero-illustration">🧳✈️</div>
     <div class="hero-title">WeatherTrip</div>
     <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
-  </div>
 
-  <div class="welcome-body">
-    <div class="auth-buttons">
-      <button class="btn btn-outline btn-full" id="googleBtn">
-        <i class="fa-brands fa-google"></i> Continue with Google
-      </button>
-    </div>
+    <button class="btn-google" id="googleBtn">
+      <i class="fa-brands fa-google"></i> Continue with Google
+    </button>
 
     <a href="plan.html" class="guest-link">Continue as guest →</a>
 
     <div class="disclaimer">
-      🌦️ Weather predictions are estimates. Use common sense when packing.
+      🌦️ Weather predictions are estimates.<br>Use common sense when packing.
     </div>
   </div>
 </div>
@@ -116,7 +128,6 @@
 
 <script>
   const googleBtn = document.getElementById('googleBtn');
-
   googleBtn.disabled = true;
   googleBtn.style.opacity = '0.6';
 
