@@ -13,7 +13,7 @@ async function loadProfile() {
   }
   window.currentUser = currentUser;
 
-  const editBtn = document.getElementById('editNameBtn');
+const editBtn = document.getElementById('editNameBtn');
   const logoutBtn = document.getElementById('logoutBtn');
   const displaySection = document.getElementById('displayNameSection');
   const editSection = document.getElementById('editNameSection');
