@@ -232,7 +232,7 @@
     }
     .empty-state p { font-size: 13px; margin-bottom: 24px; }
 
-    /* ── Delete confirm overlay (STABLE LAYOUT) ── */
+    /* ── Delete confirm overlay ── */
     .delete-overlay {
       position: fixed;
       inset: 0;
@@ -248,7 +248,7 @@
       background: #ffffff;
       border-radius: 24px;
       padding: 28px 24px;
-      width: 300px;               /* fixed width – never changes */
+      width: 300px;
       max-width: calc(100vw - 40px);
       text-align: center;
       animation: popIn 0.25s cubic-bezier(0.34,1.2,0.64,1);
@@ -274,40 +274,51 @@
     }
 
     .delete-modal p {
-  font-size: 13px;
-  color: #6B7B8D;
-  margin-bottom: 20px;
-  line-height: 1.5;
-  word-break: break-word;
-  height: 60px;           /* exactly 3 lines worth – no height change */
-  overflow-y: auto;       /* scroll if needed, but height fixed */
-}
+      font-size: 13px;
+      color: #6B7B8D;
+      margin-bottom: 20px;
+      line-height: 1.5;
+      word-break: break-word;
+      height: 60px;
+      overflow-y: auto;
+    }
 
-.delete-modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: center;
-}
+    .delete-modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
 
-.delete-modal-actions button {
-  width: 100%;
-  padding: 12px 0;
-  border-radius: 30px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
-  min-width: 0;           /* allows buttons to shrink if needed */
-}
+    /* ── FIX: explicit base state so transform never inherits from popIn ── */
+    .delete-modal-actions button {
+      width: 100%;
+      padding: 12px 0;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      min-width: 0;
+      transform: scale(1);          /* ← explicit base: prevents inheriting popIn scale */
+      transition: transform 0.1s, opacity 0.1s;
+      -webkit-appearance: none;     /* ← prevents iOS from applying native sizing */
+      appearance: none;
+    }
 
     .delete-modal-actions button:active {
       transform: scale(0.97);
+    }
+
+    /* ── FIX: prevent focus ring from inflating button size on mobile ── */
+    .delete-modal-actions button:focus {
+      outline: none;
+      box-shadow: none;
     }
 
     .btn-cancel-del {
@@ -323,6 +334,7 @@
     .btn-confirm-del:disabled {
       opacity: 0.7;
       cursor: not-allowed;
+      transform: scale(1);          /* ← stay at normal size when disabled */
     }
 
     @keyframes popIn {
@@ -397,7 +409,10 @@
     <p id="deleteModalText">This will permanently remove this trip and its packing list.</p>
     <div class="delete-modal-actions">
       <button class="btn-cancel-del" onclick="closeDeleteModal()">Cancel</button>
-      <button class="btn-confirm-del" id="confirmDeleteBtn">Delete</button>
+      <!-- FIX: icon included in HTML so it's always present from first render -->
+      <button class="btn-confirm-del" id="confirmDeleteBtn">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
     </div>
   </div>
 </div>
