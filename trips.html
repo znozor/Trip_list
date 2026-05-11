@@ -313,7 +313,9 @@
 .btn-confirm-del {
   background: #e74c3c;
   color: #ffffff;
-  min-width: 120px;   /* ensures enough space for "Deleting…" */
+  min-width: 110px;           /* force a fixed width */
+  width: auto;                /* allow it to be at least min-width */
+  justify-content: center;
 }
 
 .btn-confirm-del:disabled {
