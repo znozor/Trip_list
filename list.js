@@ -66,7 +66,7 @@ function renderPackingList() {
                             ? `<span class="${item.essential ? 'essential-badge' : 'optional-badge'}">${item.essential ? 'Essential' : 'Optional'}</span>`
                             : ''}
                     </div>
-                    <a href="#" class="item-buy" onclick="event.preventDefault();showCustomPopup('Affiliate link demo', 'info')">Buy →</a>
+                    
                 </div>
             `;
         });
