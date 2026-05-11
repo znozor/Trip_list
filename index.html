@@ -50,16 +50,16 @@
       flex-direction: column;
       justify-content: space-between;
       margin: 0 !important;
-      padding: 0 24px calc(12px + env(safe-area-inset-bottom, 12px)) 24px !important;
+      padding: 0 24px calc(20px + env(safe-area-inset-bottom, 20px)) 24px !important;
       background: none !important;
       border: none !important;
       box-shadow: none !important;
     }
 
-    /* SMALLER top spacer – content moves UP (just below cloud) */
+    /* Increased top spacer – content now a little lower */
     .top-spacer {
-      flex: 0.3;
-      min-height: 8vh;
+      flex: 0.45;
+      min-height: 10vh;
     }
 
     .main-content {
@@ -87,7 +87,7 @@
       font-weight: 500;
       text-align: center;
       padding: 0 16px;
-      margin-bottom: 40px;
+      margin-bottom: 36px;  /* slightly reduced to bring disclaimer up */
     }
 
     /* Google button (rounded, official SVG) */
@@ -154,11 +154,11 @@
       transform: scale(0.97);
     }
 
-    /* Disclaimer – stays at bottom, fully visible */
+    /* Disclaimer – now raised, fully visible */
     .disclaimer {
       width: 100%;
       max-width: 360px;
-      margin: 16px auto 0 auto;
+      margin: 12px auto 0 auto;
       background: rgba(255,255,255,0.08);
       border-radius: 28px;
       padding: 12px 18px;
@@ -169,14 +169,14 @@
       text-align: center;
     }
 
-    /* Mobile fine‑tuning – keep content up */
+    /* Mobile fine‑tuning */
     @media (max-width: 480px) {
       .welcome-card {
-        padding: 0 16px calc(8px + env(safe-area-inset-bottom, 10px)) 16px !important;
+        padding: 0 16px calc(16px + env(safe-area-inset-bottom, 16px)) 16px !important;
       }
       .top-spacer {
-        flex: 0.2;
-        min-height: 6vh;
+        flex: 0.4;
+        min-height: 8vh;
       }
       .hero-title {
         font-size: clamp(28px, 7vw, 44px);
@@ -184,7 +184,7 @@
       }
       .hero-subtitle {
         font-size: clamp(13px, 3.8vw, 16px);
-        margin-bottom: 32px;
+        margin-bottom: 28px;
       }
       .gsi-material-button-content-wrapper {
         padding: 10px 16px;
@@ -199,16 +199,21 @@
       .disclaimer {
         font-size: 11px;
         padding: 10px 14px;
+        margin-top: 8px;
       }
     }
 
-    /* For very short screens – ensure no clipping */
-    @media (max-height: 600px) {
-      .top-spacer {
-        min-height: 4vh;
-      }
+    /* For short screens – ensure disclaimer stays visible */
+    @media (max-height: 640px) {
       .hero-subtitle {
         margin-bottom: 20px;
+      }
+      .top-spacer {
+        min-height: 6vh;
+      }
+      .disclaimer {
+        margin-top: 8px;
+        padding: 8px 12px;
       }
     }
   </style>
