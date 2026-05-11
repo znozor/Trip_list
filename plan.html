@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-
   <title>Plan Trip – WanderPack</title>
-
   <link rel="stylesheet" href="shared.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Syne&family=DM+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <script>
   (function () {
@@ -22,31 +19,302 @@
     if (location.hash.includes('access_token') || location.search.includes('code=')) {
       sessionStorage.setItem('_oauth', '1');
     }
-
-    // Force viewport before first paint
     const meta = document.querySelector('meta[name="viewport"]');
     if (meta) {
       meta.content = '';
       meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover';
     }
-
-    // Hide body until viewport is stable
     document.documentElement.style.visibility = 'hidden';
-
     window.addEventListener('load', function () {
-      // Force layout recalculation
       document.body.style.width = window.innerWidth + 'px';
-      document.body.offsetHeight; // trigger reflow
+      document.body.offsetHeight;
       document.body.style.width = '';
-
-      // Small delay then show — viewport is stable by now
       setTimeout(function () {
         document.documentElement.style.visibility = 'visible';
       }, 150);
     });
   })();
-</script>
+  </script>
+
+  <style>
+    /* ── Plan page enhancements ── */
+    .plan-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 24px;
+      padding: 24px 20px 20px;
+      margin-bottom: 24px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .plan-hero::before {
+      content: '✈️';
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 52px;
+      opacity: 0.25;
+    }
+    .plan-hero h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .plan-hero p {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    /* Step indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      margin: 20px 0;
+    }
+    .step-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .step-dot.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(6,167,125,0.4);
+      transform: scale(1.1);
+    }
+    .step-dot.done {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+    .step-label {
+      display: none;
+    }
+
+    /* Step labels below indicator */
+    .step-labels {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 4px;
+      margin-top: 6px;
+      margin-bottom: 20px;
+    }
+    .step-label-item {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-align: center;
+      flex: 1;
+    }
+    .step-label-item.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Card enhancements */
+    .card {
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+    .card-title i {
+      color: var(--primary);
+      font-size: 20px;
+    }
+
+    /* Input label */
+    .input-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .input-field {
+      margin-bottom: 16px;
+    }
+
+    /* Chip group */
+    .chip-section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin: 16px 0 8px;
+    }
+    .chips-group {
+      margin: 0 0 4px;
+    }
+    .chip {
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .chip.selected {
+      box-shadow: 0 2px 8px rgba(6,167,125,0.3);
+    }
+
+    /* Date row */
+    .date-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .date-row .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .date-row .input-field {
+      margin-bottom: 0;
+    }
+
+    /* Trip duration badge */
+    .duration-badge {
+      background: rgba(6,167,125,0.1);
+      color: var(--primary);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    /* City row */
+    .city-row {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+    }
+    .city-row .input-label {
+      margin-bottom: 6px;
+    }
+    .city-row .input-field {
+      margin-bottom: 0;
+      background: var(--card-bg);
+    }
+
+    /* Hint */
+    .hint-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.5;
+    }
+    .hint-text i {
+      color: var(--primary);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Weather cards */
+    .weather-city-card {
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .weather-city-header {
+      padding: 12px 16px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .weather-day {
+      font-size: 12px;
+      border-radius: 10px;
+    }
+    .weather-note {
+      background: rgba(6,167,125,0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .weather-note i {
+      color: var(--primary);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Nav buttons */
+    .form-nav {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding-bottom: 8px;
+    }
+    #nextBtn {
+      min-width: 140px;
+      justify-content: center;
+    }
+
+    /* Step animation */
+    .form-step.active {
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Who/style icons */
+    .chip i {
+      margin-right: 4px;
+    }
+
+    /* Weather placeholder */
+    .weather-placeholder, .weather-loading, .weather-error {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .weather-placeholder i, .weather-loading i, .weather-error i {
+      font-size: 36px;
+      color: var(--primary);
+      opacity: 0.5;
+    }
+  </style>
 </head>
+
 <body>
 <div class="app-wrapper">
 
@@ -54,222 +322,193 @@
     <div class="nav-item active" onclick="location.href='plan.html'">
       <i class="fa-solid fa-map"></i><span>Trip</span>
     </div>
-
     <div class="nav-item" onclick="location.href='list.html'">
       <i class="fa-solid fa-list-check"></i><span>List</span>
     </div>
-
     <div class="nav-item" onclick="location.href='trips.html'">
       <i class="fa-solid fa-folder-open"></i><span>Trips</span>
     </div>
-
     <div class="nav-item" onclick="location.href='profile.html'">
       <i class="fa-solid fa-user"></i><span>Profile</span>
     </div>
   </nav>
 
-  <div class="form-header">
-    <h2>
-      <i class="fa-solid fa-suitcase-rolling"></i>
-      Plan Your Trip
-    </h2>
+  <!-- Hero -->
+  <div class="plan-hero">
+    <h2><i class="fa-solid fa-suitcase-rolling" style="margin-right:8px"></i>Plan Your Trip</h2>
+    <p>Answer a few questions and we'll build your perfect packing list.</p>
+  </div>
 
-    <div class="step-indicator" id="stepIndicator">
-      <div class="step-dot active" id="dot-0">1</div>
-      <div class="step-line" id="line-0"></div>
-
-      <div class="step-dot" id="dot-1">2</div>
-      <div class="step-line" id="line-1"></div>
-
-      <div class="step-dot" id="dot-2">3</div>
-      <div class="step-line" id="line-2"></div>
-
-      <div class="step-dot" id="dot-3">4</div>
-    </div>
+  <!-- Step indicator -->
+  <div class="step-indicator" id="stepIndicator">
+    <div class="step-dot active" id="dot-0">1</div>
+    <div class="step-line" id="line-0"></div>
+    <div class="step-dot" id="dot-1">2</div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot" id="dot-2">3</div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot" id="dot-3">4</div>
+  </div>
+  <div class="step-labels">
+    <div class="step-label-item active" id="label-0">Where</div>
+    <div class="step-label-item" id="label-1">When</div>
+    <div class="step-label-item" id="label-2">Style</div>
+    <div class="step-label-item" id="label-3">Weather</div>
   </div>
 
   <div class="form-body">
 
-    <!-- STEP 1 -->
+    <!-- STEP 1: Destination -->
     <div class="form-step active" id="step-0">
       <div class="card">
-
-        <div class="section-header">
-          <h2>
-            <i class="fa-solid fa-map-location-dot"></i>
-            Where are you going?
-          </h2>
+        <div class="card-title">
+          <i class="fa-solid fa-map-location-dot"></i>
+          Where are you going?
         </div>
 
-        <div class="input-group">
-          <label class="input-label">Country</label>
-
-          <input
-            type="text"
-            id="countryInput"
-            list="countryList"
-            class="input-field"
-            placeholder="Type or select country"
-            autocomplete="off"
-          >
-
-          <datalist id="countryList">
-            <option>Japan</option>
-            <option>France</option>
-            <option>Italy</option>
-            <option>Thailand</option>
-            <option>USA</option>
-            <option>Spain</option>
-            <option>UK</option>
-          </datalist>
-        </div>
+        <label class="input-label">Country</label>
+        <input
+          type="text"
+          id="countryInput"
+          list="countryList"
+          class="input-field"
+          placeholder="e.g. Japan, France, Thailand…"
+          autocomplete="off"
+        >
+        <datalist id="countryList"></datalist>
 
         <div id="cityFields">
           <div class="city-row">
-            <label class="input-label">City</label>
-
+            <label class="input-label">City 1</label>
             <input
               type="text"
               id="cityInput0"
               list="cityList0"
               class="input-field"
-              placeholder="Type or select city"
+              placeholder="e.g. Tokyo, Paris, Bangkok…"
               autocomplete="off"
             >
-
             <datalist id="cityList0"></datalist>
           </div>
         </div>
 
-        <button
-          class="btn btn-ghost btn-sm"
-          type="button"
-          onclick="addCityField()"
-        >
-          <i class="fa-solid fa-plus"></i>
-          Add another city
+        <button class="btn btn-ghost btn-sm" type="button" onclick="addCityField()" style="margin-top:4px">
+          <i class="fa-solid fa-plus"></i> Add another city
         </button>
 
-        <p
-          class="city-hint"
-          style="font-size:12px; margin-top:12px; color:var(--text-secondary);"
-        >
+        <p class="hint-text">
           <i class="fa-regular fa-lightbulb"></i>
-          We'll show weather for all cities and combine recommendations.
+          We'll fetch live weather for each city and combine recommendations for the best packing list.
         </p>
-
       </div>
     </div>
 
-    <!-- STEP 2 -->
+    <!-- STEP 2: Dates -->
     <div class="form-step" id="step-1">
       <div class="card">
-        <h2>
+        <div class="card-title">
           <i class="fa-solid fa-calendar-days"></i>
           When are you traveling?
-        </h2>
+        </div>
 
-        <label>Start Date</label>
-        <input type="date" id="startDate" class="input-field">
+        <div class="date-row">
+          <div class="input-group">
+            <label class="input-label">Start Date</label>
+            <input type="date" id="startDate" class="input-field">
+          </div>
+          <div class="input-group">
+            <label class="input-label">End Date</label>
+            <input type="date" id="endDate" class="input-field">
+          </div>
+        </div>
 
-        <label>End Date</label>
-        <input type="date" id="endDate" class="input-field">
+        <div id="durationBadge"></div>
       </div>
     </div>
 
-    <!-- STEP 3 -->
+    <!-- STEP 3: Preferences -->
     <div class="form-step" id="step-2">
       <div class="card">
-
-        <h2>
-          <i class="fa-solid fa-heart"></i>
+        <div class="card-title">
+          <i class="fa-solid fa-sliders"></i>
           Tell us about your trip
-        </h2>
+        </div>
 
-        <label>Reason</label>
-
+        <div class="chip-section-label">Purpose</div>
         <div class="chips-group" id="chips-reason">
-          <div class="chip selected" data-val="Leisure">Leisure</div>
-          <div class="chip" data-val="Adventure">Adventure</div>
-          <div class="chip" data-val="Business">Business</div>
+          <div class="chip selected" data-val="Leisure"><i class="fa-solid fa-umbrella-beach"></i>Leisure</div>
+          <div class="chip" data-val="Adventure"><i class="fa-solid fa-mountain"></i>Adventure</div>
+          <div class="chip" data-val="Business"><i class="fa-solid fa-briefcase"></i>Business</div>
+          <div class="chip" data-val="Honeymoon"><i class="fa-solid fa-heart"></i>Honeymoon</div>
         </div>
 
-        <label>Style</label>
-
+        <div class="chip-section-label">Travel Style</div>
         <div class="chips-group" id="chips-style">
-          <div class="chip selected" data-val="Standard">Standard</div>
-          <div class="chip" data-val="Backpacker">Backpacker</div>
-          <div class="chip" data-val="Luxury">Luxury</div>
+          <div class="chip selected" data-val="Standard"><i class="fa-solid fa-star-half-stroke"></i>Standard</div>
+          <div class="chip" data-val="Backpacker"><i class="fa-solid fa-person-hiking"></i>Backpacker</div>
+          <div class="chip" data-val="Luxury"><i class="fa-solid fa-gem"></i>Luxury</div>
         </div>
 
-        <label>Who</label>
-
+        <div class="chip-section-label">Traveling with</div>
         <div class="chips-group" id="chips-who">
-          <div class="chip selected" data-val="Solo">Solo</div>
-          <div class="chip" data-val="Couple">Couple</div>
-          <div class="chip" data-val="Family">Family</div>
+          <div class="chip selected" data-val="Solo"><i class="fa-solid fa-person"></i>Solo</div>
+          <div class="chip" data-val="Couple"><i class="fa-solid fa-heart"></i>Couple</div>
+          <div class="chip" data-val="Friends"><i class="fa-solid fa-people-group"></i>Friends</div>
+          <div class="chip" data-val="Family"><i class="fa-solid fa-children"></i>Family</div>
         </div>
 
-        <label>Activities</label>
-
+        <div class="chip-section-label">Activities</div>
         <div class="chips-group" id="chips-activities">
-          <div class="chip selected" data-val="Hiking">Hiking</div>
-          <div class="chip selected" data-val="City Tours">City Tours</div>
-          <div class="chip" data-val="Beach">Beach</div>
-          <div class="chip" data-val="Shopping">Shopping</div>
+          <div class="chip selected" data-val="Hiking"><i class="fa-solid fa-mountain-sun"></i>Hiking</div>
+          <div class="chip selected" data-val="City Tours"><i class="fa-solid fa-city"></i>City Tours</div>
+          <div class="chip" data-val="Beach"><i class="fa-solid fa-water"></i>Beach</div>
+          <div class="chip" data-val="Shopping"><i class="fa-solid fa-bag-shopping"></i>Shopping</div>
+          <div class="chip" data-val="Dining"><i class="fa-solid fa-utensils"></i>Dining</div>
+          <div class="chip" data-val="Nightlife"><i class="fa-solid fa-martini-glass"></i>Nightlife</div>
+          <div class="chip" data-val="Museums"><i class="fa-solid fa-landmark"></i>Museums</div>
+          <div class="chip" data-val="Water Sports"><i class="fa-solid fa-person-swimming"></i>Water Sports</div>
         </div>
 
-        <label>Luggage</label>
-
+        <div class="chip-section-label">Luggage</div>
         <div class="chips-group" id="chips-luggage">
-          <div class="chip selected" data-val="Checked">Checked Bag</div>
-          <div class="chip" data-val="Carry-on">Carry-on</div>
+          <div class="chip selected" data-val="Checked"><i class="fa-solid fa-suitcase"></i>Checked Bag</div>
+          <div class="chip" data-val="Carry-on"><i class="fa-solid fa-briefcase"></i>Carry-on Only</div>
         </div>
-
       </div>
     </div>
 
-    <!-- STEP 4 -->
+    <!-- STEP 4: Weather -->
     <div class="form-step" id="step-3">
       <div class="card">
-        <h2>
+        <div class="card-title">
           <i class="fa-solid fa-cloud-sun"></i>
           Weather Preview
-        </h2>
-
+        </div>
         <div id="weatherPreview">
-          Loading forecast...
+          <div class="weather-placeholder">
+            <i class="fa-solid fa-cloud-sun"></i>
+            Loading forecast…
+          </div>
         </div>
       </div>
     </div>
 
-  </div>
+  </div><!-- /form-body -->
 
-  <div class="form-nav" style="display:flex; gap:12px; margin-top:20px;">
-    <button
-      class="btn btn-outline"
-      id="prevBtn"
-      style="display:none"
-    >
-      <i class="fa-solid fa-arrow-left"></i>
-      Back
+  <div class="form-nav">
+    <button class="btn btn-outline" id="prevBtn" style="display:none">
+      <i class="fa-solid fa-arrow-left"></i> Back
     </button>
-
-    <button
-      class="btn btn-primary"
-      id="nextBtn"
-      style="margin-left:auto"
-    >
+    <button class="btn btn-primary" id="nextBtn" style="margin-left:auto">
       Next →
     </button>
   </div>
 
-</div>
+</div><!-- /app-wrapper -->
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
 <script src="plan.js"></script>
-
 </body>
 </html>
