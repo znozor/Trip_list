@@ -207,39 +207,50 @@
     }
 
     /* ── Empty state ── */
-    .empty-state {
-      text-align: center;
-      padding: 60px 24px;
-      color: var(--text-secondary);
-    }
-    .empty-state i {
-      font-size: 56px;
-      color: var(--primary);
-      opacity: 0.3;
-      display: block;
-      margin-bottom: 16px;
-    }
-    .empty-state h3 {
-      font-family: 'Syne', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 8px;
-    }
-    .empty-state p { font-size: 13px; margin-bottom: 24px; }
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.empty-state i {
+  font-size: 56px;
+  color: var(--primary);
+  opacity: 0.3;
+  display: block;
+  margin-bottom: 16px;
+}
+.empty-state h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.empty-state p {
+  font-size: 13px;
+  margin-bottom: 24px;
+}
 
-    /* FIX: constrain the empty-state CTA button to a proper pill shape */
-    .empty-state .btn,
-    .empty-state button {
-      display: inline-flex !important;
-      width: auto !important;
-      min-width: 160px;
-      max-width: 220px;
-      padding: 13px 32px !important;
-      border-radius: 40px !important;
-      font-size: 15px;
-      font-weight: 700;
-    }
+/* Force the button to be inline and auto-width – highest specificity */
+.empty-state .btn,
+.empty-state .btn-primary,
+.empty-state button.btn,
+.empty-state .btn.btn-primary {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 160px !important;
+  max-width: 220px !important;
+  padding: 12px 28px !important;
+  border-radius: 40px !important;
+  margin: 0 auto !important;
+  flex: 0 0 auto !important;
+  background: var(--primary) !important;
+  color: white !important;
+  border: none !important;
+}
 
     /* ── Delete confirm overlay ── */
     .delete-overlay {
@@ -351,22 +362,7 @@
       0%,100% { opacity: 0.5; }
       50%      { opacity: 1; }
     }
-/* Ensure empty state centers content without stretching */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
 
-/* Force the button to be inline and auto-width */
-.empty-state .btn,
-.empty-state .btn-primary {
-  display: inline-flex !important;
-  width: auto !important;
-  margin: 0 auto !important;
-  padding: 12px 28px !important;
-  border-radius: 40px !important;
-}
   </style>
 </head>
 <body>
