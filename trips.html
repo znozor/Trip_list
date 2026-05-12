@@ -351,11 +351,10 @@
       0%,100% { opacity: 0.5; }
       50%      { opacity: 1; }
     }
-    /* Fix for empty state button – prevent stretching */
-.empty-state .btn,
-.empty-state .btn-primary {
-  display: inline-flex;
-  width: auto;
+/* Fix for empty state button – prevent stretching */
+.empty-state .btn {
+  display: inline-flex !important;
+  width: auto !important;
   margin: 0 auto;
 }
   </style>
