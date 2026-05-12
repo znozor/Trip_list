@@ -79,7 +79,7 @@ function renderTrips() {
         <i class="fa-solid fa-suitcase-rolling"></i>
         <h3>No trips saved yet</h3>
         <p>Plan your first trip and save your packing list to see it here.</p>
-        <button class="btn btn-primary" onclick="window.location.href='plan.html'">
+        <button class="empty-btn" onclick="window.location.href='plan.html'">
           <i class="fa-solid fa-plus"></i> Plan a Trip
         </button>
       </div>`;
