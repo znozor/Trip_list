@@ -352,10 +352,15 @@
       50%      { opacity: 1; }
     }
 /* Fix for empty state button – prevent stretching */
-.empty-state .btn {
+./* Fix for empty state button – prevent stretching */
+.empty-state .btn,
+.empty-state .btn-primary {
   display: inline-flex !important;
   width: auto !important;
+  min-width: 160px;
   margin: 0 auto;
+  padding: 12px 24px !important;
+  border-radius: 40px !important;
 }
   </style>
 </head>
