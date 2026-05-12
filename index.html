@@ -12,7 +12,6 @@
     *, *::before, *::after {
       box-sizing: border-box;
     }
-
     html, body {
       margin: 0 !important;
       padding: 0 !important;
@@ -21,16 +20,13 @@
       overflow: hidden;
       font-family: 'DM Sans', sans-serif;
     }
-
     body {
       background: #059669;
       padding-bottom: 0 !important;
     }
-
     .bottom-nav {
       display: none !important;
     }
-
     .app-wrapper {
       position: relative;
       width: 100%;
@@ -46,13 +42,11 @@
       display: flex;
       flex-direction: column;
     }
-
     .welcome-card {
       flex: 1;
       display: flex;
       flex-direction: column;
-      /* CHANGED: flex-start so disclaimer sits right below the buttons */
-      justify-content: flex-start;
+      justify-content: space-between;
       margin: 0 !important;
       padding: 0 24px calc(36px + env(safe-area-inset-bottom, 24px)) 24px !important;
       background: none !important;
@@ -66,13 +60,11 @@
     .welcome-card::-webkit-scrollbar {
       display: none;
     }
-
     .top-spacer {
       flex: 0.25;
       min-height: 6vh;
       flex-shrink: 0;
     }
-
     .main-content {
       display: flex;
       flex-direction: column;
@@ -80,7 +72,6 @@
       width: 100%;
       flex-shrink: 0;
     }
-
     .hero-title {
       font-family: 'Syne', sans-serif;
       font-weight: 900;
@@ -92,7 +83,6 @@
       padding: 0 24px;
       margin-bottom: 8px;
     }
-
     .hero-subtitle {
       color: rgba(255,255,255,0.95);
       font-size: clamp(14px, 4vw, 18px);
@@ -101,7 +91,6 @@
       padding: 0 16px;
       margin-bottom: 28px;
     }
-
     /* ── Google button ── */
     .gsi-material-button {
       width: 280px;
@@ -138,7 +127,6 @@
       cursor: not-allowed;
       transform: none;
     }
-
     /* ── Guest button ── */
     .guest-link {
       margin-top: 14px;
@@ -161,12 +149,10 @@
     }
     .guest-link i { font-size: 18px; }
     .guest-link:active { transform: scale(0.97); }
-
-    /* ── Disclaimer — one button-height below the guest button ── */
+    /* ── Disclaimer — always fully visible ── */
     .disclaimer {
       width: 100%;
       max-width: 360px;
-      /* CHANGED: ~52px = one button height (~44px) + a small gap */
       margin: 52px auto 0 auto;
       background: rgba(255,255,255,0.08);
       border-radius: 28px;
@@ -176,9 +162,8 @@
       font-size: 12px;
       line-height: 1.4;
       text-align: center;
-      flex-shrink: 0;
+      flex-shrink: 0;   /* never squish */
     }
-
     /* ── Mobile ── */
     @media (max-width: 480px) {
       .welcome-card {
@@ -192,7 +177,6 @@
       .guest-link { font-size: 15px; padding: 10px 16px; margin-top: 12px; }
       .disclaimer { font-size: 11px; padding: 8px 12px; margin-top: 50px; }
     }
-
     /* ── Short screens (e.g. iPhone SE, small Android) ── */
     @media (max-height: 700px) {
       .top-spacer { min-height: 3vh; flex: 0.15; }
@@ -201,7 +185,6 @@
       .guest-link { padding: 9px 16px; margin-top: 10px; }
       .disclaimer { margin-top: 46px; padding: 7px 12px; font-size: 11px; }
     }
-
     @media (max-height: 600px) {
       .top-spacer { min-height: 2vh; flex: 0.1; }
       .hero-title { font-size: clamp(24px, 6vw, 36px); margin-bottom: 4px; }
@@ -222,13 +205,12 @@
 <body>
 <div class="app-wrapper">
   <div class="welcome-card">
-
     <div class="top-spacer"></div>
 
+    <!-- disclaimer is now INSIDE main-content so it flows right below the buttons -->
     <div class="main-content">
       <div class="hero-title">WeatherTrip</div>
       <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
-
       <button class="gsi-material-button" id="googleBtn">
         <div class="gsi-material-button-content-wrapper">
           <div class="gsi-material-button-icon">
@@ -242,28 +224,23 @@
           <span class="gsi-material-button-contents">Continue with Google</span>
         </div>
       </button>
-
       <a href="plan.html" class="guest-link">
         <i class="fa-regular fa-user"></i> Continue as guest →
       </a>
-    </div>
-
-    <div class="disclaimer">
-      🌦️ Weather predictions are estimates.<br>Use common sense when packing.
+      <div class="disclaimer">
+        🌦️ Weather predictions are estimates.<br>Use common sense when packing.
+      </div>
     </div>
 
   </div>
 </div>
-
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
-
 <script>
   const googleBtn = document.getElementById('googleBtn');
   googleBtn.disabled = true;
   googleBtn.style.opacity = '0.7';
-
   let attempts = 0;
   const interval = setInterval(() => {
     attempts++;
