@@ -351,15 +351,20 @@
       0%,100% { opacity: 0.5; }
       50%      { opacity: 1; }
     }
-/* Fix for empty state button – prevent stretching */
-./* Fix for empty state button – prevent stretching */
+/* Ensure empty state centers content without stretching */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Force the button to be inline and auto-width */
 .empty-state .btn,
 .empty-state .btn-primary {
   display: inline-flex !important;
   width: auto !important;
-  min-width: 160px;
-  margin: 0 auto;
-  padding: 12px 24px !important;
+  margin: 0 auto !important;
+  padding: 12px 28px !important;
   border-radius: 40px !important;
 }
   </style>
