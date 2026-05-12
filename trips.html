@@ -235,21 +235,21 @@
 }
 
 /* Force the button to be inline and auto-width – highest specificity */
+/* Fix empty state button size */
+.empty-state button,
 .empty-state .btn,
-.empty-state .btn-primary,
-.empty-state button.btn,
-.empty-state .btn.btn-primary {
+.empty-state .btn-primary {
+  width: fit-content !important;
+  min-width: unset !important;
+  max-width: unset !important;
   display: inline-flex !important;
-  width: auto !important;
-  min-width: 160px !important;
-  max-width: 220px !important;
-  padding: 12px 28px !important;
-  border-radius: 40px !important;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px !important;
+  border-radius: 999px !important;
   margin: 0 auto !important;
-  flex: 0 0 auto !important;
-  background: var(--primary) !important;
-  color: white !important;
-  border: none !important;
+  flex: unset !important;
+  white-space: nowrap;
 }
 
     /* ── Delete confirm overlay ── */
