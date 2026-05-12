@@ -2,22 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+
   <meta name="vercel:toolbar" content="disable">
-  <meta name="google-site-verification" content="LhujswaW5-MLdDdHcECOn3posq5guFTKOBpEAcza_mM" />
+
+  <meta name="google-site-verification" content="LhujswaW5-MLdDdHcECOn3posq5guFTKOBpEAcza_mM">
+
+  <!-- SEO -->
+  <title>WeatherTrip – Smart Weather-Based Packing Lists & Trip Planner</title>
+
+  <meta name="description" content="WeatherTrip helps travelers create smart weather-based packing lists and trip checklists for any destination. Pack smarter and travel stress-free.">
+
+  <meta name="keywords" content="travel packing list, weather packing list, trip planner, travel checklist, smart packing, vacation packing, weather trip">
+
+  <meta name="author" content="WeatherTrip">
+
+  <meta name="robots" content="index, follow">
+
+  <link rel="canonical" href="https://trip-list-six.vercel.app/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="WeatherTrip – Smart Weather-Based Packing Lists">
+
+  <meta property="og:description" content="Generate smart travel packing lists based on destination weather forecasts.">
+
+  <meta property="og:type" content="website">
+
+  <meta property="og:url" content="https://trip-list-six.vercel.app/">
+
+  <meta property="og:image" content="https://trip-list-six.vercel.app/assets/welcome-bg.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+
+  <meta name="twitter:title" content="WeatherTrip – Smart Packing Lists">
+
+  <meta name="twitter:description" content="Create weather-based packing checklists for your trips.">
+
+  <meta name="twitter:image" content="https://trip-list-six.vercel.app/assets/welcome-bg.png">
+
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+  <!-- Preload hero image -->
+  <link rel="preload" as="image" href="./assets/welcome-bg.png">
+
+  <!-- Structured Data -->
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "WeatherTrip",
   "url": "https://trip-list-six.vercel.app/",
-  "alternateName": "WeatherTrip - Smart Packing Lists"
+  "alternateName": "WeatherTrip - Smart Packing Lists",
+  "description": "Smart weather-based travel packing list generator and trip planner."
 }
   </script>
-  <title>WeatherTrip – Pack Smarter, Travel Happier</title>
+
   <link rel="stylesheet" href="shared.css">
+
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -47,8 +94,9 @@
       height: 100dvh;
       margin: 0 !important;
       padding: 0 !important;
-      background: linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.2)),
-                  url('./assets/welcome-bg.png');
+      background:
+        linear-gradient(rgba(0,0,0,0.08), rgba(0,0,0,0.2)),
+        url('./assets/welcome-bg.png');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -63,15 +111,18 @@
       flex-direction: column;
       justify-content: space-between;
       margin: 0 !important;
-      padding: 0 24px calc(36px + env(safe-area-inset-bottom, 24px)) 24px !important;
+      padding:
+        0 24px
+        calc(36px + env(safe-area-inset-bottom, 24px))
+        24px !important;
       background: none !important;
       border: none !important;
       box-shadow: none !important;
-      /* Allow scroll on tiny screens so nothing is ever clipped */
       overflow-y: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
+
     .welcome-card::-webkit-scrollbar {
       display: none;
     }
@@ -99,19 +150,32 @@
       text-shadow: 0 6px 18px rgba(0,0,0,0.18);
       text-align: center;
       padding: 0 24px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      line-height: 1.05;
     }
 
     .hero-subtitle {
-      color: rgba(255,255,255,0.95);
+      color: rgba(255,255,255,0.96);
       font-size: clamp(14px, 4vw, 18px);
       font-weight: 500;
       text-align: center;
       padding: 0 16px;
-      margin-bottom: 28px;
+      margin-bottom: 18px;
+      max-width: 620px;
+      line-height: 1.5;
     }
 
-    /* ── Google button ── */
+    .seo-content {
+      max-width: 520px;
+      text-align: center;
+      color: rgba(255,255,255,0.92);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 26px;
+      padding: 0 18px;
+    }
+
+    /* Google button */
     .gsi-material-button {
       width: 280px;
       max-width: 90%;
@@ -122,9 +186,11 @@
       cursor: pointer;
       transition: background-color 0.2s, transform 0.1s;
     }
+
     .gsi-material-button:active {
       transform: scale(0.97);
     }
+
     .gsi-material-button-content-wrapper {
       display: flex;
       align-items: center;
@@ -132,23 +198,26 @@
       gap: 12px;
       padding: 12px 20px;
     }
+
     .gsi-material-button-icon svg {
       width: 22px;
       height: 22px;
     }
+
     .gsi-material-button-contents {
       font-family: 'DM Sans', sans-serif;
       font-weight: 600;
       font-size: 16px;
       color: #1f2e33;
     }
+
     .gsi-material-button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
 
-    /* ── Guest button ── */
+    /* Guest button */
     .guest-link {
       margin-top: 14px;
       width: 280px;
@@ -168,10 +237,16 @@
       padding: 12px 20px;
       transition: background 0.2s, transform 0.1s;
     }
-    .guest-link i { font-size: 18px; }
-    .guest-link:active { transform: scale(0.97); }
 
-    /* ── Disclaimer — always fully visible ── */
+    .guest-link i {
+      font-size: 18px;
+    }
+
+    .guest-link:active {
+      transform: scale(0.97);
+    }
+
+    /* Disclaimer */
     .disclaimer {
       width: 100%;
       max-width: 360px;
@@ -184,110 +259,186 @@
       font-size: 12px;
       line-height: 1.4;
       text-align: center;
-      flex-shrink: 0;   /* never squish */
+      flex-shrink: 0;
     }
 
-    /* ── Mobile ── */
+    /* Mobile */
     @media (max-width: 480px) {
       .welcome-card {
-        padding: 0 16px calc(32px + env(safe-area-inset-bottom, 20px)) 16px !important;
+        padding:
+          0 16px
+          calc(32px + env(safe-area-inset-bottom, 20px))
+          16px !important;
       }
-      .top-spacer { flex: 0.2; min-height: 4vh; }
-      .hero-title { font-size: clamp(28px, 7vw, 44px); padding: 0 16px; margin-bottom: 6px; }
-      .hero-subtitle { font-size: clamp(13px, 3.8vw, 16px); margin-bottom: 24px; }
-      .gsi-material-button-content-wrapper { padding: 10px 16px; }
-      .gsi-material-button-contents { font-size: 15px; }
-      .guest-link { font-size: 15px; padding: 10px 16px; margin-top: 12px; }
-      .disclaimer { font-size: 11px; padding: 8px 12px; margin-top: 12px; }
-    }
 
-    /* ── Short screens (e.g. iPhone SE, small Android) ── */
-    @media (max-height: 700px) {
-      .top-spacer { min-height: 3vh; flex: 0.15; }
-      .hero-subtitle { margin-bottom: 18px; }
-      .gsi-material-button-content-wrapper { padding: 9px 16px; }
-      .guest-link { padding: 9px 16px; margin-top: 10px; }
-      .disclaimer { margin-top: 10px; padding: 7px 12px; font-size: 11px; }
-    }
+      .top-spacer {
+        flex: 0.2;
+        min-height: 4vh;
+      }
 
-    @media (max-height: 600px) {
-      .top-spacer { min-height: 2vh; flex: 0.1; }
-      .hero-title { font-size: clamp(24px, 6vw, 36px); margin-bottom: 4px; }
-      .hero-subtitle { font-size: 13px; margin-bottom: 14px; }
-      .gsi-material-button-content-wrapper { padding: 8px 16px; }
-      .gsi-material-button-contents { font-size: 14px; }
-      .guest-link { padding: 8px 16px; margin-top: 8px; font-size: 14px; }
-      .disclaimer { margin-top: 8px; padding: 6px 12px; font-size: 10px; }
+      .hero-title {
+        font-size: clamp(28px, 7vw, 44px);
+        padding: 0 16px;
+        margin-bottom: 6px;
+      }
+
+      .hero-subtitle {
+        font-size: clamp(13px, 3.8vw, 16px);
+        margin-bottom: 16px;
+      }
+
+      .seo-content {
+        font-size: 13px;
+        margin-bottom: 22px;
+      }
+
+      .gsi-material-button-content-wrapper {
+        padding: 10px 16px;
+      }
+
+      .gsi-material-button-contents {
+        font-size: 15px;
+      }
+
+      .guest-link {
+        font-size: 15px;
+        padding: 10px 16px;
+        margin-top: 12px;
+      }
+
+      .disclaimer {
+        font-size: 11px;
+        padding: 8px 12px;
+        margin-top: 12px;
+      }
     }
   </style>
+
   <script>
     (function() {
       const theme = localStorage.getItem('theme');
-      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     })();
   </script>
 </head>
+
 <body>
+
 <div class="app-wrapper">
+
   <div class="welcome-card">
 
     <div class="top-spacer"></div>
 
-    <div class="main-content">
-      <div class="hero-title">WeatherTrip</div>
-      <div class="hero-subtitle">Pack Smarter, Travel Happier</div>
+    <main class="main-content">
+
+      <h1 class="hero-title">
+        WeatherTrip
+      </h1>
+
+      <p class="hero-subtitle">
+        Smart weather-based travel packing lists and trip planning for stress-free vacations.
+      </p>
+
+      <div class="seo-content">
+        Create personalized packing checklists based on weather forecasts, destination climate, and trip duration. WeatherTrip helps travelers avoid overpacking and forgetting essentials while planning trips smarter.
+      </div>
 
       <button class="gsi-material-button" id="googleBtn">
+
         <div class="gsi-material-button-content-wrapper">
+
           <div class="gsi-material-button-icon">
-            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+
+            <svg version="1.1"
+                 xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 48 48">
+
+              <path fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+
+              <path fill="#4285F4"
+                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+
+              <path fill="#FBBC05"
+                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+
+              <path fill="#34A853"
+                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+
             </svg>
+
           </div>
-          <span class="gsi-material-button-contents">Continue with Google</span>
+
+          <span class="gsi-material-button-contents">
+            Continue with Google
+          </span>
+
         </div>
+
       </button>
 
       <a href="plan.html" class="guest-link">
-        <i class="fa-regular fa-user"></i> Continue as guest →
+        <i class="fa-regular fa-user"></i>
+        Continue as guest →
       </a>
-    </div>
+
+    </main>
 
     <div class="disclaimer">
-      🌦️ Weather predictions are estimates.<br>Use common sense when packing.
+      🌦️ Weather predictions are estimates.<br>
+      Use common sense when packing.
     </div>
 
   </div>
+
 </div>
 
 <script src="config.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="shared.js"></script>
 
 <script>
   const googleBtn = document.getElementById('googleBtn');
+
   googleBtn.disabled = true;
   googleBtn.style.opacity = '0.7';
 
   let attempts = 0;
+
   const interval = setInterval(() => {
     attempts++;
+
     if (typeof window.signInWithGoogle === 'function') {
+
       clearInterval(interval);
+
       googleBtn.disabled = false;
       googleBtn.style.opacity = '1';
+
       googleBtn.onclick = async () => {
+
         googleBtn.disabled = true;
+
         const originalHTML = googleBtn.innerHTML;
+
         googleBtn.innerHTML = `
           <div class="gsi-material-button-content-wrapper">
-            <i class="fa-solid fa-spinner fa-spin" style="color:#1f2e33;font-size:18px"></i>
-            <span class="gsi-material-button-contents">Connecting…</span>
-          </div>`;
+            <i class="fa-solid fa-spinner fa-spin"
+               style="color:#1f2e33;font-size:18px"></i>
+
+            <span class="gsi-material-button-contents">
+              Connecting…
+            </span>
+          </div>
+        `;
+
         await window.signInWithGoogle();
+
         setTimeout(() => {
           if (googleBtn) {
             googleBtn.disabled = false;
@@ -295,15 +446,27 @@
           }
         }, 5000);
       };
+
     } else if (attempts > 25) {
+
       clearInterval(interval);
+
       console.warn('signInWithGoogle not available');
+
       googleBtn.disabled = false;
       googleBtn.style.opacity = '1';
-      const span = googleBtn.querySelector('.gsi-material-button-contents');
-      if (span) span.innerText = 'Sign in (reload page)';
+
+      const span = googleBtn.querySelector(
+        '.gsi-material-button-contents'
+      );
+
+      if (span) {
+        span.innerText = 'Sign in (reload page)';
+      }
     }
+
   }, 200);
 </script>
+
 </body>
 </html>
