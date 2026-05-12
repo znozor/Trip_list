@@ -51,7 +51,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      /* CHANGED: flex-start so disclaimer sits right below the buttons */
+      justify-content: flex-start;
       margin: 0 !important;
       padding: 0 24px calc(36px + env(safe-area-inset-bottom, 24px)) 24px !important;
       background: none !important;
@@ -161,11 +162,12 @@
     .guest-link i { font-size: 18px; }
     .guest-link:active { transform: scale(0.97); }
 
-    /* ── Disclaimer — always fully visible ── */
+    /* ── Disclaimer — one button-height below the guest button ── */
     .disclaimer {
       width: 100%;
       max-width: 360px;
-      margin: 16px auto 0 auto;
+      /* CHANGED: ~52px = one button height (~44px) + a small gap */
+      margin: 52px auto 0 auto;
       background: rgba(255,255,255,0.08);
       border-radius: 28px;
       padding: 10px 16px;
@@ -174,7 +176,7 @@
       font-size: 12px;
       line-height: 1.4;
       text-align: center;
-      flex-shrink: 0;   /* never squish */
+      flex-shrink: 0;
     }
 
     /* ── Mobile ── */
@@ -188,7 +190,7 @@
       .gsi-material-button-content-wrapper { padding: 10px 16px; }
       .gsi-material-button-contents { font-size: 15px; }
       .guest-link { font-size: 15px; padding: 10px 16px; margin-top: 12px; }
-      .disclaimer { font-size: 11px; padding: 8px 12px; margin-top: 12px; }
+      .disclaimer { font-size: 11px; padding: 8px 12px; margin-top: 50px; }
     }
 
     /* ── Short screens (e.g. iPhone SE, small Android) ── */
@@ -197,7 +199,7 @@
       .hero-subtitle { margin-bottom: 18px; }
       .gsi-material-button-content-wrapper { padding: 9px 16px; }
       .guest-link { padding: 9px 16px; margin-top: 10px; }
-      .disclaimer { margin-top: 10px; padding: 7px 12px; font-size: 11px; }
+      .disclaimer { margin-top: 46px; padding: 7px 12px; font-size: 11px; }
     }
 
     @media (max-height: 600px) {
@@ -207,7 +209,7 @@
       .gsi-material-button-content-wrapper { padding: 8px 16px; }
       .gsi-material-button-contents { font-size: 14px; }
       .guest-link { padding: 8px 16px; margin-top: 8px; font-size: 14px; }
-      .disclaimer { margin-top: 8px; padding: 6px 12px; font-size: 10px; }
+      .disclaimer { margin-top: 42px; padding: 6px 12px; font-size: 10px; }
     }
   </style>
   <script>
