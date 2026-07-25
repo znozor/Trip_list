@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://trip-list-six.vercel.app/sitemap.xml
+Sitemap: https://trip-list-six.vercel.app/sitemap-index.xml
